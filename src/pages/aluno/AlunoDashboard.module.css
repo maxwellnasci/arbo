@@ -1,0 +1,374 @@
+/* src/pages/aluno/AlunoDashboard.module.css */
+
+/* ── Layout ───────────────────────────────────── */
+.page {
+  min-height: 100svh;
+  background-color: #111111;
+  padding: 24px 16px;
+  font-family: sans-serif;
+}
+
+.container {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ── Header ───────────────────────────────────── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+  gap: 16px;
+}
+
+.greeting {
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+.levelBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.levelIniciante   { background: #2a2a2a; color: #888888; }
+.levelIntermediario { background: #1e3a5f; color: #60a5fa; }
+.levelAvancado    { background: #3a1a0a; color: #E8521A; }
+
+.logoutBtn {
+  background: transparent;
+  border: 1.5px solid #333333;
+  color: #888888;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.logoutBtn:hover {
+  border-color: #555555;
+  color: #aaaaaa;
+}
+
+/* ── Progress ─────────────────────────────────── */
+.progressSection {
+  margin-bottom: 24px;
+}
+
+.progressLabel {
+  color: #888888;
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.progressBar {
+  height: 6px;
+  background: #2a2a2a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: #E8521A;
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* ── Training cards ───────────────────────────── */
+.trainingList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  background: #1a1a1a;
+  border-radius: 14px;
+  padding: 16px 20px;
+  border: 1.5px solid #2a2a2a;
+}
+
+.cardToday {
+  border-left: 3px solid #E8521A;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.dayName {
+  color: #888888;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.typeBadge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Badge por tipo de treino */
+.typeCorrida    { background: #3a1a0a; color: #E8521A; }
+.typeHiit       { background: #3a0a0a; color: #E84545; }
+.typeRecovery   { background: #0a2a1a; color: #22C55E; }
+.typeForca      { background: #1a0a3a; color: #A855F7; }
+.typeMobilidade { background: #0a1a3a; color: #3B82F6; }
+.typeDefault    { background: #2a2a2a; color: #888888; }
+
+.trainingTitle {
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.trainingMeta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.metaItem {
+  color: #888888;
+  font-size: 13px;
+}
+
+.metaValue {
+  color: #cccccc;
+  font-weight: 600;
+}
+
+.checkinBtn {
+  background: #E8521A;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s;
+}
+
+.checkinBtn:hover {
+  background: #d4481a;
+}
+
+.doneBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #22C55E;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px;
+}
+
+/* ── Estados (loading / error / empty) ────────── */
+.stateCard {
+  background: #1a1a1a;
+  border-radius: 14px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #2a2a2a;
+  border-top-color: #E8521A;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  color: #888888;
+  font-size: 14px;
+  margin: 0;
+}
+
+.errorText {
+  color: #f87171;
+  font-size: 15px;
+  margin: 0 0 16px;
+}
+
+.retryBtn {
+  background: transparent;
+  border: 1.5px solid #E8521A;
+  color: #E8521A;
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.emptyText {
+  color: #555555;
+  font-size: 15px;
+  margin: 0;
+}
+
+/* ── Modal de check-in ────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background: #1a1a1a;
+  border-radius: 16px 16px 0 0;
+  padding: 24px 20px 32px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.modalTitle {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modalSubtitle {
+  color: #888888;
+  font-size: 13px;
+  margin: 0 0 20px;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: #888888;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+}
+
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.label {
+  display: block;
+  color: #888888;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.input {
+  width: 100%;
+  background: #111111;
+  border: 1.5px solid #333333;
+  border-radius: 8px;
+  color: #ffffff;
+  padding: 10px 12px;
+  font-size: 15px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #E8521A;
+}
+
+.textarea {
+  width: 100%;
+  background: #111111;
+  border: 1.5px solid #333333;
+  border-radius: 8px;
+  color: #ffffff;
+  padding: 10px 12px;
+  font-size: 15px;
+  resize: vertical;
+  min-height: 80px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: #E8521A;
+}
+
+.modalError {
+  color: #f87171;
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.submitBtn {
+  background: #E8521A;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.15s;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #d4481a;
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Responsivo ───────────────────────────────── */
+@media (min-width: 640px) {
+  .overlay {
+    align-items: center;
+    padding: 24px;
+  }
+
+  .modal {
+    border-radius: 16px;
+  }
+}
