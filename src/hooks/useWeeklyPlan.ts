@@ -20,7 +20,7 @@ export type UseWeeklyPlanResult = {
   refresh: () => void
 }
 
-type RawPlanTraining = WeeklyPlanTraining & { trainings: Training }
+type RawPlanTraining = WeeklyPlanTraining & { trainings: Training[] }
 
 function getMonday(): string {
   const d = new Date()
@@ -37,7 +37,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function fetchWithRetry(userId: string, attempt = 0): Promise<{
+async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, attempt = 0): Promise<{
   profile: Profile | null
   plan: WeeklyPlan | null
   rawTrainings: RawPlanTraining[]
@@ -84,13 +84,14 @@ async function fetchWithRetry(userId: string, attempt = 0): Promise<{
     return {
       profile: profileRes.data,
       plan: planRes.data,
-      rawTrainings: (trainingsRes.data ?? []) as RawPlanTraining[],
+      rawTrainings: (trainingsRes.data ?? []) as unknown as RawPlanTraining[],
       checkins: checkinsRes.data ?? [],
     }
   } catch (err) {
-    if (attempt < 2) {
+    if (attempt < 2 && !signal.cancelled) {
       await sleep(1000 * Math.pow(2, attempt)) // 1s, 2s
-      return fetchWithRetry(userId, attempt + 1)
+      if (signal.cancelled) throw err
+      return fetchWithRetry(userId, signal, attempt + 1)
     }
     throw err
   }
@@ -113,34 +114,40 @@ export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
       return
     }
 
-    let cancelled = false
+    const sig = { cancelled: false }
     setIsLoading(true)
     setError(null)
 
-    fetchWithRetry(userId)
+    fetchWithRetry(userId, sig)
       .then(({ profile, plan, rawTrainings, checkins }) => {
-        if (cancelled) return
+        if (sig.cancelled) return
         setProfile(profile)
         setPlan(plan)
         setCheckins(checkins)
         setTrainings(
-          rawTrainings.map(wpt => ({
-            weeklyPlanTrainingId: wpt.id,
-            dayOfWeek: wpt.day_of_week,
-            training: wpt.trainings,
-            checkin: checkins.find(c => c.training_id === wpt.training_id) ?? null,
-          }))
+          rawTrainings
+            .map(wpt => {
+              const training = wpt.trainings[0]
+              if (!training) return null
+              return {
+                weeklyPlanTrainingId: wpt.id,
+                dayOfWeek: wpt.day_of_week,
+                training,
+                checkin: checkins.find(c => c.training_id === wpt.training_id) ?? null,
+              }
+            })
+            .filter((x): x is DayTraining => x !== null)
         )
       })
       .catch(err => {
-        if (cancelled) return
+        if (sig.cancelled) return
         setError((err as Error)?.message ?? 'Erro ao carregar dados.')
       })
       .finally(() => {
-        if (!cancelled) setIsLoading(false)
+        if (!sig.cancelled) setIsLoading(false)
       })
 
-    return () => { cancelled = true }
+    return () => { sig.cancelled = true }
   }, [userId, tick])
 
   return { profile, plan, trainings, checkins, isLoading, error, refresh }
