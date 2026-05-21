@@ -45,12 +45,12 @@ function getGreeting(name: string | null | undefined, email: string | undefined)
 }
 
 function formatDistance(meters: number | null): string | null {
-  if (!meters) return null
+  if (meters === null || meters === undefined) return null
   return `${(meters / 1000).toFixed(1).replace('.', ',')} km`
 }
 
 function formatPace(secondsPerKm: number | null): string | null {
-  if (!secondsPerKm) return null
+  if (secondsPerKm === null || secondsPerKm === undefined) return null
   const min = Math.floor(secondsPerKm / 60)
   const sec = String(secondsPerKm % 60).padStart(2, '0')
   return `${min}:${sec} /km`
@@ -254,6 +254,8 @@ export default function AlunoDashboard() {
     )
   }
 
+  if (!user) return null
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
@@ -286,12 +288,12 @@ export default function AlunoDashboard() {
             </section>
 
             <div className={styles.trainingList}>
-              {trainings.map(dt => (
+              {[...trainings].sort((a, b) => a.dayOfWeek - b.dayOfWeek).map(dt => (
                 <TrainingCard
                   key={dt.weeklyPlanTrainingId}
                   dayTraining={dt}
                   planId={plan.id}
-                  userId={user!.id}
+                  userId={user.id}
                   isToday={dt.dayOfWeek === todayDow}
                   onCheckinSuccess={refresh}
                 />
