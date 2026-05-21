@@ -1,5 +1,5 @@
 // src/hooks/useWeeklyPlan.ts
-import { useState, useEffect, useCallback } from 'react'
+import { useReducer, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Profile, Training, WeeklyPlan, WeeklyPlanTraining, Checkin } from '../lib/types'
 
@@ -21,6 +21,44 @@ export type UseWeeklyPlanResult = {
 }
 
 type RawPlanTraining = WeeklyPlanTraining & { trainings: Training[] }
+
+type State = {
+  profile: Profile | null
+  plan: WeeklyPlan | null
+  trainings: DayTraining[]
+  checkins: Checkin[]
+  isLoading: boolean
+  error: string | null
+  tick: number
+}
+
+type Action =
+  | { type: 'REFRESH' }
+  | { type: 'SUCCESS'; profile: Profile | null; plan: WeeklyPlan | null; trainings: DayTraining[]; checkins: Checkin[] }
+  | { type: 'ERROR'; message: string }
+  | { type: 'DONE' }
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'REFRESH':
+      return { ...state, tick: state.tick + 1 }
+    case 'SUCCESS':
+      return {
+        ...state,
+        profile: action.profile,
+        plan: action.plan,
+        trainings: action.trainings,
+        checkins: action.checkins,
+        error: null,
+      }
+    case 'ERROR':
+      return { ...state, error: action.message }
+    case 'DONE':
+      return { ...state, isLoading: false }
+    default:
+      return state
+  }
+}
 
 function getMonday(): string {
   const d = new Date()
@@ -97,35 +135,39 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
   }
 }
 
-export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [plan, setPlan] = useState<WeeklyPlan | null>(null)
-  const [trainings, setTrainings] = useState<DayTraining[]>([])
-  const [checkins, setCheckins] = useState<Checkin[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [tick, setTick] = useState(0)
+const initialState: State = {
+  profile: null,
+  plan: null,
+  trainings: [],
+  checkins: [],
+  isLoading: false,
+  error: null,
+  tick: 0,
+}
 
-  const refresh = useCallback(() => setTick(t => t + 1), [])
+export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
+  const [state, dispatch] = useReducer(reducer, {
+    ...initialState,
+    isLoading: !!userId,
+  })
+
+  const refresh = useCallback(() => dispatch({ type: 'REFRESH' }), [])
 
   useEffect(() => {
     if (!userId) {
-      setIsLoading(false)
       return
     }
 
     const sig = { cancelled: false }
-    setIsLoading(true)
-    setError(null)
 
     fetchWithRetry(userId, sig)
       .then(({ profile, plan, rawTrainings, checkins }) => {
         if (sig.cancelled) return
-        setProfile(profile)
-        setPlan(plan)
-        setCheckins(checkins)
-        setTrainings(
-          rawTrainings
+        dispatch({
+          type: 'SUCCESS',
+          profile,
+          plan,
+          trainings: rawTrainings
             .map(wpt => {
               const training = wpt.trainings[0]
               if (!training) return null
@@ -136,19 +178,21 @@ export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
                 checkin: checkins.find(c => c.training_id === wpt.training_id) ?? null,
               }
             })
-            .filter((x): x is DayTraining => x !== null)
-        )
+            .filter((x): x is DayTraining => x !== null),
+          checkins,
+        })
       })
       .catch(err => {
         if (sig.cancelled) return
-        setError((err as Error)?.message ?? 'Erro ao carregar dados.')
+        dispatch({ type: 'ERROR', message: (err as Error)?.message ?? 'Erro ao carregar dados.' })
       })
       .finally(() => {
-        if (!sig.cancelled) setIsLoading(false)
+        if (!sig.cancelled) dispatch({ type: 'DONE' })
       })
 
     return () => { sig.cancelled = true }
-  }, [userId, tick])
+  }, [userId, state.tick])
 
+  const { profile, plan, trainings, checkins, isLoading, error } = state
   return { profile, plan, trainings, checkins, isLoading, error, refresh }
 }
