@@ -267,7 +267,9 @@ npx supabase login
 
 **Padrão descoberto:** FK ambíguo — `checkins` tem dois FKs para `profiles`. Usar `profiles!checkins_student_id_fkey(*)`. Ver seção "Padrões Supabase".
 
-**Workaround pendente:** `profiles` não tem coluna `role`. `useAdminAlunos` exclui o admin pelo id. Adicionar `role` à tabela fica para a Fase 2.
+**Workaround pendente:** `profiles` não tem coluna `role`. `useAdminAlunos` exclui o admin pelo id. Adicionar `role` à tabela é obrigatório na Fase 2, junto com a tabela `groups` — as duas alterações de schema andam juntas.
+
+**Regra de plano:** professor define os dias da semana no grid mensal da turma. Aluno pode ajustar individualmente se precisar — plano individual tem precedência sobre o plano da turma.
 
 **Validação:** `tsc --noEmit` ✅
 
@@ -296,9 +298,9 @@ Fase 1 do painel admin commitada. **Não testada visualmente** — validada apen
 
 **Painel Admin — Fase 2**
 - `/admin/turmas` — lista de turmas com objetivo/frequência
-- `/admin/turmas/:id` — grid plano mensal (4 semanas)
+- `/admin/turmas/:id` — grid plano mensal 4 semanas; professor define os dias, aluno ajusta individualmente se precisar
 - `/admin/alunos/:id` — perfil do aluno
-- Schema: tabela `groups`, coluna `role` em `profiles`, tabela `invites`
+- Schema (obrigatório junto): coluna `role` em `profiles` + tabela `groups` + tabela `invites`
 
 **Painel Admin — Fase 3**
 - `/admin/treinos` — biblioteca de treinos (CRUD)

@@ -159,7 +159,8 @@ O nome do FK segue o padrão `tabela_coluna_fkey`, confirmável em `database.typ
 - Usar **Edge Functions** para lógica de backend sensível
 - Não usar `user_metadata` para autorização — apenas `app_metadata`
 - `PersonalRecord` como alias de tipo (não `Record`)
-- `profiles` **não tem coluna `role`** — role fica em `app_metadata`. Para filtrar alunos, usar `.neq('id', user.id)` como workaround MVP (exclui o admin). Adicionar coluna `role` à tabela é pendente para a Fase 2 do painel admin.
+- `profiles` **não tem coluna `role`** — role fica em `app_metadata`. Para filtrar alunos, usar `.neq('id', user.id)` como workaround MVP (exclui o admin). Adicionar coluna `role` à tabela é pendente para a Fase 2 do painel admin junto com a tabela `groups`.
+- **Plano mensal:** professor define os dias da semana para cada turma. Aluno pode ajustar individualmente se necessário (plano individual tem precedência sobre o plano da turma).
 
 ## Autenticação (implementada)
 
@@ -252,9 +253,10 @@ Fase 1 do painel admin completa e commitada. **Não testada visualmente ainda** 
 ### Próximo passo
 1. Testar visualmente o painel admin no browser (`npm run dev`)
 2. **Fase 2 — Turmas:**
-   - `ALTER TABLE profiles ADD COLUMN role text` (ou outro mecanismo para filtrar alunos)
+   - `ALTER TABLE profiles ADD COLUMN role text` — obrigatório junto com `groups` para substituir o workaround de `.neq('id', adminId)`
    - Criar tabela `groups` (nome, objetivo, frequência)
    - `AdminTurmas` + `AdminTurmaDetalhe` (grid plano mensal 4 semanas)
+   - Professor define os dias da semana no grid; aluno pode ajustar individualmente se precisar (plano individual tem precedência)
    - Atribuição de plano em lote para alunos da turma
 
 ## Roadmap de telas
@@ -275,9 +277,9 @@ Fase 1 do painel admin completa e commitada. **Não testada visualmente ainda** 
 
 **Painel Admin — Fase 2**
 - `/admin/turmas` — lista de turmas com objetivo/frequência
-- `/admin/turmas/:id` — grid plano mensal (4 semanas)
+- `/admin/turmas/:id` — grid plano mensal (4 semanas); professor define os dias, aluno ajusta individualmente se precisar
 - `/admin/alunos/:id` — perfil do aluno
-- Schema: tabela `groups`, coluna `role` em `profiles`, tabela `invites`
+- Schema: coluna `role` em `profiles` (criar junto com `groups` — substitui workaround), tabela `groups`, tabela `invites`
 
 **Painel Admin — Fase 3**
 - `/admin/treinos` — biblioteca de treinos (CRUD)
