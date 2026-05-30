@@ -179,6 +179,93 @@ export type Database = {
           },
         ]
       }
+      group_plan_trainings: {
+        Row: {
+          day_of_week: number
+          group_plan_id: string
+          id: string
+          sort_order: number
+          training_id: string
+          week_number: number
+        }
+        Insert: {
+          day_of_week: number
+          group_plan_id: string
+          id?: string
+          sort_order?: number
+          training_id: string
+          week_number: number
+        }
+        Update: {
+          day_of_week?: number
+          group_plan_id?: string
+          id?: string
+          sort_order?: number
+          training_id?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_plan_trainings_group_plan_id_fkey"
+            columns: ["group_plan_id"]
+            isOneToOne: false
+            referencedRelation: "group_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_plan_trainings_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_plans: {
+        Row: {
+          created_at: string
+          created_by: string
+          group_id: string
+          id: string
+          notes: string | null
+          starts_at: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          group_id: string
+          id?: string
+          notes?: string | null
+          starts_at: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          group_id?: string
+          id?: string
+          notes?: string | null
+          starts_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_plans_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       groups: {
         Row: {
           created_at: string
