@@ -71,11 +71,11 @@ npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/da
 
 ### Tipos disponíveis em `src/lib/types.ts`
 
-`Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record` — palavra reservada TS), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `TrainingType`, `DistanceCategory`, `UserLevel`.
+`Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record` — palavra reservada TS), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`, `TrainingType`, `DistanceCategory`, `UserLevel`.
 
 ### Banco de dados (Supabase — project: `jhfkflnixzivuichmkie`)
 
-**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`
+**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `groups`
 
 **Enums:** `training_type` · `distance_category` · `user_level`
 
@@ -110,6 +110,7 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `reactions` | SELECT, INSERT, DELETE |
 | `strava_activities` | SELECT |
 | `strava_connections` | **nenhum** — service_role only |
+| `groups` | SELECT, INSERT, UPDATE, DELETE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy correta.
 
@@ -159,7 +160,9 @@ O nome do FK segue o padrão `tabela_coluna_fkey`, confirmável em `database.typ
 - Usar **Edge Functions** para lógica de backend sensível
 - Não usar `user_metadata` para autorização — apenas `app_metadata`
 - `PersonalRecord` como alias de tipo (não `Record`)
-- `profiles` **não tem coluna `role`** — role fica em `app_metadata`. Para filtrar alunos, usar `.neq('id', user.id)` como workaround MVP (exclui o admin). Adicionar coluna `role` à tabela é pendente para a Fase 2 do painel admin junto com a tabela `groups`.
+- `profiles` **tem coluna `role text`** (`'aluno'` | `'admin'`). Filtrar alunos com `.eq('role', 'aluno')`. O workaround `.neq('id', adminId)` foi removido em 2026-05-30.
+- `profiles` **tem coluna `group_id uuid`** — FK para `groups.id`, nullable (`ON DELETE SET NULL`). Alunos sem turma têm `NULL`.
+- Trigger `tr_set_profile_role` (BEFORE INSERT em `profiles`) — popula `role` de `raw_user_meta_data` ao criar perfil via convite.
 - **Plano mensal:** professor define os dias da semana para cada turma. Aluno pode ajustar individualmente se necessário (plano individual tem precedência sobre o plano da turma).
 
 ## Autenticação (implementada)
@@ -178,6 +181,7 @@ O nome do FK segue o padrão `tabela_coluna_fkey`, confirmável em `database.typ
 | `/admin/alunos` | `AdminAlunos` | somente `role=admin` |
 | `/admin/feedbacks` | `AdminFeedbacks` | somente `role=admin` |
 | `/admin/convites` | `AdminConvites` | somente `role=admin` |
+| `/admin/turmas` | `AdminTurmas` | somente `role=admin` |
 | `/aluno` | `AlunoDashboard.tsx` | somente `role=aluno` |
 | `/onboarding` | `AnamnesisForm.tsx` | aluno sem anamnese |
 
@@ -196,13 +200,14 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-05-27)
+## Estado atual (2026-05-30)
 
 ### Progresso geral
 - **Task 1–3:** Schema, RLS, Auth stack ✅
 - **Task 4:** TypeScript + Lint — zero erros ✅
 - **Task 5:** AlunoDashboard com dados reais + redesign premium ✅
 - **Task 6:** Painel Admin — Fase 1 completa ✅
+- **Task 7:** Painel Admin — Fase 2 schema + `/admin/turmas` ✅
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan.ts` — join N→1 retorna objeto, não array: `wpt.trainings[0]` → `wpt.trainings`
@@ -211,53 +216,31 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - Padrão de JOINs documentado em CLAUDE.md e GEMINI.md
 
 ### O que foi feito em 2026-05-27
+- Spec do painel admin salva em `docs/superpowers/specs/2026-05-27-admin-panel-design.md`
+- Painel Admin Fase 1 implementada (AdminLayout, AdminHome, AdminAlunos, AdminFeedbacks, AdminConvites)
+- FK ambíguo documentado: `profiles!checkins_student_id_fkey(*)`
 
-**Spec do painel admin:**
-- Entrevista com o professor → decisões de design documentadas
-- Modelo de turmas explícitas (`groups` table) escolhido para Fase 2
-- Spec salva em `docs/superpowers/specs/2026-05-27-admin-panel-design.md`
+### O que foi feito em 2026-05-30
 
-**Painel Admin — Fase 1 implementada e corrigida:**
+**Schema — Fase 2 aplicado:**
+- `profiles.role text CHECK ('aluno'|'admin')` — backfill de usuários existentes + trigger `tr_set_profile_role`
+- `profiles.group_id uuid REFERENCES groups(id) ON DELETE SET NULL`
+- Tabela `groups` criada com RLS, policies (admin: tudo; aluno: SELECT de ativas), GRANT e trigger `updated_at`
 
-Arquivos criados:
-- `src/pages/admin/AdminLayout.tsx` — wrapper com `<Outlet />`, sidebar fixa
-- `src/pages/admin/AdminSidebar.tsx` — nav com todas as rotas (Turmas/Treinos atenuados como "em breve")
-- `src/pages/admin/AdminHome.tsx` — cards com dados reais (alunos, feedbacks, PRs) + lista de recordes recentes
-- `src/pages/admin/AdminAlunos.tsx` — lista tipada de alunos com avatar, nível, botão Convidar
-- `src/pages/admin/AdminFeedbacks.tsx` — feed de check-ins com badge 🏆 PR, esforço emoji, dados reais
-- `src/pages/admin/AdminConvites.tsx` — form de convite com reset de status no onChange
-- `src/hooks/useAdminAlunos.ts` — query real em `profiles` (workaround: exclui admin pelo id)
-- `src/hooks/useAdminFeedbacks.ts` — query paralela `checkins` + `records`, detecção de PR por dia
+**Frontend:**
+- `src/hooks/useAdminTurmas.ts` — hook com `GroupWithCount`, duas queries paralelas, contagem de alunos por turma
+- `src/pages/admin/AdminTurmas.tsx` — lista de turmas com `TurmaRow`, labels, acessibilidade
+- `src/App.tsx` — rota `/admin/turmas` registrada
+- `src/pages/admin/AdminSidebar.tsx` — "Turmas" ativado (era "em breve")
+- `src/pages/admin/AdminHome.tsx` — card "Turmas ativas" com dado real; contagem de alunos corrigida para `.eq('role', 'aluno')`
+- `src/hooks/useAdminAlunos.ts` — workaround `.neq('id', adminId)` substituído por `.eq('role', 'aluno')`
+- `src/lib/types.ts` — tipo `Group` adicionado
 
-`AdminDashboard.tsx` removido (dead code substituído pelo novo AdminLayout).
-
-9 problemas corrigidos no code review:
-1. Dead code `AdminDashboard.tsx` deletado
-2. `aluno: any` → `Profile` (type-safe)
-3. `fb: any` → `FeedbackItem` (type-safe)
-4. Botão "+ Convidar" sem handler → navega para `/admin/convites`
-5. `Link to="#"` para itens desabilitados → `<span>` semântico
-6. `useAdminAlunos` stub → query real Supabase
-7. `useAdminFeedbacks` stub → query paralela com detecção de PR
-8. `AdminHome` hardcoded 0 → dados reais via Supabase
-9. Status de erro em convites não resetava → reset no `onChange`
-
-**Padrão descoberto hoje:**
-- FK ambíguo: `checkins` tem dois FKs para `profiles`. Usar `profiles!checkins_student_id_fkey(*)` no select. Ver seção "Padrões Supabase" acima.
-
+**Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅
 
-### Onde paramos
-Fase 1 do painel admin completa e commitada. **Não testada visualmente ainda** — validada apenas com tsc.
-
 ### Próximo passo
-1. Testar visualmente o painel admin no browser (`npm run dev`)
-2. **Fase 2 — Turmas:**
-   - `ALTER TABLE profiles ADD COLUMN role text` — obrigatório junto com `groups` para substituir o workaround de `.neq('id', adminId)`
-   - Criar tabela `groups` (nome, objetivo, frequência)
-   - `AdminTurmas` + `AdminTurmaDetalhe` (grid plano mensal 4 semanas)
-   - Professor define os dias da semana no grid; aluno pode ajustar individualmente se precisar (plano individual tem precedência)
-   - Atribuição de plano em lote para alunos da turma
+`/admin/turmas/:id` — grid do plano mensal (4 semanas), toggle semana/mês, controle de liberação.
 
 ## Roadmap de telas
 
@@ -272,14 +255,14 @@ Fase 1 do painel admin completa e commitada. **Não testada visualmente ainda** 
 | Painel Admin — Alunos | `/admin/alunos` | ✅ |
 | Painel Admin — Feedbacks | `/admin/feedbacks` | ✅ |
 | Painel Admin — Convites | `/admin/convites` | ✅ |
+| Painel Admin — Turmas (lista) | `/admin/turmas` | ✅ |
 
 ### Pendentes
 
 **Painel Admin — Fase 2**
-- `/admin/turmas` — lista de turmas com objetivo/frequência
 - `/admin/turmas/:id` — grid plano mensal (4 semanas); professor define os dias, aluno ajusta individualmente se precisar
 - `/admin/alunos/:id` — perfil do aluno
-- Schema: coluna `role` em `profiles` (criar junto com `groups` — substitui workaround), tabela `groups`, tabela `invites`
+- Schema pendente: tabela `invites`
 
 **Painel Admin — Fase 3**
 - `/admin/treinos` — biblioteca de treinos (CRUD)
@@ -298,8 +281,11 @@ Fase 1 do painel admin completa e commitada. **Não testada visualmente ainda** 
 - Logout
 
 ### Ordem de desenvolvimento
-1. Testar visualmente Fase 1 do admin + corrigir regressões
-2. Painel Admin Fase 2 (turmas + plano mensal)
-3. Painel Admin Fase 3 (treinos + mensagem)
-4. Aba Progresso
-5. Aba Perfil
+1. ~~Testar visualmente Fase 1 do admin~~ ✅
+2. ~~Schema Fase 2 (role + group_id + tabela groups)~~ ✅
+3. ~~`/admin/turmas` lista~~ ✅
+4. `/admin/turmas/:id` — grid plano mensal
+5. `/admin/alunos/:id` — perfil do aluno
+6. Painel Admin Fase 3 (treinos + mensagem)
+7. Aba Progresso
+8. Aba Perfil
