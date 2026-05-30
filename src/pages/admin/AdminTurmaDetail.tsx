@@ -22,7 +22,7 @@ const MONTH_NAMES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out'
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function addDays(base: string, days: number): Date {
-  const d = new Date(base)
+  const d = new Date(base + 'T12:00:00')
   d.setDate(d.getDate() + days)
   return d
 }
@@ -66,26 +66,39 @@ export default function AdminTurmaDetail() {
   const [selectedWeek, setSelectedWeek] = useState(1)
   const [panel, setPanel] = useState<PanelState | null>(null)
   const [mutating, setMutating] = useState(false)
+  const [mutationError, setMutationError] = useState<string | null>(null)
+  const [allTrainings, setAllTrainings] = useState<Training[]>([])
+
+  useEffect(() => {
+    supabase.from('trainings').select('*').order('title').then(({ data }) => {
+      if (data) setAllTrainings(data)
+    })
+  }, [])
 
   useEffect(() => {
     if (defaultWeekNumber > 0) setSelectedWeek(defaultWeekNumber)
   }, [defaultWeekNumber])
 
   function openSlot(weekNumber: number, dayOfWeek: number) {
+    setMutationError(null)
     setPanel({ weekNumber, dayOfWeek, mode: 'search', existing: null })
   }
 
   function openCard(entry: GroupDayTraining) {
+    setMutationError(null)
     setPanel({ weekNumber: entry.weekNumber, dayOfWeek: entry.dayOfWeek, mode: 'view', existing: entry })
   }
 
   async function handleAddTraining(trainingId: string) {
     if (!panel) return
     setMutating(true)
+    setMutationError(null)
     try {
       await addTraining(panel.weekNumber, panel.dayOfWeek, trainingId)
       refresh()
       setPanel(null)
+    } catch (e) {
+      setMutationError((e as Error)?.message ?? 'Erro ao adicionar treino')
     } finally {
       setMutating(false)
     }
@@ -94,10 +107,13 @@ export default function AdminTurmaDetail() {
   async function handleRemoveTraining() {
     if (!panel?.existing) return
     setMutating(true)
+    setMutationError(null)
     try {
       await removeTraining(panel.existing.id)
       refresh()
       setPanel(null)
+    } catch (e) {
+      setMutationError((e as Error)?.message ?? 'Erro ao remover treino')
     } finally {
       setMutating(false)
     }
@@ -106,16 +122,20 @@ export default function AdminTurmaDetail() {
   async function handleCreateTraining(input: NewTrainingInput) {
     if (!panel) return
     setMutating(true)
+    setMutationError(null)
     try {
       await createAndAddTraining(panel.weekNumber, panel.dayOfWeek, input)
       refresh()
       setPanel(null)
+    } catch (e) {
+      setMutationError((e as Error)?.message ?? 'Erro ao criar treino')
     } finally {
       setMutating(false)
     }
   }
 
   function switchToWeekFromMonth(weekNumber: number, dayOfWeek: number) {
+    setMutationError(null)
     setView('week')
     setSelectedWeek(weekNumber)
     setPanel({ weekNumber, dayOfWeek, mode: 'search', existing: null })
@@ -207,12 +227,14 @@ export default function AdminTurmaDetail() {
               cycleStart={cycleStart}
               panelState={panel}
               cycleTrainings={trainings}
+              allTrainings={allTrainings}
               mutating={mutating}
+              mutationError={mutationError}
               onModeChange={mode => setPanel(p => p ? { ...p, mode } : null)}
               onAddTraining={handleAddTraining}
               onRemoveTraining={handleRemoveTraining}
               onCreateTraining={handleCreateTraining}
-              onClose={() => setPanel(null)}
+              onClose={() => { setMutationError(null); setPanel(null) }}
             />
           )}
         </div>
@@ -388,7 +410,9 @@ function SidePanel({
   cycleStart,
   panelState,
   cycleTrainings,
+  allTrainings,
   mutating,
+  mutationError,
   onModeChange,
   onAddTraining,
   onRemoveTraining,
@@ -398,7 +422,9 @@ function SidePanel({
   cycleStart: string
   panelState: PanelState
   cycleTrainings: GroupDayTraining[]
+  allTrainings: Training[]
   mutating: boolean
+  mutationError: string | null
   onModeChange: (mode: PanelMode) => void
   onAddTraining: (trainingId: string) => void
   onRemoveTraining: () => void
@@ -409,14 +435,7 @@ function SidePanel({
   const date = cycleStart ? dayDate(cycleStart, weekNumber, dayOfWeek) : null
   const dayLabel = date ? `${DAY_NAMES[dayOfWeek]}, ${formatDay(date)}` : DAY_NAMES[dayOfWeek]
 
-  const [allTrainings, setAllTrainings] = useState<Training[]>([])
   const [search, setSearch] = useState('')
-
-  useEffect(() => {
-    supabase.from('trainings').select('*').order('title').then(({ data }) => {
-      if (data) setAllTrainings(data)
-    })
-  }, [])
 
   const cycleTrainingIds = new Set(cycleTrainings.map(t => t.training.id))
   const inCycle = allTrainings.filter(t => cycleTrainingIds.has(t.id))
@@ -456,6 +475,12 @@ function SidePanel({
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#444', fontSize: '14px', cursor: 'pointer', padding: '0', lineHeight: 1 }}>✕</button>
       </div>
+
+      {mutationError && (
+        <div style={{ margin: '8px 14px 0', padding: '7px 10px', background: '#ff3b3011', border: '1px solid #ff3b3044', borderRadius: '7px', fontSize: '10px', color: '#ff6b6b' }}>
+          {mutationError}
+        </div>
+      )}
 
       {/* View mode: existing entry */}
       {mode === 'view' && existing && (
