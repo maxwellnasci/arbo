@@ -1,6 +1,6 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-05-30
+> Gerado em 2026-05-29 | Atualizado em 2026-05-30 (sessão 2)
 
 ---
 
@@ -15,7 +15,7 @@
 | Schema Fase 2 | ✅ `profiles.role`, `profiles.group_id`, tabela `groups` com RLS |
 | `/admin/turmas` lista | ✅ Hook `useAdminTurmas`, componente `AdminTurmas`, sidebar ativada |
 | `/admin/turmas/:id` schema | ✅ `group_plans` + `group_plan_trainings` com RLS, policies, GRANTs |
-| `/admin/turmas/:id` página | 🔧 Componente completo; rota, TurmaRow link e fallback aluno pendentes |
+| `/admin/turmas/:id` | ✅ Completo: componente, rota, TurmaRow clicável, fallback aluno, build |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 
@@ -48,20 +48,16 @@
 - Hook `useAdminTurmas` com `GroupWithCount` e duas queries paralelas
 - Botão "+ Nova Turma" presente (desabilitado — aguarda modal)
 
-#### `/admin/turmas/:id` 🔧 parcialmente implementado
-
-**Concluído:**
-- Schema: `group_plans` (id, group_id, starts_at, notes, created_by) + `group_plan_trainings` (id, group_plan_id, week_number, day_of_week, training_id, sort_order) com RLS + policies + GRANTs
+#### `/admin/turmas/:id` ✅ CONCLUÍDO (2026-05-30)
+- Schema: `group_plans` + `group_plan_trainings` com RLS, policies, GRANTs
 - Tipos: `GroupPlan`, `GroupPlanTraining` em `src/lib/types.ts`
 - Hook `useAdminTurmaDetail` — fetch do grupo, cálculo do ciclo de 4 semanas, trainings do ciclo
 - Hook `useGroupPlanMutations` — addTraining, removeTraining, createAndAddTraining (com `ensureGroupPlan` lazy)
 - Página `AdminTurmaDetail.tsx` — WeekView (‹›, 6 colunas, dots), MonthView (4 semanas compactas), SidePanel (busca/criação/remoção), CreateTrainingForm
-
-**Pendente (Tasks 6–8 do plano):**
-- Registrar rota `turmas/:id` em `App.tsx` e importar `AdminTurmaDetail`
-- Tornar `TurmaRow` clicável com `useNavigate`
-- Fallback em `useWeeklyPlan.ts`: aluno sem plano individual usa plano da turma
-- `npm run build` + smoke test
+- `App.tsx` — rota `turmas/:id` registrada + import de `AdminTurmaDetail`
+- `AdminTurmas.tsx` — `TurmaRow` clicável com `useNavigate` + seta `›`
+- `useWeeklyPlan.ts` — fallback: aluno sem plano individual usa plano da turma
+- `npm run build` ✅
 
 **Spec:** `docs/superpowers/specs/2026-05-30-turma-detail-design.md`  
 **Plano:** `docs/superpowers/plans/2026-05-30-turma-detail.md`
@@ -196,10 +192,10 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 ```
 1. ✅ Schema: coluna role + group_id + tabela groups
 2. ✅ /admin/turmas — lista
-3. 🔧 /admin/turmas/:id — grid plano mensal + toggle semana/mês (Tasks 6–8 pendentes)
+3. ✅ /admin/turmas/:id — grid plano mensal + toggle semana/mês
 4. Sistema de etiquetas personalizadas
 5. Controle de liberação do plano (por semana ou tudo de uma vez)
-6. /admin/alunos/:id — perfil do aluno
+6. /admin/alunos/:id — perfil do aluno (próximo)
 7. Chat admin ↔ aluno
 8. Notificações de PR no painel
 ```

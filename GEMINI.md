@@ -87,6 +87,8 @@ reactions         -- reações em checkins e recordes
 strava_connections -- tokens OAuth Strava (sem acesso direto — Edge Function only)
 strava_activities  -- atividades importadas do Strava
 groups            -- turmas: name, goal, frequency, plan_type, starts_at, is_active
+group_plans       -- planos de ciclo por turma (group_id, starts_at, notes, created_by)
+group_plan_trainings -- pivot: week_number (1–4) × day_of_week (1–6) × training_id
 ```
 
 #### Convenções de schema
@@ -119,12 +121,15 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `reactions` | SELECT, INSERT, DELETE |
 | `strava_activities` | SELECT |
 | `strava_connections` | **nenhum** — service_role only |
+| `groups` | SELECT, INSERT, UPDATE, DELETE |
+| `group_plans` | SELECT, INSERT, UPDATE, DELETE |
+| `group_plan_trainings` | SELECT, INSERT, UPDATE, DELETE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy RLS correta.
 
 ### Tipos TypeScript
 - `src/lib/database.types.ts` — gerado pelo Supabase (não editar)
-- `src/lib/types.ts` — atalhos: `Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record`!), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`
+- `src/lib/types.ts` — atalhos: `Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record`!), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`, `GroupPlan`, `GroupPlanTraining`
 - Regenerar tipos: `npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/database.types.ts`
 
 ## Estrutura de Pastas (Frontend)
@@ -181,6 +186,9 @@ Nome do FK segue padrão `tabela_coluna_fkey`, confirmável na seção `Relation
 - `PersonalRecord` como alias de tipo em vez de `Record` (palavra reservada TS)
 - `profiles.role` existe e é populado por trigger — filtrar alunos com `.eq('role', 'aluno')`
 - `profiles.group_id` é FK nullable para `groups.id` — alunos sem turma têm NULL
+- **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id). Ciclo de 4 semanas calculado a partir de `groups.starts_at`.
+- **Fallback de plano:** `useWeeklyPlan` busca plano individual primeiro; se não existir e `profile.group_id` não for null, usa plano do grupo da semana correspondente
+- **`supabase gen types`** pode incluir aviso de versão no final — remover manualmente as linhas após o `} as const`
 
 ## Autenticação (implementada em 2026-05-19)
 
@@ -198,6 +206,7 @@ Stack de auth: React Router v6 (`createBrowserRouter`) + Supabase Auth + `AuthCo
 | `/admin/feedbacks` | `role=admin` |
 | `/admin/convites` | `role=admin` |
 | `/admin/turmas` | `role=admin` |
+| `/admin/turmas/:id` | `role=admin` |
 | `/aluno` | `role=aluno` com anamnese |
 | `/onboarding` | `role=aluno` sem anamnese |
 
@@ -243,6 +252,7 @@ npx supabase login
 - Task 5: AlunoDashboard com dados reais + redesign premium ✅
 - Task 6: Painel Admin — Fase 1 completa ✅
 - Task 7: Painel Admin — Fase 2 schema + `/admin/turmas` ✅
+- Task 8: `/admin/turmas/:id` — rota, wiring, fallback aluno, build ✅
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan`: join N→1 corrigido (`wpt.trainings[0]` → `wpt.trainings`)
@@ -254,27 +264,31 @@ npx supabase login
 - Painel Admin Fase 1 implementada (AdminLayout, AdminHome, AdminAlunos, AdminFeedbacks, AdminConvites)
 - FK ambíguo documentado: `profiles!checkins_student_id_fkey(*)`
 
-### O que foi feito em 2026-05-30
+### O que foi feito em 2026-05-30 (sessão 1)
 
 **Schema Fase 2:**
 - `profiles.role text` adicionado com backfill + trigger `tr_set_profile_role`
 - `profiles.group_id uuid` FK para `groups.id` (nullable, ON DELETE SET NULL)
 - Tabela `groups` criada com RLS, policies, GRANT e trigger `updated_at`
 
-**Frontend:**
+**Frontend `/admin/turmas` e `/admin/turmas/:id` (Fase 2 completa):**
 - `useAdminTurmas.ts` — hook `GroupWithCount`, queries paralelas, contagem por turma
-- `AdminTurmas.tsx` — lista de turmas com `TurmaRow` e labels
-- `App.tsx` — rota `/admin/turmas`
+- `AdminTurmas.tsx` — lista de turmas com `TurmaRow` clicável (`useNavigate`) + seta `›`
+- `App.tsx` — rotas `/admin/turmas` e `turmas/:id` registradas
 - `AdminSidebar.tsx` — "Turmas" ativado
 - `AdminHome.tsx` — card "Turmas ativas" com dado real; alunos via `.eq('role', 'aluno')`
 - `useAdminAlunos.ts` — workaround `.neq('id', adminId)` → `.eq('role', 'aluno')`
-- `types.ts` — tipo `Group` adicionado
+- `types.ts` — tipos `Group`, `GroupPlan`, `GroupPlanTraining` adicionados
+- `useAdminTurmaDetail.ts` — fetch do grupo, ciclo de 4 semanas, trainings do ciclo
+- `useGroupPlanMutations.ts` — addTraining, removeTraining, createAndAddTraining
+- `AdminTurmaDetail.tsx` — WeekView (‹›, 6 colunas), MonthView, SidePanel, CreateTrainingForm
+- `useWeeklyPlan.ts` — fallback: aluno sem plano individual usa plano do grupo
 
 **Repositório:** https://github.com/maxwellnasci/arbo  
-**Validação:** `tsc --noEmit` ✅
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅
 
 ### Próximo Passo
-`/admin/turmas/:id` — grid do plano mensal (4 semanas), toggle semana/mês, controle de liberação.
+`/admin/alunos/:id` — perfil completo do aluno (histórico de check-ins, PRs, feedbacks).
 
 ## Roadmap de Telas
 
@@ -290,11 +304,11 @@ npx supabase login
 | Painel Admin — Feedbacks | `/admin/feedbacks` | ✅ |
 | Painel Admin — Convites | `/admin/convites` | ✅ |
 | Painel Admin — Turmas (lista) | `/admin/turmas` | ✅ |
+| Painel Admin — Turmas (detalhe) | `/admin/turmas/:id` | ✅ |
 
 ### Pendentes
 
 **Painel Admin — Fase 2**
-- `/admin/turmas/:id` — grid plano mensal 4 semanas; professor define os dias, aluno ajusta individualmente se precisar
 - `/admin/alunos/:id` — perfil do aluno
 - Schema pendente: tabela `invites`
 
@@ -315,8 +329,8 @@ npx supabase login
 1. ~~Testar Fase 1 do admin visualmente~~ ✅
 2. ~~Schema Fase 2 (role + group_id + tabela groups)~~ ✅
 3. ~~`/admin/turmas` lista~~ ✅
-4. `/admin/turmas/:id` — grid plano mensal
-5. `/admin/alunos/:id` — perfil do aluno
+4. ~~`/admin/turmas/:id` — grid plano mensal~~ ✅
+5. `/admin/alunos/:id` — perfil do aluno (próximo)
 6. Painel Admin Fase 3 (treinos + mensagem)
 7. Aba Progresso
 8. Aba Perfil

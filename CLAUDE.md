@@ -71,7 +71,7 @@ npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/da
 
 ### Tipos disponíveis em `src/lib/types.ts`
 
-`Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record` — palavra reservada TS), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`, `TrainingType`, `DistanceCategory`, `UserLevel`.
+`Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record` — palavra reservada TS), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`, `GroupPlan`, `GroupPlanTraining`, `TrainingType`, `DistanceCategory`, `UserLevel`.
 
 ### Banco de dados (Supabase — project: `jhfkflnixzivuichmkie`)
 
@@ -186,6 +186,7 @@ O nome do FK segue o padrão `tabela_coluna_fkey`, confirmável em `database.typ
 | `/admin/feedbacks` | `AdminFeedbacks` | somente `role=admin` |
 | `/admin/convites` | `AdminConvites` | somente `role=admin` |
 | `/admin/turmas` | `AdminTurmas` | somente `role=admin` |
+| `/admin/turmas/:id` | `AdminTurmaDetail` | somente `role=admin` |
 | `/aluno` | `AlunoDashboard.tsx` | somente `role=aluno` |
 | `/onboarding` | `AnamnesisForm.tsx` | aluno sem anamnese |
 
@@ -212,7 +213,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 5:** AlunoDashboard com dados reais + redesign premium ✅
 - **Task 6:** Painel Admin — Fase 1 completa ✅
 - **Task 7:** Painel Admin — Fase 2 schema + `/admin/turmas` ✅
-- **Task 8 (parcial):** `/admin/turmas/:id` — página construída, wiring + fallback aluno pendentes
+- **Task 8:** `/admin/turmas/:id` — rota, wiring, fallback aluno, build ✅
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan.ts` — join N→1 retorna objeto, não array: `wpt.trainings[0]` → `wpt.trainings`
@@ -241,25 +242,23 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - `src/hooks/useAdminAlunos.ts` — workaround `.neq('id', adminId)` substituído por `.eq('role', 'aluno')`
 - `src/lib/types.ts` — tipo `Group` adicionado
 
-**Frontend — `/admin/turmas/:id` (parcial — sessão atual):**
+**Frontend — `/admin/turmas/:id` (concluído 2026-05-30):**
 - Schema: tabelas `group_plans` + `group_plan_trainings` criadas com RLS, policies, GRANTs, trigger `updated_at`
 - `src/lib/types.ts` — tipos `GroupPlan` e `GroupPlanTraining` adicionados
 - `src/hooks/useAdminTurmaDetail.ts` — fetch do grupo + plano do ciclo atual + trainings; cálculo de ciclo de 4 semanas a partir de `groups.starts_at`
 - `src/hooks/useGroupPlanMutations.ts` — `addTraining`, `removeTraining`, `createAndAddTraining`; `ensureGroupPlan` cria o plano lazily
 - `src/pages/admin/AdminTurmaDetail.tsx` — página completa: WeekView (navegação ‹›, 6 colunas SEG-SÁB, dots), MonthView (4 semanas compactas), SidePanel (modos: busca, criação, visualização/remoção), CreateTrainingForm
+- `src/App.tsx` — rota `turmas/:id` registrada + import de `AdminTurmaDetail`
+- `src/pages/admin/AdminTurmas.tsx` — `TurmaRow` clicável com `useNavigate` + seta `›`
+- `src/hooks/useWeeklyPlan.ts` — fallback: aluno sem plano individual usa plano do grupo (`group_plans` + `group_plan_trainings`)
 - Spec: `docs/superpowers/specs/2026-05-30-turma-detail-design.md`
 - Plano de impl: `docs/superpowers/plans/2026-05-30-turma-detail.md`
 
-**⚠️ PENDENTE para próxima sessão:**
-- Task 6: Registrar rota `turmas/:id` em `App.tsx` + tornar `TurmaRow` clicável (`useNavigate`)
-- Task 7: Fallback em `useWeeklyPlan.ts` — aluno sem plano individual usa plano do grupo
-- Task 8: `npm run build` + smoke test no browser
-
 **Repositório:** https://github.com/maxwellnasci/arbo  
-**Validação parcial:** `tsc --noEmit` ✅ (build completo pendente)
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅
 
 ### Próximo passo
-Concluir Tasks 6, 7 e 8 do plano `docs/superpowers/plans/2026-05-30-turma-detail.md` para liberar `/admin/turmas/:id` totalmente funcional.
+`/admin/alunos/:id` — perfil completo do aluno (histórico de check-ins, PRs, feedbacks).
 
 ## Roadmap de telas
 
@@ -275,12 +274,11 @@ Concluir Tasks 6, 7 e 8 do plano `docs/superpowers/plans/2026-05-30-turma-detail
 | Painel Admin — Feedbacks | `/admin/feedbacks` | ✅ |
 | Painel Admin — Convites | `/admin/convites` | ✅ |
 | Painel Admin — Turmas (lista) | `/admin/turmas` | ✅ |
-| Painel Admin — Turmas (detalhe) | `/admin/turmas/:id` | 🔧 página pronta, rota pendente |
+| Painel Admin — Turmas (detalhe) | `/admin/turmas/:id` | ✅ |
 
 ### Pendentes
 
 **Painel Admin — Fase 2**
-- `/admin/turmas/:id` — rota + TurmaRow clicável (Tasks 6–8 do plano `2026-05-30-turma-detail.md`)
 - `/admin/alunos/:id` — perfil do aluno
 - Schema pendente: tabela `invites`
 
@@ -304,7 +302,7 @@ Concluir Tasks 6, 7 e 8 do plano `docs/superpowers/plans/2026-05-30-turma-detail
 1. ~~Testar visualmente Fase 1 do admin~~ ✅
 2. ~~Schema Fase 2 (role + group_id + tabela groups)~~ ✅
 3. ~~`/admin/turmas` lista~~ ✅
-4. `/admin/turmas/:id` — Tasks 6–8 pendentes (wiring + fallback aluno + smoke test)
+4. ~~`/admin/turmas/:id` — grid plano mensal, wiring, fallback aluno~~ ✅
 5. `/admin/alunos/:id` — perfil do aluno
 6. Painel Admin Fase 3 (treinos + mensagem)
 7. Aba Progresso
