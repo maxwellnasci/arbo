@@ -75,7 +75,7 @@ npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/da
 
 ### Banco de dados (Supabase — project: `jhfkflnixzivuichmkie`)
 
-**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `groups`
+**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `groups`, `group_plans`, `group_plan_trainings`
 
 **Enums:** `training_type` · `distance_category` · `user_level`
 
@@ -111,6 +111,8 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `strava_activities` | SELECT |
 | `strava_connections` | **nenhum** — service_role only |
 | `groups` | SELECT, INSERT, UPDATE, DELETE |
+| `group_plans` | SELECT, INSERT, UPDATE, DELETE |
+| `group_plan_trainings` | SELECT, INSERT, UPDATE, DELETE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy correta.
 
@@ -164,6 +166,8 @@ O nome do FK segue o padrão `tabela_coluna_fkey`, confirmável em `database.typ
 - `profiles` **tem coluna `group_id uuid`** — FK para `groups.id`, nullable (`ON DELETE SET NULL`). Alunos sem turma têm `NULL`.
 - Trigger `tr_set_profile_role` (BEFORE INSERT em `profiles`) — popula `role` de `raw_user_meta_data` ao criar perfil via convite.
 - **Plano mensal:** professor define os dias da semana para cada turma. Aluno pode ajustar individualmente se necessário (plano individual tem precedência sobre o plano da turma).
+- **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id, sort_order). Ciclo de 4 semanas calculado a partir de `groups.starts_at`. Admin: acesso total. Aluno: SELECT onde `group_id = profile.group_id`.
+- **`supabase gen types`** pode incluir aviso de versão no final do arquivo gerado — remover manualmente as linhas de texto após o `} as const` antes de commitar.
 
 ## Autenticação (implementada)
 
@@ -208,6 +212,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 5:** AlunoDashboard com dados reais + redesign premium ✅
 - **Task 6:** Painel Admin — Fase 1 completa ✅
 - **Task 7:** Painel Admin — Fase 2 schema + `/admin/turmas` ✅
+- **Task 8 (parcial):** `/admin/turmas/:id` — página construída, wiring + fallback aluno pendentes
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan.ts` — join N→1 retorna objeto, não array: `wpt.trainings[0]` → `wpt.trainings`
@@ -227,7 +232,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - `profiles.group_id uuid REFERENCES groups(id) ON DELETE SET NULL`
 - Tabela `groups` criada com RLS, policies (admin: tudo; aluno: SELECT de ativas), GRANT e trigger `updated_at`
 
-**Frontend:**
+**Frontend — `/admin/turmas` lista:**
 - `src/hooks/useAdminTurmas.ts` — hook com `GroupWithCount`, duas queries paralelas, contagem de alunos por turma
 - `src/pages/admin/AdminTurmas.tsx` — lista de turmas com `TurmaRow`, labels, acessibilidade
 - `src/App.tsx` — rota `/admin/turmas` registrada
@@ -236,11 +241,25 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - `src/hooks/useAdminAlunos.ts` — workaround `.neq('id', adminId)` substituído por `.eq('role', 'aluno')`
 - `src/lib/types.ts` — tipo `Group` adicionado
 
+**Frontend — `/admin/turmas/:id` (parcial — sessão atual):**
+- Schema: tabelas `group_plans` + `group_plan_trainings` criadas com RLS, policies, GRANTs, trigger `updated_at`
+- `src/lib/types.ts` — tipos `GroupPlan` e `GroupPlanTraining` adicionados
+- `src/hooks/useAdminTurmaDetail.ts` — fetch do grupo + plano do ciclo atual + trainings; cálculo de ciclo de 4 semanas a partir de `groups.starts_at`
+- `src/hooks/useGroupPlanMutations.ts` — `addTraining`, `removeTraining`, `createAndAddTraining`; `ensureGroupPlan` cria o plano lazily
+- `src/pages/admin/AdminTurmaDetail.tsx` — página completa: WeekView (navegação ‹›, 6 colunas SEG-SÁB, dots), MonthView (4 semanas compactas), SidePanel (modos: busca, criação, visualização/remoção), CreateTrainingForm
+- Spec: `docs/superpowers/specs/2026-05-30-turma-detail-design.md`
+- Plano de impl: `docs/superpowers/plans/2026-05-30-turma-detail.md`
+
+**⚠️ PENDENTE para próxima sessão:**
+- Task 6: Registrar rota `turmas/:id` em `App.tsx` + tornar `TurmaRow` clicável (`useNavigate`)
+- Task 7: Fallback em `useWeeklyPlan.ts` — aluno sem plano individual usa plano do grupo
+- Task 8: `npm run build` + smoke test no browser
+
 **Repositório:** https://github.com/maxwellnasci/arbo  
-**Validação:** `tsc --noEmit` ✅
+**Validação parcial:** `tsc --noEmit` ✅ (build completo pendente)
 
 ### Próximo passo
-`/admin/turmas/:id` — grid do plano mensal (4 semanas), toggle semana/mês, controle de liberação.
+Concluir Tasks 6, 7 e 8 do plano `docs/superpowers/plans/2026-05-30-turma-detail.md` para liberar `/admin/turmas/:id` totalmente funcional.
 
 ## Roadmap de telas
 
@@ -256,11 +275,12 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 | Painel Admin — Feedbacks | `/admin/feedbacks` | ✅ |
 | Painel Admin — Convites | `/admin/convites` | ✅ |
 | Painel Admin — Turmas (lista) | `/admin/turmas` | ✅ |
+| Painel Admin — Turmas (detalhe) | `/admin/turmas/:id` | 🔧 página pronta, rota pendente |
 
 ### Pendentes
 
 **Painel Admin — Fase 2**
-- `/admin/turmas/:id` — grid plano mensal (4 semanas); professor define os dias, aluno ajusta individualmente se precisar
+- `/admin/turmas/:id` — rota + TurmaRow clicável (Tasks 6–8 do plano `2026-05-30-turma-detail.md`)
 - `/admin/alunos/:id` — perfil do aluno
 - Schema pendente: tabela `invites`
 
@@ -284,7 +304,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 1. ~~Testar visualmente Fase 1 do admin~~ ✅
 2. ~~Schema Fase 2 (role + group_id + tabela groups)~~ ✅
 3. ~~`/admin/turmas` lista~~ ✅
-4. `/admin/turmas/:id` — grid plano mensal
+4. `/admin/turmas/:id` — Tasks 6–8 pendentes (wiring + fallback aluno + smoke test)
 5. `/admin/alunos/:id` — perfil do aluno
 6. Painel Admin Fase 3 (treinos + mensagem)
 7. Aba Progresso
