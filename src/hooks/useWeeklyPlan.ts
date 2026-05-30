@@ -20,7 +20,7 @@ export type UseWeeklyPlanResult = {
   refresh: () => void
 }
 
-type RawPlanTraining = WeeklyPlanTraining & { trainings: Training[] }
+type RawPlanTraining = WeeklyPlanTraining & { trainings: Training }
 
 type State = {
   profile: Profile | null
@@ -71,6 +71,13 @@ function getMonday(): string {
   return `${yyyy}-${mm}-${dd}`
 }
 
+function getGroupPlanWeekNumber(cycleStartStr: string, weekStartStr: string): number {
+  const cycleStart = new Date(cycleStartStr)
+  const weekStart = new Date(weekStartStr)
+  const msPerWeek = 7 * 24 * 60 * 60 * 1000
+  return Math.floor((weekStart.getTime() - cycleStart.getTime()) / msPerWeek) + 1
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
@@ -98,7 +105,49 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
     if (planRes.error) throw planRes.error
 
     if (!planRes.data) {
-      return { profile: profileRes.data, plan: null, rawTrainings: [], checkins: [] }
+      // Fallback: busca plano de grupo se o aluno pertence a uma turma
+      const groupId = profileRes.data?.group_id
+      if (!groupId) {
+        return { profile: profileRes.data, plan: null, rawTrainings: [], checkins: [] }
+      }
+
+      const { data: groupPlan } = await supabase
+        .from('group_plans')
+        .select('id, starts_at')
+        .eq('group_id', groupId)
+        .lte('starts_at', weekStart)
+        .order('starts_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (!groupPlan) {
+        return { profile: profileRes.data, plan: null, rawTrainings: [], checkins: [] }
+      }
+
+      // Verificar que a semana cai dentro do ciclo de 4 semanas (28 dias)
+      const cycleEnd = new Date(groupPlan.starts_at)
+      cycleEnd.setDate(cycleEnd.getDate() + 28)
+      if (new Date(weekStart) >= cycleEnd) {
+        return { profile: profileRes.data, plan: null, rawTrainings: [], checkins: [] }
+      }
+
+      const weekNumber = getGroupPlanWeekNumber(groupPlan.starts_at, weekStart)
+
+      const { data: gptData, error: gptError } = await supabase
+        .from('group_plan_trainings')
+        .select('*, trainings(*)')
+        .eq('group_plan_id', groupPlan.id)
+        .eq('week_number', weekNumber)
+        .order('day_of_week')
+
+      if (gptError) throw gptError
+
+      return {
+        profile: profileRes.data,
+        plan: null,
+        rawTrainings: (gptData ?? []) as unknown as RawPlanTraining[],
+        checkins: [],
+      }
     }
 
     const planId = planRes.data.id
@@ -169,7 +218,7 @@ export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
           plan,
           trainings: rawTrainings
             .map(wpt => {
-              const training = wpt.trainings[0]
+              const training = wpt.trainings
               if (!training) return null
               return {
                 weeklyPlanTrainingId: wpt.id,

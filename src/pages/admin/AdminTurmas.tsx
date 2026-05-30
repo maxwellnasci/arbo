@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { useAdminTurmas, type GroupWithCount } from '../../hooks/useAdminTurmas'
 
 const goalLabel: Record<string, string> = {
@@ -63,8 +64,14 @@ export default function AdminTurmas() {
 }
 
 function TurmaRow({ turma }: { turma: GroupWithCount }) {
+  const navigate = useNavigate()
+
   return (
     <div
+      onClick={() => navigate(`/admin/turmas/${turma.id}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => e.key === 'Enter' && navigate(`/admin/turmas/${turma.id}`)}
       style={{
         background: '#1c1c1e',
         borderRadius: '10px',
@@ -74,6 +81,7 @@ function TurmaRow({ turma }: { turma: GroupWithCount }) {
         justifyContent: 'space-between',
         border: '1px solid #2a2a2a',
         gap: '12px',
+        cursor: 'pointer',
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -112,6 +120,7 @@ function TurmaRow({ turma }: { turma: GroupWithCount }) {
         >
           <span aria-hidden="true">●</span>{' '}{turma.is_active ? 'Ativa' : 'Inativa'}
         </span>
+        <span style={{ color: '#444', fontSize: '14px' }}>›</span>
       </div>
     </div>
   )
