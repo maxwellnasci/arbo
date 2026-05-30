@@ -27,6 +27,7 @@ export default function AdminTurmas() {
         <h1>Turmas</h1>
         <button
           disabled
+          title="Em breve"
           style={{
             background: '#E8521A',
             color: '#fff',
@@ -109,7 +110,7 @@ function TurmaRow({ turma }: { turma: GroupWithCount }) {
             fontWeight: 500,
           }}
         >
-          ● {turma.is_active ? 'Ativa' : 'Inativa'}
+          <span aria-hidden="true">●</span>{' '}{turma.is_active ? 'Ativa' : 'Inativa'}
         </span>
       </div>
     </div>
