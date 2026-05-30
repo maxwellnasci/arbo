@@ -10,6 +10,7 @@ import AdminHome from './pages/admin/AdminHome'
 import AdminAlunos from './pages/admin/AdminAlunos'
 import AdminFeedbacks from './pages/admin/AdminFeedbacks'
 import AdminConvites from './pages/admin/AdminConvites'
+import AdminTurmas from './pages/admin/AdminTurmas'
 import AlunoDashboard from './pages/aluno/AlunoDashboard'
 import AnamnesisForm from './pages/aluno/AnamnesisForm'
 
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
               { path: 'alunos', element: <AdminAlunos /> },
               { path: 'feedbacks', element: <AdminFeedbacks /> },
               { path: 'convites', element: <AdminConvites /> },
+              { path: 'turmas', element: <AdminTurmas /> },
             ]
           },
         ],

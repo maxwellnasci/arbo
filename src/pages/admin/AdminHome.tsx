@@ -9,11 +9,12 @@ type Stats = {
   totalAlunos: number
   feedbacksThisWeek: number
   prsThisWeek: number
+  turmasAtivas: number
 }
 
 export default function AdminHome() {
   const { user } = useAuth()
-  const [stats, setStats] = useState<Stats>({ totalAlunos: 0, feedbacksThisWeek: 0, prsThisWeek: 0 })
+  const [stats, setStats] = useState<Stats>({ totalAlunos: 0, feedbacksThisWeek: 0, prsThisWeek: 0, turmasAtivas: 0 })
   const [recentPRs, setRecentPRs] = useState<RecentPR[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
@@ -29,16 +30,19 @@ export default function AdminHome() {
         { count: totalAlunos },
         { count: feedbacksThisWeek },
         { data: prs },
+        { count: turmasAtivas },
       ] = await Promise.all([
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).neq('id', user!.id),
+        supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'aluno'),
         supabase.from('checkins').select('id', { count: 'exact', head: true }).gte('created_at', weekAgoIso),
         supabase.from('records').select('*, profiles(*)').gte('created_at', weekAgoIso).order('created_at', { ascending: false }).limit(5),
+        supabase.from('groups').select('id', { count: 'exact', head: true }).eq('is_active', true),
       ])
 
       setStats({
         totalAlunos: totalAlunos ?? 0,
         feedbacksThisWeek: feedbacksThisWeek ?? 0,
         prsThisWeek: prs?.length ?? 0,
+        turmasAtivas: turmasAtivas ?? 0,
       })
       setRecentPRs((prs ?? []) as RecentPR[])
       setIsLoading(false)
@@ -62,7 +66,7 @@ export default function AdminHome() {
         <StatCard label="Alunos ativos" value={isLoading ? '…' : String(stats.totalAlunos)} />
         <StatCard label="Feedbacks (7 dias)" value={isLoading ? '…' : String(stats.feedbacksThisWeek)} />
         <StatCard label="PRs esta semana" value={isLoading ? '…' : String(stats.prsThisWeek)} accent="#4caf50" />
-        <StatCard label="Turmas ativas" value="—" muted />
+        <StatCard label="Turmas ativas" value={isLoading ? '…' : String(stats.turmasAtivas)} />
       </div>
 
       <h2 style={{ fontSize: '16px', marginBottom: '16px', color: '#aaa' }}>Recordes recentes</h2>
