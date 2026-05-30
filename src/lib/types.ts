@@ -12,6 +12,8 @@ export type Reaction        = Database['public']['Tables']['reactions']['Row']
 export type StravaActivity  = Database['public']['Tables']['strava_activities']['Row']
 export type Anamnesis       = Database['public']['Tables']['anamnesis']['Row']
 export type Group           = Database['public']['Tables']['groups']['Row']
+export type GroupPlan       = Database['public']['Tables']['group_plans']['Row']
+export type GroupPlanTraining = Database['public']['Tables']['group_plan_trainings']['Row']
 
 // Enums
 export type TrainingType     = Database['public']['Enums']['training_type']
