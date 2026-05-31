@@ -87,7 +87,7 @@ reactions         -- reações em checkins e recordes
 strava_connections -- tokens OAuth Strava (sem acesso direto — Edge Function only)
 strava_activities  -- atividades importadas do Strava
 groups            -- turmas: name, goal, frequency, plan_type, starts_at, is_active
-group_plans       -- planos de ciclo por turma (group_id, starts_at, notes, created_by)
+group_plans       -- planos de ciclo por turma (group_id, starts_at, notes, created_by, released_through_week smallint DEFAULT 0 — 0=bloqueado, 1–4=semanas liberadas até N)
 group_plan_trainings -- pivot: week_number (1–4) × day_of_week (1–6) × training_id
 ```
 

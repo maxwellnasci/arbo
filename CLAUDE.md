@@ -199,7 +199,7 @@ catch (e: unknown) {
 - `profiles` **tem coluna `group_id uuid`** — FK para `groups.id`, nullable (`ON DELETE SET NULL`). Alunos sem turma têm `NULL`.
 - Trigger `tr_set_profile_role` (BEFORE INSERT em `profiles`) — popula `role` de `raw_user_meta_data` ao criar perfil via convite.
 - **Plano mensal:** professor define os dias da semana para cada turma. Aluno pode ajustar individualmente se necessário (plano individual tem precedência sobre o plano da turma).
-- **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id, sort_order). Ciclo de 4 semanas calculado a partir de `groups.starts_at`. Admin: acesso total. Aluno: SELECT onde `group_id = profile.group_id`.
+- **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by, **released_through_week smallint DEFAULT 0** — 0=bloqueado, 1–4=semanas liberadas até N, unidirecional) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id, sort_order). Ciclo de 4 semanas calculado a partir de `groups.starts_at`. Admin: acesso total. Aluno: SELECT onde `group_id = profile.group_id`.
 - **`supabase gen types`** pode incluir aviso de versão no final do arquivo gerado — remover manualmente as linhas de texto após o `} as const` antes de commitar.
 
 ## Autenticação (implementada)
@@ -337,7 +337,7 @@ Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin
 
 **Painel Admin — Fase 2**
 - ~~Sistema de etiquetas personalizadas~~ ✅
-- Controle de liberação do plano
+- ~~Controle de liberação do plano~~ ✅
 - Chat admin ↔ aluno
 - Notificações de PR no painel
 - Schema pendente: tabela `invites`
