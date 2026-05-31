@@ -54,7 +54,7 @@ Somos um **time de 3**:
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado.
-- Sistema de Etiquetas Personalizadas (tabela `tags`, pills nos treinos, form inline com 8 cores).
+- Sistema de Etiquetas Personalizadas (tabela `tags`, pills nos treinos, form inline com 8 cores). 100% completo e revisado pelo Claude Code (exibição de erros no `handleCreateTag` e GRANTs atualizados no CLAUDE.md). Lint zerado.
 
 ### Próximo passo
 **Painel Admin Fase 3:** `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin ↔ aluno.

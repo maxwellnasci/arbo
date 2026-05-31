@@ -193,7 +193,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 1. ✅ Schema: coluna role + group_id + tabela groups
 2. ✅ /admin/turmas — lista
 3. ✅ /admin/turmas/:id — grid plano mensal + toggle semana/mês
-4. ✅ Sistema de etiquetas personalizadas
+4. ✅ Sistema de etiquetas personalizadas (100% completo)
 5. Controle de liberação do plano (por semana ou tudo de uma vez)
 6. ✅ /admin/alunos/:id — perfil do aluno
 7. Chat admin ↔ aluno
