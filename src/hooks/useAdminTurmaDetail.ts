@@ -58,10 +58,10 @@ export function useAdminTurmaDetail(groupId: string): UseAdminTurmaDetailResult 
 
   useEffect(() => {
     let cancelled = false
-    setIsLoading(true)
-    setError(null)
 
     async function load() {
+      setIsLoading(true)
+      setError(null)
       const { data: groupData, error: groupErr } = await supabase
         .from('groups')
         .select('*')

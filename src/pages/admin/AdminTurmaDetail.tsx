@@ -63,21 +63,20 @@ export default function AdminTurmaDetail() {
     useGroupPlanMutations(id ?? '', cycleStart, plan?.id ?? null)
 
   const [view, setView] = useState<'week' | 'month'>('week')
-  const [selectedWeek, setSelectedWeek] = useState(1)
+  const [selectedWeek, setSelectedWeek] = useState(0)
   const [panel, setPanel] = useState<PanelState | null>(null)
   const [mutating, setMutating] = useState(false)
   const [mutationError, setMutationError] = useState<string | null>(null)
   const [allTrainings, setAllTrainings] = useState<Training[]>([])
+
+  // 0 = user hasn't navigated yet → fall back to the hook's default (current week in cycle)
+  const effectiveWeek = selectedWeek > 0 ? selectedWeek : defaultWeekNumber
 
   useEffect(() => {
     supabase.from('trainings').select('*').order('title').then(({ data }) => {
       if (data) setAllTrainings(data)
     })
   }, [])
-
-  useEffect(() => {
-    if (defaultWeekNumber > 0) setSelectedWeek(defaultWeekNumber)
-  }, [defaultWeekNumber])
 
   function openSlot(weekNumber: number, dayOfWeek: number) {
     setMutationError(null)
@@ -205,7 +204,7 @@ export default function AdminTurmaDetail() {
             {view === 'week' ? (
               <WeekView
                 cycleStart={cycleStart}
-                selectedWeek={selectedWeek}
+                selectedWeek={effectiveWeek}
                 trainings={trainings}
                 panelEntry={panel?.existing ?? null}
                 onNavigate={setSelectedWeek}
