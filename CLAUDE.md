@@ -113,6 +113,7 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `groups` | SELECT, INSERT, UPDATE, DELETE |
 | `group_plans` | SELECT, INSERT, UPDATE, DELETE |
 | `group_plan_trainings` | SELECT, INSERT, UPDATE, DELETE |
+| `tags` | SELECT, INSERT, UPDATE, DELETE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy correta.
 

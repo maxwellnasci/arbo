@@ -639,17 +639,19 @@ function CreateTrainingForm({ mutating, allTags, onBack, onSubmit, onTagCreated 
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('#E8521A')
   const [creatingTag, setCreatingTag] = useState(false)
+  const [tagError, setTagError] = useState<string | null>(null)
 
   async function handleCreateTag() {
     if (!newTagName.trim()) return
     setCreatingTag(true)
+    setTagError(null)
     const { data, error } = await supabase
       .from('tags')
       .insert({ name: newTagName.trim(), color: newTagColor, created_by: user?.id ?? '' })
       .select('*')
       .single()
     setCreatingTag(false)
-    if (error || !data) return
+    if (error || !data) { setTagError(error?.message ?? 'Erro ao criar etiqueta'); return }
     onTagCreated(data as Tag)
     setTagId(data.id)
     setShowNewTag(false)
@@ -741,8 +743,13 @@ function CreateTrainingForm({ mutating, allTags, onBack, onSubmit, onTagCreated 
                 />
               ))}
             </div>
+            {tagError && (
+              <div style={{ fontSize: '10px', color: '#ff6b6b', padding: '4px 6px', background: '#ff3b3011', borderRadius: '5px', border: '1px solid #ff3b3044' }}>
+                {tagError}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '6px' }}>
-              <button type="button" onClick={() => setShowNewTag(false)} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1 }}>Cancelar</button>
+              <button type="button" onClick={() => { setShowNewTag(false); setTagError(null) }} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1 }}>Cancelar</button>
               <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: '#E8521A', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                 {creatingTag ? '...' : 'Criar'}
               </button>
