@@ -228,6 +228,7 @@ export type Database = {
           group_id: string
           id: string
           notes: string | null
+          released_through_week: number
           starts_at: string
           updated_at: string
         }
@@ -237,6 +238,7 @@ export type Database = {
           group_id: string
           id?: string
           notes?: string | null
+          released_through_week?: number
           starts_at: string
           updated_at?: string
         }
@@ -246,6 +248,7 @@ export type Database = {
           group_id?: string
           id?: string
           notes?: string | null
+          released_through_week?: number
           starts_at?: string
           updated_at?: string
         }
