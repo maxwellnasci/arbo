@@ -154,6 +154,38 @@ Quando uma tabela tem mais de um FK para a mesma tabela referenciada, o Supabase
 
 O nome do FK segue o padrão `tabela_coluna_fkey`, confirmável em `database.types.ts` na seção `Relationships`.
 
+## Padrões React / Hooks
+
+### useEffect com fetch assíncrono
+
+Sempre usar `async function load()` interna com flag `cancelled`. `setState` direto no corpo do `useEffect` é erro de lint (`react-hooks/set-state-in-effect`):
+
+```ts
+useEffect(() => {
+  let cancelled = false
+  async function load() {
+    setIsLoading(true) // ✅ dentro da função, não no corpo do effect
+    // ...
+    if (cancelled) return
+    setState(data)
+  }
+  load()
+  return () => { cancelled = true }
+}, [dep])
+```
+
+**TypeScript não estreita variáveis do escopo externo dentro de funções async aninhadas.** O guard `if (!id) return` deve ficar dentro de `load()`, não no `useEffect`.
+
+### Tratamento de erros
+
+`catch (e: any)` é proibido (`no-explicit-any`). Usar:
+
+```ts
+catch (e: unknown) {
+  setError(e instanceof Error ? e.message : 'Erro desconhecido')
+}
+```
+
 ## Convenções
 
 - Responder e documentar em **português brasileiro**
@@ -187,6 +219,7 @@ O nome do FK segue o padrão `tabela_coluna_fkey`, confirmável em `database.typ
 | `/admin/convites` | `AdminConvites` | somente `role=admin` |
 | `/admin/turmas` | `AdminTurmas` | somente `role=admin` |
 | `/admin/turmas/:id` | `AdminTurmaDetail` | somente `role=admin` |
+| `/admin/alunos/:id` | `AdminAlunoDetail` | somente `role=admin` |
 | `/aluno` | `AlunoDashboard.tsx` | somente `role=aluno` |
 | `/onboarding` | `AnamnesisForm.tsx` | aluno sem anamnese |
 
@@ -205,7 +238,7 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-05-30)
+## Estado atual (2026-05-31)
 
 ### Progresso geral
 - **Task 1–3:** Schema, RLS, Auth stack ✅
@@ -214,6 +247,9 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 6:** Painel Admin — Fase 1 completa ✅
 - **Task 7:** Painel Admin — Fase 2 schema + `/admin/turmas` ✅
 - **Task 8:** `/admin/turmas/:id` — rota, wiring, fallback aluno, build ✅
+- **Task 9:** `/admin/alunos/:id` — perfil do aluno, hook, CSS, lint zero ✅
+
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-05-31)
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan.ts` — join N→1 retorna objeto, não array: `wpt.trainings[0]` → `wpt.trainings`
@@ -255,10 +291,24 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - Plano de impl: `docs/superpowers/plans/2026-05-30-turma-detail.md`
 
 **Repositório:** https://github.com/maxwellnasci/arbo  
-**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅
+
+### O que foi feito em 2026-05-31
+
+**Frontend — `/admin/alunos/:id` (implementado pelo AntiGravity, revisado pelo Claude Code):**
+- `src/hooks/useAdminAlunoDetail.ts` — fetch paralelo de profile, grupos, check-ins, PRs e anamnese; mutation `changeGroup`
+- `src/pages/admin/AdminAlunoDetail.tsx` — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion
+- `src/pages/admin/AdminAlunoDetail.module.css` — CSS Modules, dark mode
+
+**Correções de lint (Claude Code — revisão):**
+- `useAdminAlunoDetail`: `fetchData` inline como `async function load()` com flag `cancelled`; `catch (e: any)` → `catch (e: unknown)`
+- `useAdminTurmaDetail`: `setIsLoading`/`setError` movidos para dentro de `load()`
+- `AdminTurmaDetail`: removido `useEffect` de sync de `selectedWeek`; substituído por `effectiveWeek = selectedWeek > 0 ? selectedWeek : defaultWeekNumber`
+
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅
 
 ### Próximo passo
-Sistema de etiquetas personalizadas, Controle de liberação do plano, ou Chat admin ↔ aluno (Fase 2 remanescentes).
+Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin ↔ aluno.
 
 ## Roadmap de telas
 

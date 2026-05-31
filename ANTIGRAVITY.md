@@ -47,13 +47,13 @@ Somos um **time de 3**:
 - **date-fns** — Formatação de datas em PT-BR
 
 ### Estado atual (2026-05-31)
-- **10 telas implementadas**, build passando (`tsc --noEmit` ✅ · `npm run build` ✅)
+- **11 telas implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
-- Fase 2 (Admin Turmas + Planos): ~80%
+- Fase 2 (Admin Turmas + Planos + Perfil Aluno): ✅ ~90%
 - Fase 3 (Treinos + Chat + Progresso): 0%
 
 ### Próximo passo
-**Fase 2 remanescentes** — Sistema de etiquetas, Controle de liberação do plano, Chat admin ↔ aluno ou Notificações de PR
+**Painel Admin Fase 3:** `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin ↔ aluno.
 
 ---
 

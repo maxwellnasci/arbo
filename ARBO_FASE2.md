@@ -1,10 +1,10 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-05-30 (sessão 2)
+> Gerado em 2026-05-29 | Atualizado em 2026-05-31 (sessão 3)
 
 ---
 
-## Estado atual (2026-05-30)
+## Estado atual (2026-05-31)
 
 | Área | Status |
 |------|--------|
@@ -16,6 +16,7 @@
 | `/admin/turmas` lista | ✅ Hook `useAdminTurmas`, componente `AdminTurmas`, sidebar ativada |
 | `/admin/turmas/:id` | ✅ Completo: componente, rota, TurmaRow clicável, fallback aluno, build |
 | `/admin/alunos/:id` | ✅ Perfil completo do aluno, histórico, PRs e design premium |
+| **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-05-31) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 

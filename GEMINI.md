@@ -177,6 +177,31 @@ Quando uma tabela tem mais de um FK para a mesma tabela referenciada, usar o nom
 
 Nome do FK segue padrão `tabela_coluna_fkey`, confirmável na seção `Relationships` de `database.types.ts`.
 
+## Padrões React / Hooks
+
+### useEffect com fetch assíncrono
+
+`setState` direto no corpo do `useEffect` é erro de lint (`react-hooks/set-state-in-effect`). Padrão correto:
+
+```ts
+useEffect(() => {
+  let cancelled = false
+  async function load() {
+    if (!id) return          // guard DENTRO de load() — TS não estreita do escopo externo
+    setIsLoading(true)       // dentro da função, não no corpo do effect
+    try { /* ... */ } catch (e: unknown) {
+      if (!cancelled) setError(e instanceof Error ? e.message : 'Erro')
+    } finally {
+      if (!cancelled) setIsLoading(false)
+    }
+  }
+  load()
+  return () => { cancelled = true }
+}, [id])
+```
+
+`catch (e: any)` proibido — usar `catch (e: unknown)` com `e instanceof Error`.
+
 ## Observações Importantes
 - Sempre responder em português brasileiro
 - Priorizar Row Level Security (RLS) no Supabase
@@ -244,7 +269,7 @@ npx supabase login
 
 **Project ID:** `jhfkflnixzivuichmkie`
 
-## Estado Atual (2026-05-30)
+## Estado Atual (2026-05-31)
 
 ### Progresso geral
 - Tasks 1–3: Schema, RLS, Auth stack ✅
@@ -253,6 +278,9 @@ npx supabase login
 - Task 6: Painel Admin — Fase 1 completa ✅
 - Task 7: Painel Admin — Fase 2 schema + `/admin/turmas` ✅
 - Task 8: `/admin/turmas/:id` — rota, wiring, fallback aluno, build ✅
+- Task 9: `/admin/alunos/:id` — perfil do aluno, hook, CSS, lint zero ✅
+
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-05-31)
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan`: join N→1 corrigido (`wpt.trainings[0]` → `wpt.trainings`)
@@ -285,10 +313,17 @@ npx supabase login
 - `useWeeklyPlan.ts` — fallback: aluno sem plano individual usa plano do grupo
 
 **Repositório:** https://github.com/maxwellnasci/arbo  
-**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅
+
+### O que foi feito em 2026-05-31
+
+- `useAdminAlunoDetail.ts` — fetch paralelo de profile, grupos, check-ins, PRs e anamnese; mutation `changeGroup`
+- `AdminAlunoDetail.tsx` — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion
+- `AdminAlunoDetail.module.css` — CSS Modules, dark mode
+- Lint zerado: padrão `async function load()` com flag `cancelled` em todos os hooks; `catch (e: unknown)`
 
 ### Próximo Passo
-Sistema de etiquetas personalizadas, Controle de liberação do plano, ou Chat admin ↔ aluno (Fase 2 remanescentes).
+Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin ↔ aluno.
 
 ## Roadmap de Telas
 
