@@ -44,6 +44,7 @@ export default function AdminAlunos() {
 }
 
 function AlunoRow({ aluno, levelLabel }: { aluno: Profile; levelLabel: Record<string, string> }) {
+  const navigate = useNavigate()
   const initials = (aluno.full_name ?? '?')
     .split(' ')
     .slice(0, 2)
@@ -52,7 +53,10 @@ function AlunoRow({ aluno, levelLabel }: { aluno: Profile; levelLabel: Record<st
     .toUpperCase()
 
   return (
-    <div style={{ background: '#1c1c1e', borderRadius: '10px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid #2a2a2a' }}>
+    <button 
+      onClick={() => navigate(`/admin/alunos/${aluno.id}`)}
+      style={{ width: '100%', textAlign: 'left', background: '#1c1c1e', borderRadius: '10px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid #2a2a2a', cursor: 'pointer' }}
+    >
       <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>
         {initials}
       </div>
@@ -64,6 +68,7 @@ function AlunoRow({ aluno, levelLabel }: { aluno: Profile; levelLabel: Record<st
           {aluno.level ? levelLabel[aluno.level] ?? aluno.level : 'Nível não definido'}
         </p>
       </div>
-    </div>
+      <div style={{ color: '#555', fontSize: '16px' }}>›</div>
+    </button>
   )
 }
