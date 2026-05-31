@@ -1,12 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Group, GroupPlan, Training } from '../lib/types'
+import type { Group, GroupPlan, Tag, Training } from '../lib/types'
 
 export type GroupDayTraining = {
   id: string
   weekNumber: number
   dayOfWeek: number
-  training: Training
+  training: Training & { tags: Tag | null }
 }
 
 export type UseAdminTurmaDetailResult = {
@@ -24,7 +24,7 @@ type RawGPT = {
   id: string
   week_number: number
   day_of_week: number
-  trainings: Training
+  trainings: Training & { tags: Tag | null }
 }
 
 function toDateString(d: Date): string {
@@ -94,7 +94,7 @@ export function useAdminTurmaDetail(groupId: string): UseAdminTurmaDetailResult 
 
       const { data: gptData, error: gptErr } = await supabase
         .from('group_plan_trainings')
-        .select('*, trainings(*)')
+        .select('*, trainings(*, tags(*))')
         .eq('group_plan_id', planData.id)
         .order('week_number')
         .order('day_of_week')

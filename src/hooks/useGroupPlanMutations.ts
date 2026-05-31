@@ -10,6 +10,7 @@ export type NewTrainingInput = {
   target_pace_seconds_per_km?: number
   sets?: number
   description?: string
+  tag_id?: string
 }
 
 async function ensureGroupPlan(

@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAdminTurmaDetail, type GroupDayTraining } from '../../hooks/useAdminTurmaDetail'
 import { useGroupPlanMutations, type NewTrainingInput } from '../../hooks/useGroupPlanMutations'
-import type { Training, TrainingType } from '../../lib/types'
+import { useAuth } from '../../contexts/AuthContext'
+import type { Tag, Training, TrainingType } from '../../lib/types'
 
 // ─── Labels ────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,17 @@ const typeLabel: Record<string, string> = {
 }
 const DAY_NAMES = ['', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 const MONTH_NAMES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+
+const TAG_COLORS = [
+  { name: 'Laranja', hex: '#E8521A' },
+  { name: 'Azul', hex: '#3B82F6' },
+  { name: 'Verde', hex: '#22C55E' },
+  { name: 'Vermelho', hex: '#EF4444' },
+  { name: 'Amarelo', hex: '#EAB308' },
+  { name: 'Roxo', hex: '#A855F7' },
+  { name: 'Ciano', hex: '#06B6D4' },
+  { name: 'Cinza', hex: '#71717A' },
+]
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -68,6 +80,7 @@ export default function AdminTurmaDetail() {
   const [mutating, setMutating] = useState(false)
   const [mutationError, setMutationError] = useState<string | null>(null)
   const [allTrainings, setAllTrainings] = useState<Training[]>([])
+  const [allTags, setAllTags] = useState<Tag[]>([])
 
   // 0 = user hasn't navigated yet → fall back to the hook's default (current week in cycle)
   const effectiveWeek = selectedWeek > 0 ? selectedWeek : defaultWeekNumber
@@ -75,6 +88,9 @@ export default function AdminTurmaDetail() {
   useEffect(() => {
     supabase.from('trainings').select('*').order('title').then(({ data }) => {
       if (data) setAllTrainings(data)
+    })
+    supabase.from('tags').select('*').order('name').then(({ data }) => {
+      if (data) setAllTags(data)
     })
   }, [])
 
@@ -227,6 +243,7 @@ export default function AdminTurmaDetail() {
               panelState={panel}
               cycleTrainings={trainings}
               allTrainings={allTrainings}
+              allTags={allTags}
               mutating={mutating}
               mutationError={mutationError}
               onModeChange={mode => setPanel(p => p ? { ...p, mode } : null)}
@@ -234,6 +251,7 @@ export default function AdminTurmaDetail() {
               onRemoveTraining={handleRemoveTraining}
               onCreateTraining={handleCreateTraining}
               onClose={() => { setMutationError(null); setPanel(null) }}
+              onTagCreated={(tag: Tag) => setAllTags(prev => [...prev, tag].sort((a, b) => a.name.localeCompare(b.name)))}
             />
           )}
         </div>
@@ -325,6 +343,11 @@ function WeekView({
                     textAlign: 'left', width: '100%',
                   }}
                 >
+                  {entry.training.tags && (
+                    <div style={{ fontSize: '7px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: '2px', color: entry.training.tags.color, background: entry.training.tags.color + '18', padding: '1px 5px', borderRadius: '3px', display: 'inline-block' }}>
+                      {entry.training.tags.name}
+                    </div>
+                  )}
                   <div style={{ fontSize: '8px', color: '#E8521A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '2px' }}>
                     {typeLabel[entry.training.type] ?? entry.training.type}
                   </div>
@@ -410,6 +433,7 @@ function SidePanel({
   panelState,
   cycleTrainings,
   allTrainings,
+  allTags,
   mutating,
   mutationError,
   onModeChange,
@@ -417,11 +441,13 @@ function SidePanel({
   onRemoveTraining,
   onCreateTraining,
   onClose,
+  onTagCreated,
 }: {
   cycleStart: string
   panelState: PanelState
   cycleTrainings: GroupDayTraining[]
   allTrainings: Training[]
+  allTags: Tag[]
   mutating: boolean
   mutationError: string | null
   onModeChange: (mode: PanelMode) => void
@@ -429,6 +455,7 @@ function SidePanel({
   onRemoveTraining: () => void
   onCreateTraining: (input: NewTrainingInput) => void
   onClose: () => void
+  onTagCreated: (tag: Tag) => void
 }) {
   const { weekNumber, dayOfWeek, mode, existing } = panelState
   const date = cycleStart ? dayDate(cycleStart, weekNumber, dayOfWeek) : null
@@ -516,17 +543,19 @@ function SidePanel({
             {filtered(inCycle).length > 0 && (
               <>
                 <div style={{ fontSize: '9px', color: '#444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>Usados neste ciclo</div>
-                {filtered(inCycle).map(t => (
-                  <TrainingListItem key={t.id} training={t} mutating={mutating} onSelect={() => onAddTraining(t.id)} />
-                ))}
+                {filtered(inCycle).map(t => {
+                  const tag = allTags.find(tg => tg.id === t.tag_id)
+                  return <TrainingListItem key={t.id} training={t} mutating={mutating} onSelect={() => onAddTraining(t.id)} tagName={tag?.name} tagColor={tag?.color} />
+                })}
               </>
             )}
             {filtered(others).length > 0 && (
               <>
                 <div style={{ fontSize: '9px', color: '#444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '8px 0 5px' }}>Outros treinos</div>
-                {filtered(others).map(t => (
-                  <TrainingListItem key={t.id} training={t} mutating={mutating} onSelect={() => onAddTraining(t.id)} />
-                ))}
+                {filtered(others).map(t => {
+                  const tag = allTags.find(tg => tg.id === t.tag_id)
+                  return <TrainingListItem key={t.id} training={t} mutating={mutating} onSelect={() => onAddTraining(t.id)} tagName={tag?.name} tagColor={tag?.color} />
+                })}
               </>
             )}
           </div>
@@ -545,8 +574,10 @@ function SidePanel({
       {mode === 'create' && (
         <CreateTrainingForm
           mutating={mutating}
+          allTags={allTags}
           onBack={() => onModeChange('search')}
           onSubmit={onCreateTraining}
+          onTagCreated={onTagCreated}
         />
       )}
     </div>
@@ -555,7 +586,7 @@ function SidePanel({
 
 // ─── TrainingListItem ────────────────────────────────────────────────────────
 
-function TrainingListItem({ training, mutating, onSelect }: { training: Training; mutating: boolean; onSelect: () => void }) {
+function TrainingListItem({ training, mutating, onSelect, tagName, tagColor }: { training: Training; mutating: boolean; onSelect: () => void; tagName?: string; tagColor?: string }) {
   return (
     <button
       onClick={onSelect}
@@ -571,6 +602,7 @@ function TrainingListItem({ training, mutating, onSelect }: { training: Training
         <div style={{ fontSize: '10px', color: '#ccc', fontWeight: 600 }}>{training.title}</div>
         <div style={{ fontSize: '8px', color: '#555', marginTop: '1px' }}>
           {typeLabel[training.type] ?? training.type}
+          {tagName && <> · <span style={{ color: tagColor }}>{tagName}</span></>}
           {training.distance_m ? ` · ${(training.distance_m / 1000).toFixed(1)}km` : ''}
         </div>
       </div>
@@ -588,17 +620,41 @@ function parsePace(value: string): number | undefined {
   return parseInt(match[1]) * 60 + parseInt(match[2])
 }
 
-function CreateTrainingForm({ mutating, onBack, onSubmit }: {
+function CreateTrainingForm({ mutating, allTags, onBack, onSubmit, onTagCreated }: {
   mutating: boolean
+  allTags: Tag[]
   onBack: () => void
   onSubmit: (input: NewTrainingInput) => void
+  onTagCreated: (tag: Tag) => void
 }) {
+  const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [type, setType] = useState<TrainingType>('corrida')
   const [distanceKm, setDistanceKm] = useState('')
   const [pace, setPace] = useState('')
   const [sets, setSets] = useState('')
   const [description, setDescription] = useState('')
+  const [tagId, setTagId] = useState<string>('')
+  const [showNewTag, setShowNewTag] = useState(false)
+  const [newTagName, setNewTagName] = useState('')
+  const [newTagColor, setNewTagColor] = useState('#E8521A')
+  const [creatingTag, setCreatingTag] = useState(false)
+
+  async function handleCreateTag() {
+    if (!newTagName.trim()) return
+    setCreatingTag(true)
+    const { data, error } = await supabase
+      .from('tags')
+      .insert({ name: newTagName.trim(), color: newTagColor, created_by: user?.id ?? '' })
+      .select('*')
+      .single()
+    setCreatingTag(false)
+    if (error || !data) return
+    onTagCreated(data as Tag)
+    setTagId(data.id)
+    setShowNewTag(false)
+    setNewTagName('')
+  }
 
   function handleSubmit() {
     if (!title.trim()) return
@@ -610,6 +666,7 @@ function CreateTrainingForm({ mutating, onBack, onSubmit }: {
     const setsNum = parseInt(sets)
     if (!isNaN(setsNum) && setsNum > 0) input.sets = setsNum
     if (description.trim()) input.description = description.trim()
+    if (tagId) input.tag_id = tagId
     onSubmit(input)
   }
 
@@ -659,6 +716,47 @@ function CreateTrainingForm({ mutating, onBack, onSubmit }: {
           onChange={e => setDescription(e.target.value)}
           placeholder="Instruções do treino…"
         />
+      </div>
+      <div>
+        <label style={labelStyle}>Etiqueta</label>
+        {showNewTag ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <input
+              style={inputStyle}
+              value={newTagName}
+              onChange={e => setNewTagName(e.target.value)}
+              placeholder="Nome da etiqueta"
+            />
+            <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+              {TAG_COLORS.map(c => (
+                <button
+                  key={c.hex}
+                  type="button"
+                  onClick={() => setNewTagColor(c.hex)}
+                  style={{
+                    width: 20, height: 20, borderRadius: '50%', border: newTagColor === c.hex ? '2px solid #fff' : '2px solid transparent',
+                    background: c.hex, cursor: 'pointer', padding: 0,
+                  }}
+                  title={c.name}
+                />
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button type="button" onClick={() => setShowNewTag(false)} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1 }}>Cancelar</button>
+              <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: '#E8521A', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                {creatingTag ? '...' : 'Criar'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <select style={{ ...inputStyle, flex: 1 }} value={tagId} onChange={e => setTagId(e.target.value)}>
+              <option value="">Nenhuma</option>
+              {allTags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+            <button type="button" onClick={() => setShowNewTag(true)} style={{ background: '#1e1e1e', border: '1px solid #2a2a2a', borderRadius: '7px', padding: '6px 8px', fontSize: '11px', color: '#E8521A', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Nova</button>
+          </div>
+        )}
       </div>
       <button
         onClick={handleSubmit}

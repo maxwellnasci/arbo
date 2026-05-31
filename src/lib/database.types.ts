@@ -529,6 +529,41 @@ export type Database = {
           },
         ]
       }
+      tags: {
+        Row: {
+          color: string
+          created_at: string
+          created_by: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tags_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trainings: {
         Row: {
           created_at: string | null
@@ -538,6 +573,7 @@ export type Database = {
           duration_minutes: number | null
           id: string
           sets: number | null
+          tag_id: string | null
           target_pace_seconds_per_km: number | null
           title: string
           type: Database["public"]["Enums"]["training_type"]
@@ -551,6 +587,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           sets?: number | null
+          tag_id?: string | null
           target_pace_seconds_per_km?: number | null
           title: string
           type: Database["public"]["Enums"]["training_type"]
@@ -564,6 +601,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           sets?: number | null
+          tag_id?: string | null
           target_pace_seconds_per_km?: number | null
           title?: string
           type?: Database["public"]["Enums"]["training_type"]
@@ -575,6 +613,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainings_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags"
             referencedColumns: ["id"]
           },
         ]
