@@ -258,7 +258,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅
 
 ### Próximo passo
-`/admin/alunos/:id` — perfil completo do aluno (histórico de check-ins, PRs, feedbacks).
+Sistema de etiquetas personalizadas, Controle de liberação do plano, ou Chat admin ↔ aluno (Fase 2 remanescentes).
 
 ## Roadmap de telas
 
@@ -275,11 +275,15 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 | Painel Admin — Convites | `/admin/convites` | ✅ |
 | Painel Admin — Turmas (lista) | `/admin/turmas` | ✅ |
 | Painel Admin — Turmas (detalhe) | `/admin/turmas/:id` | ✅ |
+| Painel Admin — Perfil Aluno | `/admin/alunos/:id` | ✅ |
 
 ### Pendentes
 
 **Painel Admin — Fase 2**
-- `/admin/alunos/:id` — perfil do aluno
+- Sistema de etiquetas personalizadas
+- Controle de liberação do plano
+- Chat admin ↔ aluno
+- Notificações de PR no painel
 - Schema pendente: tabela `invites`
 
 **Painel Admin — Fase 3**
@@ -302,8 +306,8 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 1. ~~Testar visualmente Fase 1 do admin~~ ✅
 2. ~~Schema Fase 2 (role + group_id + tabela groups)~~ ✅
 3. ~~`/admin/turmas` lista~~ ✅
-4. ~~`/admin/turmas/:id` — grid plano mensal, wiring, fallback aluno~~ ✅
-5. `/admin/alunos/:id` — perfil do aluno
+4. ~~`/admin/turmas/:id` — grid plano mensal~~ ✅
+5. ~~`/admin/alunos/:id` — perfil do aluno~~ ✅
 6. Painel Admin Fase 3 (treinos + mensagem)
 7. Aba Progresso
 8. Aba Perfil

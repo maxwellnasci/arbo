@@ -42,6 +42,15 @@ function formatDistance(meters: number | null): string {
   return `${(meters / 1000).toFixed(1)} km`
 }
 
+function formatTimeRecord(seconds: number | null): string {
+  if (!seconds) return '—'
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  const s = Math.floor(seconds % 60)
+  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+}
+
 export default function AdminAlunoDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -207,7 +216,7 @@ export default function AdminAlunoDetail() {
                 <div key={cat} className={styles.recordCard}>
                   <div className={styles.recordDist}>{cat}</div>
                   <div className={styles.recordTime} style={{ color: rec ? '#E8521A' : '#444' }}>
-                    {rec ? formatDuration(rec.time_seconds).replace(/[hm ]/g, ':').replace(/:$/, '') : '—'}
+                    {rec ? formatTimeRecord(rec.time_seconds) : '—'}
                   </div>
                   <div className={styles.recordDate}>
                     {rec?.created_at ? format(new Date(rec.created_at), "dd MMM yyyy", { locale: ptBR }) : 'Sem recorde'}

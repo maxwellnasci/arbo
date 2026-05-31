@@ -14,8 +14,8 @@
 | Painel Admin Fase 1 | ✅ AdminLayout, AdminHome, AdminAlunos, AdminFeedbacks, AdminConvites |
 | Schema Fase 2 | ✅ `profiles.role`, `profiles.group_id`, tabela `groups` com RLS |
 | `/admin/turmas` lista | ✅ Hook `useAdminTurmas`, componente `AdminTurmas`, sidebar ativada |
-| `/admin/turmas/:id` schema | ✅ `group_plans` + `group_plan_trainings` com RLS, policies, GRANTs |
 | `/admin/turmas/:id` | ✅ Completo: componente, rota, TurmaRow clicável, fallback aluno, build |
+| `/admin/alunos/:id` | ✅ Perfil completo do aluno, histórico, PRs e design premium |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 
@@ -68,12 +68,11 @@ Grid do plano mensal:
 - Ciclo de 4 semanas calculado automaticamente a partir de `groups.starts_at`
 - Controle de liberação: pendente (item 5 do roadmap)
 
-#### `/admin/alunos/:id`
-- Perfil completo do aluno
-- Admin pode **editar dados** dentro das regras de LGPD
-- Histórico de check-ins e feedbacks
-- PRs do aluno
-- Acesso ao chat com o aluno
+#### `/admin/alunos/:id` ✅ CONCLUÍDO
+- Perfil completo do aluno renderizado com métricas agregadas
+- Histórico de check-ins detalhado e records pessoais
+- Anamnese exposta em UI amigável
+- Modificação de turma no próprio perfil (select)
 
 ---
 
@@ -195,7 +194,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 3. ✅ /admin/turmas/:id — grid plano mensal + toggle semana/mês
 4. Sistema de etiquetas personalizadas
 5. Controle de liberação do plano (por semana ou tudo de uma vez)
-6. /admin/alunos/:id — perfil do aluno (próximo)
+6. ✅ /admin/alunos/:id — perfil do aluno
 7. Chat admin ↔ aluno
 8. Notificações de PR no painel
 ```
