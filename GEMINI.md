@@ -211,8 +211,8 @@ useEffect(() => {
 - `PersonalRecord` como alias de tipo em vez de `Record` (palavra reservada TS)
 - `profiles.role` existe e é populado por trigger — filtrar alunos com `.eq('role', 'aluno')`
 - `profiles.group_id` é FK nullable para `groups.id` — alunos sem turma têm NULL
-- **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id). Ciclo de 4 semanas calculado a partir de `groups.starts_at`.
-- **Fallback de plano:** `useWeeklyPlan` busca plano individual primeiro; se não existir e `profile.group_id` não for null, usa plano do grupo da semana correspondente
+- **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by, **released_through_week smallint DEFAULT 0** — 0=bloqueado, 1–4=semanas liberadas até N, unidirecional) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id). Ciclo de 4 semanas calculado a partir de `groups.starts_at`.
+- **Fallback de plano:** `useWeeklyPlan` busca plano individual primeiro; se não existir e `profile.group_id` não for null, usa plano do grupo da semana correspondente; se `weekNumber > released_through_week`, retorna `isLocked: true`
 - **`supabase gen types`** pode incluir aviso de versão no final — remover manualmente as linhas após o `} as const`
 
 ## Autenticação (implementada em 2026-05-19)
@@ -321,7 +321,8 @@ npx supabase login
 - `AdminAlunoDetail.tsx` — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion
 - `AdminAlunoDetail.module.css` — CSS Modules, dark mode
 - Lint zerado: padrão `async function load()` com flag `cancelled` em todos os hooks; `catch (e: unknown)`
-- **Sistema de Etiquetas Personalizadas**: Tabela `tags`, FK em `trainings`, tag pill colorida nos cards e criação/seleção inline com 8 cores. 100% completo (incluindo correção do Claude Code no `handleCreateTag` para exibir erros) e lint zerado.
+- **Sistema de Etiquetas Personalizadas**: Tabela `tags`, FK em `trainings`, tag pill colorida nos cards e criação/seleção inline com 8 cores. 100% completo.
+- **Controle de Liberação do Plano**: `released_through_week smallint DEFAULT 0` em `group_plans`; `releaseThrough()` em `useGroupPlanMutations`; lock check em `useWeeklyPlan` (`isLocked`, `lockedWeekNumber`, `lastWeekSummary`); chips S1–S4 + banner admin; `LockedScreen` no AlunoDashboard; `<Toaster />` adicionado ao `App.tsx`.
 
 ### Próximo Passo
 Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin ↔ aluno.
@@ -347,7 +348,7 @@ Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin
 
 **Painel Admin — Fase 2**
 - ~~Sistema de etiquetas personalizadas~~ ✅
-- Controle de liberação do plano
+- ~~Controle de liberação do plano~~ ✅
 - Chat admin ↔ aluno
 - Notificações de PR no painel
 - Schema pendente: tabela `invites`

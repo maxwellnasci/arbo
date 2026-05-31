@@ -49,12 +49,13 @@ Somos um **time de 3**:
 ### Estado atual (2026-05-31)
 - **11 telas implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
-- Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas): ✅ ~95%
+- Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação): ✅ 100%
 - Fase 3 (Treinos + Chat + Progresso): 0%
 
 ### O que foi feito em 2026-05-31
-- Perfil do Aluno (`/admin/alunos/:id`) implementado.
-- Sistema de Etiquetas Personalizadas (tabela `tags`, pills nos treinos, form inline com 8 cores). 100% completo e revisado pelo Claude Code (exibição de erros no `handleCreateTag` e GRANTs atualizados no CLAUDE.md). Lint zerado.
+- Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
+- Sistema de Etiquetas Personalizadas (tabela `tags`, pills nos treinos, form inline com 8 cores). Lint zerado.
+- Controle de Liberação do Plano — `released_through_week` no banco, chips S1–S4 com `✓`/`🔒` + banner de liberação no admin, `LockedScreen` no AlunoDashboard (boas-vindas, resumo da semana anterior, barra de ciclo).
 
 ### Próximo passo
 **Painel Admin Fase 3:** `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin ↔ aluno.

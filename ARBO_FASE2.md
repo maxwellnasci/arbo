@@ -1,6 +1,6 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-05-31 (sessão 3)
+> Gerado em 2026-05-29 | Atualizado em 2026-05-31 (sessão 4)
 
 ---
 
@@ -8,7 +8,7 @@
 
 | Área | Status |
 |------|--------|
-| Schema + RLS | ✅ 14 tabelas, enums, triggers, policies, GRANTs |
+| Schema + RLS | ✅ 15 tabelas, enums, triggers, policies, GRANTs |
 | Auth stack | ✅ AuthContext, rotas protegidas por role, convite via Edge Function |
 | Dashboard do Aluno `/aluno` | ✅ Dados reais, redesign premium (Bebas Neue, glow, bottom sheet, skeleton, PR tracking) |
 | Painel Admin Fase 1 | ✅ AdminLayout, AdminHome, AdminAlunos, AdminFeedbacks, AdminConvites |
@@ -16,6 +16,8 @@
 | `/admin/turmas` lista | ✅ Hook `useAdminTurmas`, componente `AdminTurmas`, sidebar ativada |
 | `/admin/turmas/:id` | ✅ Completo: componente, rota, TurmaRow clicável, fallback aluno, build |
 | `/admin/alunos/:id` | ✅ Perfil completo do aluno, histórico, PRs e design premium |
+| Sistema de Etiquetas | ✅ Tabela `tags`, pills coloridas nos cards, form inline com 8 cores |
+| Controle de Liberação | ✅ `released_through_week`, chips admin `✓`/`🔒`, `LockedScreen` no aluno |
 | **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-05-31) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
@@ -67,7 +69,7 @@ Grid do plano mensal:
 - Visualização por **semana** (padrão) ou **mês** (toggle)
 - Professor monta treinos diretamente no app (cria ou reutiliza da biblioteca)
 - Ciclo de 4 semanas calculado automaticamente a partir de `groups.starts_at`
-- Controle de liberação: pendente (item 5 do roadmap)
+- Controle de liberação: ✅ `released_through_week`, chips S1–S4, banner admin, `LockedScreen` aluno
 
 #### `/admin/alunos/:id` ✅ CONCLUÍDO
 - Perfil completo do aluno renderizado com métricas agregadas
@@ -193,8 +195,8 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 1. ✅ Schema: coluna role + group_id + tabela groups
 2. ✅ /admin/turmas — lista
 3. ✅ /admin/turmas/:id — grid plano mensal + toggle semana/mês
-4. ✅ Sistema de etiquetas personalizadas (100% completo)
-5. Controle de liberação do plano (por semana ou tudo de uma vez)
+4. ✅ Sistema de etiquetas personalizadas
+5. ✅ Controle de liberação do plano (por semana ou tudo de uma vez)
 6. ✅ /admin/alunos/:id — perfil do aluno
 7. Chat admin ↔ aluno
 8. Notificações de PR no painel

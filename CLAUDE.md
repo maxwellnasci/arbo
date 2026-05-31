@@ -249,6 +249,8 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 7:** Painel Admin — Fase 2 schema + `/admin/turmas` ✅
 - **Task 8:** `/admin/turmas/:id` — rota, wiring, fallback aluno, build ✅
 - **Task 9:** `/admin/alunos/:id` — perfil do aluno, hook, CSS, lint zero ✅
+- **Task 10:** Sistema de Etiquetas — tabela `tags`, pills coloridas, color picker inline ✅
+- **Task 11:** Controle de Liberação — `released_through_week`, chips admin, `LockedScreen` aluno ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-05-31)
 
@@ -305,6 +307,14 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - Schema: Tabela `tags` (RLS, policies) e coluna `tag_id` em `trainings`.
 - Hooks: `useAdminTurmaDetail` com join para `tags`, `useGroupPlanMutations` com suporte a `tag_id`.
 - UI: Pill de etiqueta colorida nos cards de treino (Admin e Aluno) e form de criação inline com color picker (8 cores).
+
+**Controle de Liberação do Plano:**
+- Schema: `released_through_week smallint DEFAULT 0` em `group_plans`; backfill de planos existentes para 4 (mantém comportamento atual)
+- `useGroupPlanMutations`: `releaseThrough(weekNumber)` — atualiza `released_through_week` no banco
+- `useWeeklyPlan`: lock check — verifica se semana está liberada antes de retornar trainings; exporta `isLocked`, `lockedWeekNumber`, `lastWeekSummary`
+- `AdminTurmaDetail`: chips S1–S4 com `✓` / `🔒` + banner de liberação com botões "Liberar Sn" e "Liberar tudo"; toasts via sonner
+- `App.tsx`: `<Toaster />` do sonner adicionado
+- `AlunoDashboard`: `LockedScreen` — boas-vindas (semana 1), resumo da semana anterior + card "a caminho" + barra de ciclo S1–S4 (semanas 2–4)
 
 **Correções de lint (Claude Code — revisão):**
 - `useAdminAlunoDetail`: `fetchData` inline como `async function load()` com flag `cancelled`; `catch (e: any)` → `catch (e: unknown)`
