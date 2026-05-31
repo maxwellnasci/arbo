@@ -300,6 +300,11 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - `src/pages/admin/AdminAlunoDetail.tsx` — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion
 - `src/pages/admin/AdminAlunoDetail.module.css` — CSS Modules, dark mode
 
+**Fase 2 - Sistema de Etiquetas Personalizadas:**
+- Schema: Tabela `tags` (RLS, policies) e coluna `tag_id` em `trainings`.
+- Hooks: `useAdminTurmaDetail` com join para `tags`, `useGroupPlanMutations` com suporte a `tag_id`.
+- UI: Pill de etiqueta colorida nos cards de treino (Admin e Aluno) e form de criação inline com color picker (8 cores).
+
 **Correções de lint (Claude Code — revisão):**
 - `useAdminAlunoDetail`: `fetchData` inline como `async function load()` com flag `cancelled`; `catch (e: any)` → `catch (e: unknown)`
 - `useAdminTurmaDetail`: `setIsLoading`/`setError` movidos para dentro de `load()`
@@ -330,7 +335,7 @@ Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin
 ### Pendentes
 
 **Painel Admin — Fase 2**
-- Sistema de etiquetas personalizadas
+- ~~Sistema de etiquetas personalizadas~~ ✅
 - Controle de liberação do plano
 - Chat admin ↔ aluno
 - Notificações de PR no painel

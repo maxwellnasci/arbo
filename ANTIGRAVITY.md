@@ -49,8 +49,12 @@ Somos um **time de 3**:
 ### Estado atual (2026-05-31)
 - **11 telas implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
-- Fase 2 (Admin Turmas + Planos + Perfil Aluno): ✅ ~90%
+- Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas): ✅ ~95%
 - Fase 3 (Treinos + Chat + Progresso): 0%
+
+### O que foi feito em 2026-05-31
+- Perfil do Aluno (`/admin/alunos/:id`) implementado.
+- Sistema de Etiquetas Personalizadas (tabela `tags`, pills nos treinos, form inline com 8 cores).
 
 ### Próximo passo
 **Painel Admin Fase 3:** `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin ↔ aluno.
