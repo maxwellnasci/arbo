@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { useAuth } from './contexts/AuthContext'
 import Login from './components/Login'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -56,5 +57,10 @@ const router = createBrowserRouter([
 ])
 
 export default function App() {
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster theme="dark" position="bottom-center" richColors />
+    </>
+  )
 }

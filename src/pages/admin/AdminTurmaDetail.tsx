@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAdminTurmaDetail, type GroupDayTraining } from '../../hooks/useAdminTurmaDetail'
@@ -71,7 +72,7 @@ export default function AdminTurmaDetail() {
   const navigate = useNavigate()
   const { group, plan, trainings, cycleStart, defaultWeekNumber, isLoading, error, refresh } =
     useAdminTurmaDetail(id ?? '')
-  const { addTraining, removeTraining, createAndAddTraining } =
+  const { addTraining, removeTraining, createAndAddTraining, releaseThrough } =
     useGroupPlanMutations(id ?? '', cycleStart, plan?.id ?? null)
 
   const [view, setView] = useState<'week' | 'month'>('week')
@@ -81,6 +82,7 @@ export default function AdminTurmaDetail() {
   const [mutationError, setMutationError] = useState<string | null>(null)
   const [allTrainings, setAllTrainings] = useState<Training[]>([])
   const [allTags, setAllTags] = useState<Tag[]>([])
+  const [releasing, setReleasing] = useState(false)
 
   // 0 = user hasn't navigated yet → fall back to the hook's default (current week in cycle)
   const effectiveWeek = selectedWeek > 0 ? selectedWeek : defaultWeekNumber
@@ -146,6 +148,23 @@ export default function AdminTurmaDetail() {
       setMutationError((e as Error)?.message ?? 'Erro ao criar treino')
     } finally {
       setMutating(false)
+    }
+  }
+
+  async function handleRelease(weekNumber: 1 | 2 | 3 | 4) {
+    if (!plan || weekNumber <= plan.released_through_week) return
+    setReleasing(true)
+    try {
+      await releaseThrough(weekNumber)
+      refresh()
+      const msg = weekNumber === 4
+        ? 'Todas as semanas liberadas para os alunos'
+        : `Semana ${weekNumber} liberada para os alunos`
+      toast.success(msg)
+    } catch (e) {
+      toast.error((e as Error)?.message ?? 'Erro ao liberar semana')
+    } finally {
+      setReleasing(false)
     }
   }
 
@@ -223,9 +242,12 @@ export default function AdminTurmaDetail() {
                 selectedWeek={effectiveWeek}
                 trainings={trainings}
                 panelEntry={panel?.existing ?? null}
+                releasedThroughWeek={plan?.released_through_week ?? null}
+                releasing={releasing}
                 onNavigate={setSelectedWeek}
                 onSlotClick={openSlot}
                 onCardClick={openCard}
+                onRelease={handleRelease}
               />
             ) : (
               <MonthView
@@ -267,17 +289,23 @@ function WeekView({
   selectedWeek,
   trainings,
   panelEntry,
+  releasedThroughWeek,
+  releasing,
   onNavigate,
   onSlotClick,
   onCardClick,
+  onRelease,
 }: {
   cycleStart: string
   selectedWeek: number
   trainings: GroupDayTraining[]
   panelEntry: GroupDayTraining | null
+  releasedThroughWeek: number | null
+  releasing: boolean
   onNavigate: (week: number) => void
   onSlotClick: (weekNumber: number, dayOfWeek: number) => void
   onCardClick: (entry: GroupDayTraining) => void
+  onRelease: (week: 1 | 2 | 3 | 4) => void
 }) {
   const weekTrainings = trainings.filter(t => t.weekNumber === selectedWeek)
   const trainingByDay = new Map(weekTrainings.map(t => [t.dayOfWeek, t]))
@@ -297,16 +325,21 @@ function WeekView({
           <div style={{ fontSize: '10px', color: '#555', marginTop: '2px' }}>{weekRange(cycleStart, selectedWeek)}</div>
           <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', marginTop: '6px' }}>
             {[1, 2, 3, 4].map(w => {
-              const hasTreino = trainings.some(t => t.weekNumber === w)
+              const isActive = w === selectedWeek
+              const isReleased = releasedThroughWeek !== null && w <= releasedThroughWeek
               return (
                 <button
                   key={w}
                   onClick={() => onNavigate(w)}
                   style={{
-                    width: 7, height: 7, borderRadius: '50%', border: 'none', cursor: 'pointer', padding: 0,
-                    background: w === selectedWeek ? '#E8521A' : hasTreino ? '#E8521A66' : '#2a2a2a',
+                    padding: '2px 7px', borderRadius: '5px', border: 'none', cursor: 'pointer',
+                    fontSize: '9px', fontWeight: 700, lineHeight: 1.4,
+                    background: isActive ? '#E8521A' : isReleased ? '#4caf5022' : '#1e1e1e',
+                    color: isActive ? '#fff' : isReleased ? '#4caf50' : '#3a3a3a',
                   }}
-                />
+                >
+                  S{w} {releasedThroughWeek !== null ? (isReleased ? '✓' : '🔒') : ''}
+                </button>
               )
             })}
           </div>
@@ -318,6 +351,57 @@ function WeekView({
           style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e1e1e', border: '1px solid #2a2a2a', borderRadius: '7px', color: selectedWeek >= 4 ? '#333' : '#E8521A', fontSize: '14px', fontWeight: 700, cursor: selectedWeek >= 4 ? 'not-allowed' : 'pointer' }}
         >›</button>
       </div>
+
+      {/* Banner de liberação — só quando semana ativa está bloqueada */}
+      {releasedThroughWeek !== null && selectedWeek > releasedThroughWeek && (
+        <div style={{
+          margin: '0 16px 8px',
+          background: '#E8521A0f',
+          border: '1px solid #E8521A33',
+          borderRadius: '9px',
+          padding: '10px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+        }}>
+          <div>
+            <div style={{ color: '#E8521A', fontSize: '11px', fontWeight: 700, marginBottom: '2px' }}>
+              Semana {selectedWeek} bloqueada
+            </div>
+            <div style={{ color: '#666', fontSize: '10px' }}>
+              Alunos não veem os treinos desta semana
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+            <button
+              onClick={() => onRelease(selectedWeek as 1 | 2 | 3 | 4)}
+              disabled={releasing}
+              style={{
+                background: '#E8521A', color: '#fff', border: 'none',
+                borderRadius: '6px', padding: '6px 12px', fontSize: '10px',
+                fontWeight: 700, cursor: releasing ? 'not-allowed' : 'pointer',
+                opacity: releasing ? 0.6 : 1,
+              }}
+            >
+              {releasing ? '...' : `Liberar S${selectedWeek}`}
+            </button>
+            <button
+              onClick={() => onRelease(4)}
+              disabled={releasing}
+              style={{
+                background: '#1e1e1e', color: '#666',
+                border: '1px solid #2a2a2a', borderRadius: '6px',
+                padding: '6px 10px', fontSize: '10px',
+                cursor: releasing ? 'not-allowed' : 'pointer',
+                opacity: releasing ? 0.6 : 1,
+              }}
+            >
+              Liberar tudo
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Day grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', padding: '6px 16px 16px' }}>
