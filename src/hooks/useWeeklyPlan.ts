@@ -99,6 +99,12 @@ function subtractOneWeek(dateStr: string): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
+function addOneDay(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  d.setDate(d.getDate() + 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function computeLastWeekSummary(checkins: { actual_distance_m: number | null; actual_duration_seconds: number | null }[]): LastWeekSummary {
   const checkinCount = checkins.length
   const totalDistanceM = checkins.reduce((sum, c) => sum + (c.actual_distance_m ?? 0), 0)
@@ -177,7 +183,7 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
             .select('actual_distance_m, actual_duration_seconds')
             .eq('student_id', userId)
             .gte('created_at', previousMonday)
-            .lt('created_at', weekStart)
+            .lt('created_at', addOneDay(weekStart))
           lastWeekSummary = computeLastWeekSummary(prevCheckins ?? [])
         }
         return {
