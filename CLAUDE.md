@@ -253,6 +253,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 11:** Controle de Liberação — `released_through_week`, chips admin, `LockedScreen` aluno ✅
 - **Task 12:** `/admin/treinos` — biblioteca de treinos implementada via colaboração Gemini + DeepSeek V4 Pro como subagente ✅
 - **Task 13:** `/admin/treinos` — visual refinado pelo Claude Code: padrão dark inline styles, pills de tipo coloridas, lint + TS zero erros ✅
+- **Task 14:** `/admin/alunos/:id` e `/aluno` — Chat Direto admin ↔ aluno com interface premium (Framer Motion, Glassmorphism, tempo real via Supabase) ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-01)
 
@@ -333,11 +334,19 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - `AdminTreinos.tsx` — removidas classes Tailwind; botão `+ Novo Treino` em `#E8521A`; busca dark; grid `auto-fill 260px`
 - `AdminSidebar.tsx` — fix TS pré-existente: `disabled?: boolean` adicionado ao tipo dos links
 
+### O que foi feito em 2026-06-01 (Parte 2)
+
+**Implementação do Chat Admin ↔ Aluno (AntiGravity):**
+- Schema: Tabela `messages` criada (id, student_id, admin_id, sender_id, content, deleted_by_student, deleted_by_admin, read_at) com RLS ativada e policies restritas por `role`. Realtime ativado.
+- Hook `useChat.ts` — fetch, realtime subscription com supabase channel, soft delete. Bypass no eslint para initial fetch.
+- UI Admin: `AdminChatPanel.tsx` — Painel lateral com glassmorphism animado via framer-motion, integrado ao perfil do aluno.
+- UI Aluno: `AlunoChat.tsx` — View full page mobile-first. Aba Chat adicionada no `BottomNav`.
+
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-01)
 
 ### Próximo passo
-Painel Admin Fase 3: Chat admin ↔ aluno (schema: tabela `messages`, Edge Function ou RLS direto).
+Painel Admin Fase 3: Progresso do aluno (`/aluno/progresso`) e Perfil (`/aluno/perfil`).
 
 ## Roadmap de telas
 
@@ -368,8 +377,8 @@ Painel Admin Fase 3: Chat admin ↔ aluno (schema: tabela `messages`, Edge Funct
 
 **Painel Admin — Fase 3**
 - ~~`/admin/treinos` — biblioteca de treinos (CRUD) + visual refinado~~ ✅
-- Modal de mensagem direta ao aluno
-- Schema: tabela `messages`
+- ~~Modal de mensagem direta ao aluno~~ ✅
+- ~~Schema: tabela `messages`~~ ✅
 
 **Bottom Nav — Progresso (`/aluno/progresso`)**
 - Histórico de check-ins por semana

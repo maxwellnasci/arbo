@@ -1,0 +1,230 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: var(--bg-primary, #09090b);
+  padding-bottom: 70px; /* Space for BottomNav */
+}
+
+.header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(9, 9, 11, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #a1a1aa;
+  margin: 0;
+}
+
+.messagesContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.messagesContainer::-webkit-scrollbar {
+  width: 4px;
+}
+.messagesContainer::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 2px;
+}
+
+.loading, .empty {
+  text-align: center;
+  color: #a1a1aa;
+  font-size: 14px;
+  margin-top: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.emptyIcon {
+  font-size: 48px;
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+.emptySub {
+  font-size: 13px;
+  color: #71717a;
+}
+
+.messageWrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 85%;
+  position: relative;
+}
+
+.wrapperStudent {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.wrapperAdmin {
+  align-self: flex-start;
+}
+
+.bubble {
+  padding: 12px 16px;
+  position: relative;
+}
+
+.bubbleStudent {
+  background: #E8521A;
+  color: #fff;
+  border-radius: 18px 18px 4px 18px;
+  box-shadow: 0 4px 12px rgba(232, 82, 26, 0.15);
+}
+
+.bubbleAdmin {
+  background: #27272a;
+  color: #e4e4e7;
+  border-radius: 18px 18px 18px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.msgContent {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.msgTime {
+  display: block;
+  font-size: 11px;
+  margin-top: 6px;
+  text-align: right;
+  opacity: 0.6;
+}
+
+.deleteBtn {
+  background: #1e1e1e;
+  border: 1px solid #333;
+  color: #a1a1aa;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s;
+  transform: scale(0.8);
+  flex-shrink: 0;
+}
+
+/* In mobile we might want it always slightly visible or visible on tap, but hover works ok on touch generally as a tap */
+.messageWrapper:hover .deleteBtn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.deleteBtn:hover {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+
+.inputArea {
+  padding: 12px 20px;
+  background: rgba(9, 9, 11, 0.9);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  position: sticky;
+  bottom: 70px; /* Space for BottomNav */
+  z-index: 10;
+}
+
+.form {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.input {
+  flex: 1;
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 24px;
+  padding: 14px 20px;
+  color: #fff;
+  font-size: 15px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.input:focus {
+  border-color: #E8521A;
+  background: #1f1f22;
+}
+
+.sendBtn {
+  background: #E8521A;
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(232, 82, 26, 0.3);
+}
+
+.sendBtn:disabled {
+  background: #27272a;
+  color: #71717a;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.sendBtn:not(:disabled):hover {
+  transform: scale(1.05);
+  background: #ff5e22;
+}
+
+.sendBtn:not(:disabled):active {
+  transform: scale(0.95);
+}

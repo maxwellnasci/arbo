@@ -50,7 +50,7 @@ Somos um **time de 3**:
 - **12 telas implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
 - Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação): ✅ 100%
-- Fase 3 (Treinos + Chat + Progresso): 33% (Treinos ✅ com visual refinado)
+- Fase 3 (Treinos + Chat + Progresso): 66% (Treinos ✅, Chat ✅)
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
@@ -60,9 +60,10 @@ Somos um **time de 3**:
 
 ### O que foi feito em 2026-06-01
 - **Refinamento visual de `/admin/treinos`** (Claude Code): convertido de Tailwind/light para inline styles dark; pills de tipo coloridas por categoria; `TreinoFormPanel` com dark theme e fix de lint (`as any` → `TrainingType`, padrão `async load()`); fix TS pré-existente no `AdminSidebar`. tsc + build + lint: 0 erros.
+- **Chat Direto Admin ↔ Aluno** (Antigravity): Tabela `messages` criada com RLS e tempo real; `useChat.ts` hook com subscription; `AdminChatPanel` SidePanel elegante usando glassmorphism e framer-motion; Aba Chat em `AlunoDashboard` com UI mobile-first premium (balões coloridos, soft delete, auto scroll).
 
 ### Próximo passo
-**Painel Admin Fase 3:** Chat admin ↔ aluno (schema: tabela `messages`).
+**Painel Admin Fase 3:** Progresso e Perfil do Aluno (`/aluno/progresso`, `/aluno/perfil`).
 
 ---
 

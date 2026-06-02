@@ -283,6 +283,7 @@ npx supabase login
 - Task 11: Controle de Liberação — `released_through_week`, chips admin, `LockedScreen` aluno ✅
 - Task 12: `/admin/treinos` — biblioteca de treinos CRUD implementada ✅
 - Task 13: `/admin/treinos` — visual refinado: dark inline styles, pills de tipo coloridas ✅
+- Task 14: Chat Admin ↔ Aluno implementado com UI Premium, framer-motion e banco Realtime ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-01)
 
@@ -341,7 +342,7 @@ npx supabase login
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-01)
 
 ### Próximo Passo
-Painel Admin Fase 3: Chat admin ↔ aluno (schema: tabela `messages`).
+Painel Admin Fase 3: Progresso e Perfil do aluno.
 
 ## Roadmap de Telas
 
@@ -372,8 +373,8 @@ Painel Admin Fase 3: Chat admin ↔ aluno (schema: tabela `messages`).
 
 **Painel Admin — Fase 3**
 - ~~`/admin/treinos` — biblioteca de treinos (CRUD) + visual refinado~~ ✅
-- Modal de mensagem direta ao aluno
-- Schema: tabela `messages`
+- ~~Modal de mensagem direta ao aluno~~ ✅
+- ~~Schema: tabela `messages`~~ ✅
 
 **Bottom Nav — Progresso (`/aluno/progresso`)**
 - Histórico de check-ins por semana
@@ -389,6 +390,6 @@ Painel Admin Fase 3: Chat admin ↔ aluno (schema: tabela `messages`).
 3. ~~`/admin/turmas` lista~~ ✅
 4. ~~`/admin/turmas/:id` — grid plano mensal~~ ✅
 5. ~~`/admin/alunos/:id` — perfil do aluno~~ ✅
-6. Painel Admin Fase 3 (treinos ✅ + mensagem)
+6. Painel Admin Fase 3 (treinos ✅ + mensagem ✅)
 7. Aba Progresso
 8. Aba Perfil

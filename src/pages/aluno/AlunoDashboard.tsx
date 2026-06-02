@@ -4,6 +4,7 @@ import { useLogout } from '../../hooks/useLogout'
 import { useWeeklyPlan, type DayTraining, type LastWeekSummary } from '../../hooks/useWeeklyPlan'
 import { supabase } from '../../lib/supabase'
 import type { Checkin, TrainingType, UserLevel } from '../../lib/types'
+import AlunoChat from './AlunoChat'
 import styles from './AlunoDashboard.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -234,12 +235,13 @@ function LockedScreen({ lockedWeekNumber, lastWeekSummary }: {
 
 // ── Bottom Navigation ─────────────────────────────────────────────────────────
 
-type NavTab = 'inicio' | 'progresso' | 'perfil'
+type NavTab = 'inicio' | 'progresso' | 'chat' | 'perfil'
 
 function BottomNav({ activeTab, onTabChange }: { activeTab: NavTab; onTabChange: (tab: NavTab) => void }) {
   const tabs: { id: NavTab; icon: string; label: string }[] = [
     { id: 'inicio',    icon: '🏠', label: 'Início' },
     { id: 'progresso', icon: '📊', label: 'Progresso' },
+    { id: 'chat',      icon: '💬', label: 'Chat' },
     { id: 'perfil',    icon: '👤', label: 'Perfil' },
   ]
   return (
@@ -684,9 +686,12 @@ export default function AlunoDashboard() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.container}>
+      {activeTab === 'chat' ? (
+        <AlunoChat studentId={user.id} />
+      ) : (
+        <div className={styles.container}>
 
-        {/* Header */}
+          {/* Header */}
         <header className={styles.header}>
           <p className={styles.greeting}>
             {period},{' '}
@@ -739,6 +744,7 @@ export default function AlunoDashboard() {
         )}
 
       </div>
+      )}
 
       {/* Profile menu */}
       {showProfileMenu && (

@@ -305,6 +305,64 @@ export type Database = {
         }
         Relationships: []
       }
+      messages: {
+        Row: {
+          admin_id: string | null
+          content: string
+          created_at: string
+          deleted_by_admin: boolean
+          deleted_by_student: boolean
+          id: string
+          read_at: string | null
+          sender_id: string
+          student_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          content: string
+          created_at?: string
+          deleted_by_admin?: boolean
+          deleted_by_student?: boolean
+          id?: string
+          read_at?: string | null
+          sender_id: string
+          student_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          content?: string
+          created_at?: string
+          deleted_by_admin?: boolean
+          deleted_by_student?: boolean
+          id?: string
+          read_at?: string | null
+          sender_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

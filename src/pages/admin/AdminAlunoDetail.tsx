@@ -7,6 +7,7 @@ import { ptBR } from 'date-fns/locale'
 import { Toaster, toast } from 'sonner'
 import { MessageSquare, RefreshCw, ChevronLeft } from 'lucide-react'
 import styles from './AdminAlunoDetail.module.css'
+import AdminChatPanel from '../../components/admin/AdminChatPanel'
 
 const levelLabel: Record<string, string> = {
   iniciante: 'Iniciante',
@@ -58,6 +59,7 @@ export default function AdminAlunoDetail() {
   
   const [activeTab, setActiveTab] = useState<'checkins' | 'records' | 'anamnesis'>('checkins')
   const [isChangingGroup, setIsChangingGroup] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
 
   if (isLoading) {
     return <p style={{ color: '#555' }}>Carregando dados do aluno...</p>
@@ -136,7 +138,7 @@ export default function AdminAlunoDetail() {
               </select>
               <RefreshCw size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#a1a1aa' }} />
             </div>
-            <button className={styles.btn} disabled title="Disponível na Fase 3">
+            <button className={styles.btn} onClick={() => setIsChatOpen(true)}>
               <MessageSquare size={16} /> Mensagem
             </button>
           </div>
@@ -267,6 +269,13 @@ export default function AdminAlunoDetail() {
           </div>
         )}
       </div>
+
+      <AdminChatPanel
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        studentId={id || ''}
+        studentName={profile.full_name || 'Aluno'}
+      />
     </motion.div>
   )
 }

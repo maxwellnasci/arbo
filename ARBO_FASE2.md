@@ -19,6 +19,7 @@
 | Sistema de Etiquetas | ✅ Tabela `tags`, pills coloridas nos cards, form inline com 8 cores |
 | Controle de Liberação | ✅ `released_through_week`, chips admin `✓`/`🔒`, `LockedScreen` no aluno |
 | `/admin/treinos` | ✅ CRUD completo + visual dark refinado (pills de tipo, inline styles, padrão do projeto) |
+| Chat Admin ↔ Aluno | ✅ Tabela `messages` (RLS + Realtime), SidePanel Admin, Aba Chat no Aluno, Framer Motion |
 | **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-01) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
@@ -124,12 +125,12 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 
 ### 5. Sistema de Mensagens
 
-#### Chat admin ↔ aluno (MVP)
+#### Chat admin ↔ aluno (MVP) - ✅ CONCLUÍDO
 - Texto simples
 - Histórico completo salvo
-- Admin e aluno podem excluir mensagens individualmente
-- Notificação no app quando chegar mensagem nova
-- Foco em: dúvidas, consultoria, observações sobre treino
+- Admin e aluno podem excluir mensagens individualmente (soft delete)
+- UI Premium com glassmorphism e micro-animações
+- Tempo real via Supabase Realtime
 
 #### Regras de retenção (a definir)
 - Possibilidade futura: mensagens expiram conforme o plano do aluno
@@ -152,7 +153,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 | Tela | Descrição |
 |------|-----------|
 | `/admin/treinos` | ~~Biblioteca de treinos — CRUD completo + visual dark refinado~~ ✅ |
-| Mensagem direta | Chat admin ↔ aluno — schema: tabela `messages` |
+| Mensagem direta | ~~Chat admin ↔ aluno — schema: tabela `messages`~~ ✅ |
 | `/aluno/progresso` | Histórico, recordes, gráfico de pace |
 | `/aluno/perfil` | Dados pessoais, Strava, logout |
 
@@ -200,7 +201,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 5. ✅ Controle de liberação do plano (por semana ou tudo de uma vez)
 6. ✅ `/admin/alunos/:id` — perfil do aluno
 7. ✅ `/admin/treinos` — biblioteca de treinos CRUD + visual dark refinado (Claude Code, 2026-06-01)
-8. Chat admin ↔ aluno
+8. ✅ Chat admin ↔ aluno (Tabela messages, RLS, interface premium - AntiGravity)
 9. Notificações de PR no painel
 ```
 
