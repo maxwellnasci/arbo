@@ -7,7 +7,7 @@ export function AdminSidebar() {
   const logout = useLogout()
   const { user } = useAuth()
 
-  const links = [
+  const links: { to: string; label: string; exact: boolean; disabled?: boolean }[] = [
     { to: '/admin', label: 'Início', exact: true },
     { to: '/admin/alunos', label: 'Alunos', exact: false },
     { to: '/admin/turmas', label: 'Turmas', exact: false },

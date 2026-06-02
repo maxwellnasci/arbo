@@ -1,96 +1,172 @@
-import React from 'react';
-import { Dumbbell, Timer, Activity, Zap, Heart } from 'lucide-react';
-import type { TrainingWithTag } from '../../hooks/useAdminTreinos';
+import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 
 interface TreinoCardProps {
-  treino: TrainingWithTag;
-  onClickEdit?: () => void;
-  onClickDelete?: () => void;
+  treino: TrainingWithTag
+  onClickEdit?: () => void
+  onClickDelete?: () => void
 }
 
-const typeIconMap: Record<string, React.ElementType> = {
-  forca: Dumbbell,
-  hiit: Timer,
-  corrida: Activity,
-  funcional: Zap,
-  cardio: Heart,
-};
+const typeLabel: Record<string, string> = {
+  corrida: 'Corrida',
+  hiit: 'HIIT',
+  recovery: 'Recuperação',
+  forca: 'Força',
+  mobilidade: 'Mobilidade',
+}
+
+const typeColor: Record<string, string> = {
+  corrida: '#E8521A',
+  hiit: '#EF4444',
+  recovery: '#22C55E',
+  forca: '#3B82F6',
+  mobilidade: '#A855F7',
+}
 
 function formatPace(secondsPerKm: number | null): string {
-  if (!secondsPerKm) return '--:--/km';
-  const minutes = Math.floor(secondsPerKm / 60);
-  const seconds = secondsPerKm % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}/km`;
+  if (!secondsPerKm) return '—'
+  const minutes = Math.floor(secondsPerKm / 60)
+  const seconds = secondsPerKm % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}/km`
+}
+
+function formatDistance(meters: number | null): string {
+  if (!meters) return '—'
+  return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${meters} m`
 }
 
 export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardProps) {
-  const Icon = typeIconMap[treino.type] || Activity;
+  const color = typeColor[treino.type] ?? '#888'
+  const label = typeLabel[treino.type] ?? treino.type
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-200 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:ring-gray-300 dark:bg-gray-900/50 dark:ring-gray-800 dark:hover:ring-gray-700">
-      {/* Tag */}
-      {treino.tag && (
-        <div
-          className="absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm"
-          style={{ backgroundColor: treino.tag.color }}
+    <div
+      style={{
+        background: '#1c1c1e',
+        borderRadius: '12px',
+        border: '1px solid #2a2a2a',
+        padding: '16px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '12px',
+      }}
+    >
+      {/* Pills: tipo + etiqueta */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+        <span
+          style={{
+            background: color + '22',
+            color,
+            borderRadius: '6px',
+            padding: '3px 10px',
+            fontSize: '11px',
+            fontWeight: 700,
+            letterSpacing: '0.5px',
+            textTransform: 'uppercase',
+          }}
         >
-          {treino.tag.name}
-        </div>
-      )}
-
-      {/* Icon and Title */}
-      <div className="mb-4 flex items-center gap-3 pr-20">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-600 transition-colors duration-300 group-hover:bg-black group-hover:text-white dark:bg-gray-800 dark:text-gray-400 dark:group-hover:bg-white dark:group-hover:text-black">
-          <Icon className="h-6 w-6" />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">{treino.title}</h3>
-        </div>
-      </div>
-
-      {/* Description */}
-      {treino.description && (
-        <p className="mb-5 line-clamp-2 text-sm text-gray-600 dark:text-gray-400">{treino.description}</p>
-      )}
-
-      {/* Stats Grid */}
-      <div className="mt-auto grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800/50">
-          <span className="block text-xs font-medium text-gray-500 dark:text-gray-400">Distância</span>
-          <span className="font-semibold text-gray-900 dark:text-white">
-            {treino.distance_m && treino.distance_m >= 1000
-              ? `${(treino.distance_m / 1000).toFixed(1)} km`
-              : `${treino.distance_m || 0} m`}
-          </span>
-        </div>
-        <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800/50">
-          <span className="block text-xs font-medium text-gray-500 dark:text-gray-400">Duração</span>
-          <span className="font-semibold text-gray-900 dark:text-white">{treino.duration_minutes || 0} min</span>
-        </div>
-        <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800/50">
-          <span className="block text-xs font-medium text-gray-500 dark:text-gray-400">Pace Alvo</span>
-          <span className="font-semibold text-gray-900 dark:text-white">{formatPace(treino.target_pace_seconds_per_km)}</span>
-        </div>
-        <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800/50">
-          <span className="block text-xs font-medium text-gray-500 dark:text-gray-400">Séries</span>
-          <span className="font-semibold text-gray-900 dark:text-white">{treino.sets || 1}</span>
-        </div>
-      </div>
-
-      {/* Type indicator and Actions */}
-      <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4 dark:border-gray-800">
-        <span className="text-xs font-bold uppercase tracking-wider text-gray-400">
-          {treino.type}
+          {label}
         </span>
-        <div className="flex gap-2">
-          {onClickEdit && (
-            <button onClick={onClickEdit} className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400">Editar</button>
-          )}
-          {onClickDelete && (
-            <button onClick={onClickDelete} className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400">Excluir</button>
-          )}
-        </div>
+        {treino.tag && (
+          <span
+            style={{
+              background: treino.tag.color + '33',
+              color: treino.tag.color,
+              borderRadius: '6px',
+              padding: '3px 10px',
+              fontSize: '11px',
+              fontWeight: 600,
+            }}
+          >
+            {treino.tag.name}
+          </span>
+        )}
+      </div>
+
+      {/* Título e descrição */}
+      <div>
+        <p style={{ color: '#fff', fontSize: '15px', fontWeight: 700, margin: 0, lineHeight: 1.3 }}>
+          {treino.title}
+        </p>
+        {treino.description && (
+          <p
+            style={{
+              color: '#888',
+              fontSize: '12px',
+              margin: '4px 0 0',
+              lineHeight: 1.5,
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {treino.description}
+          </p>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+        <StatCell label="Distância" value={formatDistance(treino.distance_m)} />
+        <StatCell label="Duração" value={treino.duration_minutes ? `${treino.duration_minutes} min` : '—'} />
+        <StatCell label="Pace alvo" value={formatPace(treino.target_pace_seconds_per_km)} />
+        <StatCell label="Séries" value={treino.sets ? String(treino.sets) : '1'} />
+      </div>
+
+      {/* Ações */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          gap: '16px',
+          borderTop: '1px solid #2a2a2a',
+          paddingTop: '12px',
+        }}
+      >
+        {onClickEdit && (
+          <button
+            onClick={onClickEdit}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#aaa',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            Editar
+          </button>
+        )}
+        {onClickDelete && (
+          <button
+            onClick={onClickDelete}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#ff6b6b',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            Excluir
+          </button>
+        )}
       </div>
     </div>
-  );
+  )
+}
+
+function StatCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ background: '#111', borderRadius: '8px', padding: '10px 12px' }}>
+      <p style={{ color: '#555', fontSize: '11px', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+        {label}
+      </p>
+      <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600, margin: 0 }}>{value}</p>
+    </div>
+  )
 }
