@@ -61,6 +61,7 @@ Somos um **time de 3**:
 ### O que foi feito em 2026-06-01
 - **Refinamento visual de `/admin/treinos`** (Claude Code): convertido de Tailwind/light para inline styles dark; pills de tipo coloridas por categoria; `TreinoFormPanel` com dark theme e fix de lint (`as any` → `TrainingType`, padrão `async load()`); fix TS pré-existente no `AdminSidebar`. tsc + build + lint: 0 erros.
 - **Chat Direto Admin ↔ Aluno** (Antigravity): Tabela `messages` criada com RLS e tempo real; `useChat.ts` hook com subscription; `AdminChatPanel` SidePanel elegante usando glassmorphism e framer-motion; Aba Chat em `AlunoDashboard` com UI mobile-first premium (balões coloridos, soft delete, auto scroll).
+- **Fix `<Toaster>` duplicado** (Claude Code): `AdminAlunoDetail` renderizava Toaster local em conflito com o global em `App.tsx`. Removido — eliminava toasts duplicados. tsc + lint: 0 erros.
 
 ### Próximo passo
 **Painel Admin Fase 3:** Progresso e Perfil do Aluno (`/aluno/progresso`, `/aluno/perfil`).

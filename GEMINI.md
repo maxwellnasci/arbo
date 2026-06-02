@@ -89,6 +89,7 @@ strava_activities  -- atividades importadas do Strava
 groups            -- turmas: name, goal, frequency, plan_type, starts_at, is_active
 group_plans       -- planos de ciclo por turma (group_id, starts_at, notes, created_by, released_through_week smallint DEFAULT 0 — 0=bloqueado, 1–4=semanas liberadas até N)
 group_plan_trainings -- pivot: week_number (1–4) × day_of_week (1–6) × training_id
+messages          -- chat admin↔aluno: student_id, sender_id, admin_id, content, deleted_by_student, deleted_by_admin, read_at
 ```
 
 #### Convenções de schema
@@ -98,7 +99,7 @@ group_plan_trainings -- pivot: week_number (1–4) × day_of_week (1–6) × tra
 - Trigger `on_auth_user_role_set` → copia `role` de `user_metadata` → `app_metadata` no INSERT (segurança: impede usuário de injetar próprio role)
 
 ### Segurança e RLS
-- RLS habilitado em todas as 11 tabelas
+- RLS habilitado em todas as tabelas
 - Role admin em `app_metadata.role = 'admin'` (NÃO em `user_metadata`)
 - Função `private.is_admin()` — schema privado, SECURITY DEFINER
 - Policies usam `(SELECT auth.uid())` e `(SELECT private.is_admin())` para evitar re-avaliação por linha
@@ -124,6 +125,7 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `groups` | SELECT, INSERT, UPDATE, DELETE |
 | `group_plans` | SELECT, INSERT, UPDATE, DELETE |
 | `group_plan_trainings` | SELECT, INSERT, UPDATE, DELETE |
+| `messages` | SELECT, INSERT, UPDATE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy RLS correta.
 
@@ -284,6 +286,7 @@ npx supabase login
 - Task 12: `/admin/treinos` — biblioteca de treinos CRUD implementada ✅
 - Task 13: `/admin/treinos` — visual refinado: dark inline styles, pills de tipo coloridas ✅
 - Task 14: Chat Admin ↔ Aluno implementado com UI Premium, framer-motion e banco Realtime ✅
+- Task 15: Fix `<Toaster>` duplicado em `AdminAlunoDetail` — Claude Code ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-01)
 
@@ -338,11 +341,18 @@ npx supabase login
 - `AdminTreinos.tsx` — removidas classes Tailwind; botão `+ Novo Treino` em `#E8521A`; busca dark; grid `auto-fill 260px`
 - `AdminSidebar.tsx` — fix TS pré-existente: `disabled?: boolean` adicionado ao tipo dos links
 
+**Chat Admin ↔ Aluno (AntiGravity + fix Claude Code):**
+- Schema: `messages` (student_id, sender_id, admin_id, content, deleted_by_student, deleted_by_admin, read_at) com RLS + Realtime
+- `useChat.ts` — fetch + realtime subscription via supabase channel, soft delete
+- `AdminChatPanel.tsx` + CSS Modules — painel lateral framer-motion, integrado em `/admin/alunos/:id`
+- `AlunoChat.tsx` + CSS Modules — view full page, aba Chat no BottomNav de `/aluno`
+- Fix: `<Toaster>` duplicado removido de `AdminAlunoDetail` (Claude Code)
+
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-01)
 
 ### Próximo Passo
-Painel Admin Fase 3: Progresso e Perfil do aluno.
+Aba Progresso (`/aluno/progresso`) e Aba Perfil (`/aluno/perfil`).
 
 ## Roadmap de Telas
 
@@ -361,20 +371,21 @@ Painel Admin Fase 3: Progresso e Perfil do aluno.
 | Painel Admin — Turmas (detalhe) | `/admin/turmas/:id` | ✅ |
 | Painel Admin — Perfil Aluno | `/admin/alunos/:id` | ✅ |
 | Painel Admin — Treinos | `/admin/treinos` | ✅ |
+| Chat Admin → Aluno | panel em `/admin/alunos/:id` | ✅ |
+| Chat Aluno → Admin | aba em `/aluno` | ✅ |
 
 ### Pendentes
 
 **Painel Admin — Fase 2**
 - ~~Sistema de etiquetas personalizadas~~ ✅
 - ~~Controle de liberação do plano~~ ✅
-- Chat admin ↔ aluno
+- ~~Chat admin ↔ aluno~~ ✅
 - Notificações de PR no painel
 - Schema pendente: tabela `invites`
 
 **Painel Admin — Fase 3**
 - ~~`/admin/treinos` — biblioteca de treinos (CRUD) + visual refinado~~ ✅
-- ~~Modal de mensagem direta ao aluno~~ ✅
-- ~~Schema: tabela `messages`~~ ✅
+- ~~Chat direto admin ↔ aluno + schema `messages`~~ ✅
 
 **Bottom Nav — Progresso (`/aluno/progresso`)**
 - Histórico de check-ins por semana
@@ -390,6 +401,6 @@ Painel Admin Fase 3: Progresso e Perfil do aluno.
 3. ~~`/admin/turmas` lista~~ ✅
 4. ~~`/admin/turmas/:id` — grid plano mensal~~ ✅
 5. ~~`/admin/alunos/:id` — perfil do aluno~~ ✅
-6. Painel Admin Fase 3 (treinos ✅ + mensagem ✅)
+6. ~~Painel Admin Fase 3 (treinos ✅ + mensagem ✅)~~ ✅
 7. Aba Progresso
 8. Aba Perfil

@@ -75,7 +75,7 @@ npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/da
 
 ### Banco de dados (Supabase — project: `jhfkflnixzivuichmkie`)
 
-**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `groups`, `group_plans`, `group_plan_trainings`
+**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `groups`, `group_plans`, `group_plan_trainings`, `messages`
 
 **Enums:** `training_type` · `distance_category` · `user_level`
 
@@ -114,6 +114,7 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `group_plans` | SELECT, INSERT, UPDATE, DELETE |
 | `group_plan_trainings` | SELECT, INSERT, UPDATE, DELETE |
 | `tags` | SELECT, INSERT, UPDATE, DELETE |
+| `messages` | SELECT, INSERT, UPDATE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy correta.
 
@@ -339,8 +340,11 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 **Implementação do Chat Admin ↔ Aluno (AntiGravity):**
 - Schema: Tabela `messages` criada (id, student_id, admin_id, sender_id, content, deleted_by_student, deleted_by_admin, read_at) com RLS ativada e policies restritas por `role`. Realtime ativado.
 - Hook `useChat.ts` — fetch, realtime subscription com supabase channel, soft delete. Bypass no eslint para initial fetch.
-- UI Admin: `AdminChatPanel.tsx` — Painel lateral com glassmorphism animado via framer-motion, integrado ao perfil do aluno.
-- UI Aluno: `AlunoChat.tsx` — View full page mobile-first. Aba Chat adicionada no `BottomNav`.
+- UI Admin: `AdminChatPanel.tsx` + `AdminChatPanel.module.css` — Painel lateral framer-motion com glassmorphism, integrado ao perfil do aluno via botão "Mensagem".
+- UI Aluno: `AlunoChat.tsx` + `AlunoChat.module.css` — View full page mobile-first, balões coloridos, soft delete. Aba Chat adicionada no `BottomNav` de `AlunoDashboard`.
+
+**Fix (Claude Code — revisão):**
+- `AdminAlunoDetail.tsx` — `<Toaster>` duplicado removido; `App.tsx` já possui o global. Eliminava toasts duplicados.
 
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-01)
@@ -365,19 +369,21 @@ Painel Admin Fase 3: Progresso do aluno (`/aluno/progresso`) e Perfil (`/aluno/p
 | Painel Admin — Turmas (detalhe) | `/admin/turmas/:id` | ✅ |
 | Painel Admin — Perfil Aluno | `/admin/alunos/:id` | ✅ |
 | Painel Admin — Treinos | `/admin/treinos` | ✅ |
+| Chat Admin → Aluno | panel em `/admin/alunos/:id` | ✅ |
+| Chat Aluno → Admin | aba em `/aluno` | ✅ |
 
 ### Pendentes
 
 **Painel Admin — Fase 2**
 - ~~Sistema de etiquetas personalizadas~~ ✅
 - ~~Controle de liberação do plano~~ ✅
-- Chat admin ↔ aluno
+- ~~Chat admin ↔ aluno~~ ✅
 - Notificações de PR no painel
 - Schema pendente: tabela `invites`
 
 **Painel Admin — Fase 3**
 - ~~`/admin/treinos` — biblioteca de treinos (CRUD) + visual refinado~~ ✅
-- ~~Modal de mensagem direta ao aluno~~ ✅
+- ~~Modal de mensagem direta ao aluno + aba chat aluno~~ ✅
 - ~~Schema: tabela `messages`~~ ✅
 
 **Bottom Nav — Progresso (`/aluno/progresso`)**
@@ -397,6 +403,6 @@ Painel Admin Fase 3: Progresso do aluno (`/aluno/progresso`) e Perfil (`/aluno/p
 3. ~~`/admin/turmas` lista~~ ✅
 4. ~~`/admin/turmas/:id` — grid plano mensal~~ ✅
 5. ~~`/admin/alunos/:id` — perfil do aluno~~ ✅
-6. Painel Admin Fase 3 (treinos ✅ + mensagem)
+6. ~~Painel Admin Fase 3 (treinos ✅ + mensagem ✅)~~ ✅
 7. Aba Progresso
 8. Aba Perfil

@@ -8,7 +8,7 @@
 
 | Área | Status |
 |------|--------|
-| Schema + RLS | ✅ 15 tabelas, enums, triggers, policies, GRANTs |
+| Schema + RLS | ✅ 16 tabelas, enums, triggers, policies, GRANTs |
 | Auth stack | ✅ AuthContext, rotas protegidas por role, convite via Edge Function |
 | Dashboard do Aluno `/aluno` | ✅ Dados reais, redesign premium (Bebas Neue, glow, bottom sheet, skeleton, PR tracking) |
 | Painel Admin Fase 1 | ✅ AdminLayout, AdminHome, AdminAlunos, AdminFeedbacks, AdminConvites |
@@ -208,4 +208,4 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 ---
 
 *Documento gerado com base nas respostas do professor e alinhamento de produto.*
-*Atualizado em 2026-05-30 com progresso da sessão.*
+*Atualizado em 2026-06-01 com chat implementado e lint zerado.*
