@@ -115,6 +115,16 @@ Após cada sessão de trabalho, **atualizar os .md** com o que foi feito. Isso m
 
 ---
 
+## 🎨 Comandos de Qualidade Visual
+
+Utilize os comandos abaixo para acionar a revisão e melhoria visual pelo AntiGravity (baseado nas diretrizes modernas ativadas no ambiente):
+
+- *"Faça uma auditoria visual e de design system na tela X"*
+- *"Revise a qualidade do CSS no componente Y seguindo práticas modernas"*
+- *"Aplique efeito WOW na tela X — micro-animações, hover effects, paleta premium"*
+
+---
+
 ## 🔍 Melhorias Identificadas pelo Antigravity (2026-05-31)
 
 > Seção mantida pelo Antigravity. Cada melhoria identificada fica documentada aqui para o time avaliar e implementar no momento certo. O Claude Code pode ler esta seção e ajudar a priorizar ou implementar.
