@@ -269,7 +269,7 @@ npx supabase login
 
 **Project ID:** `jhfkflnixzivuichmkie`
 
-## Estado Atual (2026-05-31)
+## Estado Atual (2026-06-01)
 
 ### Progresso geral
 - Tasks 1–3: Schema, RLS, Auth stack ✅
@@ -279,8 +279,12 @@ npx supabase login
 - Task 7: Painel Admin — Fase 2 schema + `/admin/turmas` ✅
 - Task 8: `/admin/turmas/:id` — rota, wiring, fallback aluno, build ✅
 - Task 9: `/admin/alunos/:id` — perfil do aluno, hook, CSS, lint zero ✅
+- Task 10: Sistema de Etiquetas — tabela `tags`, pills coloridas, color picker inline ✅
+- Task 11: Controle de Liberação — `released_through_week`, chips admin, `LockedScreen` aluno ✅
+- Task 12: `/admin/treinos` — biblioteca de treinos CRUD implementada ✅
+- Task 13: `/admin/treinos` — visual refinado: dark inline styles, pills de tipo coloridas ✅
 
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-05-31)
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-01)
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan`: join N→1 corrigido (`wpt.trainings[0]` → `wpt.trainings`)
@@ -325,8 +329,19 @@ npx supabase login
 - **Controle de Liberação do Plano**: `released_through_week smallint DEFAULT 0` em `group_plans`; `releaseThrough()` em `useGroupPlanMutations`; lock check em `useWeeklyPlan` (`isLocked`, `lockedWeekNumber`, `lastWeekSummary`); chips S1–S4 + banner admin; `LockedScreen` no AlunoDashboard; `<Toaster />` adicionado ao `App.tsx`.
 - **Biblioteca de Treinos**: `/admin/treinos` — biblioteca de treinos implementada via colaboração Gemini + DeepSeek V4 Pro como subagente ✅
 
+### O que foi feito em 2026-06-01
+
+**Refinamento visual de `/admin/treinos` (Claude Code):**
+- `TreinoCard.tsx` — reescrito com inline styles dark: fundo `#1c1c1e`, pill de tipo colorida (corrida=#E8521A, hiit=#EF4444, recovery=#22C55E, forca=#3B82F6, mobilidade=#A855F7), pill de etiqueta com cor do banco, stats grid sobre `#111`
+- `TreinoFormPanel.tsx` — convertido de Tailwind para inline styles dark; `as any` → `TrainingType`; `resetForm` movida antes do `useEffect`; setState via `async function load()` (padrão CLAUDE.md)
+- `AdminTreinos.tsx` — removidas classes Tailwind; botão `+ Novo Treino` em `#E8521A`; busca dark; grid `auto-fill 260px`
+- `AdminSidebar.tsx` — fix TS pré-existente: `disabled?: boolean` adicionado ao tipo dos links
+
+**Repositório:** https://github.com/maxwellnasci/arbo  
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-01)
+
 ### Próximo Passo
-Painel Admin Fase 3: Chat admin ↔ aluno. O visual do `/admin/treinos` precisa de refinamento pelo Claude.
+Painel Admin Fase 3: Chat admin ↔ aluno (schema: tabela `messages`).
 
 ## Roadmap de Telas
 
@@ -344,6 +359,7 @@ Painel Admin Fase 3: Chat admin ↔ aluno. O visual do `/admin/treinos` precisa 
 | Painel Admin — Turmas (lista) | `/admin/turmas` | ✅ |
 | Painel Admin — Turmas (detalhe) | `/admin/turmas/:id` | ✅ |
 | Painel Admin — Perfil Aluno | `/admin/alunos/:id` | ✅ |
+| Painel Admin — Treinos | `/admin/treinos` | ✅ |
 
 ### Pendentes
 
@@ -355,7 +371,7 @@ Painel Admin Fase 3: Chat admin ↔ aluno. O visual do `/admin/treinos` precisa 
 - Schema pendente: tabela `invites`
 
 **Painel Admin — Fase 3**
-- ~~`/admin/treinos` — biblioteca de treinos (CRUD)~~ ✅ (Implementado com Gemini + DeepSeek, visual requer refinamento pelo Claude)
+- ~~`/admin/treinos` — biblioteca de treinos (CRUD) + visual refinado~~ ✅
 - Modal de mensagem direta ao aluno
 - Schema: tabela `messages`
 

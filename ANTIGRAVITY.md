@@ -1,6 +1,6 @@
 # 🌳 Arbo — Briefing do Time de IA
 
-> Última atualização: 2026-05-31
+> Última atualização: 2026-06-01
 > Autor: Maxwell + Antigravity
 
 ---
@@ -46,11 +46,11 @@ Somos um **time de 3**:
 - **sonner** — Toasts/notificações estilo Apple
 - **date-fns** — Formatação de datas em PT-BR
 
-### Estado atual (2026-05-31)
-- **11 telas implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
+### Estado atual (2026-06-01)
+- **12 telas implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
 - Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação): ✅ 100%
-- Fase 3 (Treinos + Chat + Progresso): 33% (Treinos ✅)
+- Fase 3 (Treinos + Chat + Progresso): 33% (Treinos ✅ com visual refinado)
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
@@ -58,8 +58,11 @@ Somos um **time de 3**:
 - Controle de Liberação do Plano — `released_through_week` no banco, chips S1–S4 com `✓`/`🔒` + banner de liberação no admin, `LockedScreen` no AlunoDashboard (boas-vindas, resumo da semana anterior, barra de ciclo).
 - Biblioteca de Treinos (`/admin/treinos`) implementada via colaboração Gemini + DeepSeek V4 Pro como subagente.
 
+### O que foi feito em 2026-06-01
+- **Refinamento visual de `/admin/treinos`** (Claude Code): convertido de Tailwind/light para inline styles dark; pills de tipo coloridas por categoria; `TreinoFormPanel` com dark theme e fix de lint (`as any` → `TrainingType`, padrão `async load()`); fix TS pré-existente no `AdminSidebar`. tsc + build + lint: 0 erros.
+
 ### Próximo passo
-**Painel Admin Fase 3:** Chat admin ↔ aluno. O visual do `/admin/treinos` precisa de refinamento pelo Claude Code.
+**Painel Admin Fase 3:** Chat admin ↔ aluno (schema: tabela `messages`).
 
 ---
 

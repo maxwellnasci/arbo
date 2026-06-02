@@ -1,10 +1,10 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-05-31 (sessão 4)
+> Gerado em 2026-05-29 | Atualizado em 2026-06-01 (sessão 5)
 
 ---
 
-## Estado atual (2026-05-31)
+## Estado atual (2026-06-01)
 
 | Área | Status |
 |------|--------|
@@ -18,8 +18,8 @@
 | `/admin/alunos/:id` | ✅ Perfil completo do aluno, histórico, PRs e design premium |
 | Sistema de Etiquetas | ✅ Tabela `tags`, pills coloridas nos cards, form inline com 8 cores |
 | Controle de Liberação | ✅ `released_through_week`, chips admin `✓`/`🔒`, `LockedScreen` no aluno |
-| `/admin/treinos` | ✅ Biblioteca de treinos — CRUD implementado via Gemini + DeepSeek |
-| **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-05-31) |
+| `/admin/treinos` | ✅ CRUD completo + visual dark refinado (pills de tipo, inline styles, padrão do projeto) |
+| **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-01) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 
@@ -147,12 +147,12 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 
 ---
 
-## Fase 3 — Pendente
+## Fase 3 — Em andamento
 
 | Tela | Descrição |
 |------|-----------|
-| `/admin/treinos` | ~~Biblioteca de treinos — CRUD completo~~ ✅ (Visual requer refino do Claude) |
-| Mensagem direta | Campo já na Fase 2, evolução na Fase 3 |
+| `/admin/treinos` | ~~Biblioteca de treinos — CRUD completo + visual dark refinado~~ ✅ |
+| Mensagem direta | Chat admin ↔ aluno — schema: tabela `messages` |
 | `/aluno/progresso` | Histórico, recordes, gráfico de pace |
 | `/aluno/perfil` | Dados pessoais, Strava, logout |
 
@@ -199,7 +199,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 4. ✅ Sistema de etiquetas personalizadas
 5. ✅ Controle de liberação do plano (por semana ou tudo de uma vez)
 6. ✅ `/admin/alunos/:id` — perfil do aluno
-7. ✅ `/admin/treinos` — biblioteca de treinos
+7. ✅ `/admin/treinos` — biblioteca de treinos CRUD + visual dark refinado (Claude Code, 2026-06-01)
 8. Chat admin ↔ aluno
 9. Notificações de PR no painel
 ```
