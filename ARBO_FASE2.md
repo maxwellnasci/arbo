@@ -1,6 +1,6 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-06-01 (sessão 5)
+> Gerado em 2026-05-29 | Atualizado em 2026-06-02 (sessão 6)
 
 ---
 
@@ -20,7 +20,8 @@
 | Controle de Liberação | ✅ `released_through_week`, chips admin `✓`/`🔒`, `LockedScreen` no aluno |
 | `/admin/treinos` | ✅ CRUD completo + visual dark refinado (pills de tipo, inline styles, padrão do projeto) |
 | Chat Admin ↔ Aluno | ✅ Tabela `messages` (RLS + Realtime), SidePanel Admin, Aba Chat no Aluno, Framer Motion |
-| **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-01) |
+| `/aluno/progresso` — Aba Progresso | ✅ `AlunoProgresso.tsx`, `useProgresso.ts`, gráfico recharts 2.x, recordes pessoais, histórico, streak |
+| **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-02) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 
@@ -154,7 +155,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 |------|-----------|
 | `/admin/treinos` | ~~Biblioteca de treinos — CRUD completo + visual dark refinado~~ ✅ |
 | Mensagem direta | ~~Chat admin ↔ aluno — schema: tabela `messages`~~ ✅ |
-| `/aluno/progresso` | Histórico, recordes, gráfico de pace |
+| ~~`/aluno/progresso`~~ | ~~Histórico, recordes, gráfico de pace~~ ✅ |
 | `/aluno/perfil` | Dados pessoais, Strava, logout |
 
 ---
@@ -163,7 +164,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 
 | Tela | Descrição |
 |------|-----------|
-| `/aluno/progresso` | Histórico de check-ins, recordes pessoais (5km, 10km...), gráfico de evolução de pace |
+| ~~`/aluno/progresso`~~ | ~~Histórico de check-ins, recordes pessoais (5km, 10km...), gráfico de evolução de pace~~ ✅ |
 | `/aluno/perfil` | Dados pessoais, conexão Strava, logout |
 
 ---
@@ -202,7 +203,8 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 6. ✅ `/admin/alunos/:id` — perfil do aluno
 7. ✅ `/admin/treinos` — biblioteca de treinos CRUD + visual dark refinado (Claude Code, 2026-06-01)
 8. ✅ Chat admin ↔ aluno (Tabela messages, RLS, interface premium - AntiGravity)
-9. Notificações de PR no painel
+9. ~~`/aluno/progresso` — Aba Progresso (histórico, recordes, gráfico recharts, streak)~~ ✅
+10. Notificações de PR no painel
 ```
 
 ---

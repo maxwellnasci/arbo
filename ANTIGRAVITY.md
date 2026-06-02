@@ -1,6 +1,6 @@
 # 🌳 Arbo — Briefing do Time de IA
 
-> Última atualização: 2026-06-01
+> Última atualização: 2026-06-02
 > Autor: Maxwell + Antigravity
 
 ---
@@ -47,10 +47,10 @@ Somos um **time de 3**:
 - **date-fns** — Formatação de datas em PT-BR
 
 ### Estado atual (2026-06-01)
-- **12 telas implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
+- **15 telas implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
 - Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação): ✅ 100%
-- Fase 3 (Treinos + Chat + Progresso): 66% (Treinos ✅, Chat ✅)
+- Fase 3 (Treinos + Chat + Progresso): 75% (Treinos ✅, Chat ✅, Progresso ✅ — falta Perfil)
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
@@ -63,8 +63,12 @@ Somos um **time de 3**:
 - **Chat Direto Admin ↔ Aluno** (Antigravity): Tabela `messages` criada com RLS e tempo real; `useChat.ts` hook com subscription; `AdminChatPanel` SidePanel elegante usando glassmorphism e framer-motion; Aba Chat em `AlunoDashboard` com UI mobile-first premium (balões coloridos, soft delete, auto scroll).
 - **Fix `<Toaster>` duplicado** (Claude Code): `AdminAlunoDetail` renderizava Toaster local em conflito com o global em `App.tsx`. Removido — eliminava toasts duplicados. tsc + lint: 0 erros.
 
+### O que foi feito em 2026-06-02
+- **Aba Progresso `/aluno/progresso`** (Claude Code): `useProgresso.ts` — queries paralelas de recordes, histórico de check-ins, cálculo de pace médio por mês e streak semanal. `AlunoProgresso.tsx` — badge de streak, grid de recordes (5km/10km/21km/42km), gráfico LineChart recharts com CustomTooltip formatado, histórico recente. CSS Modules dark. Integrado ao BottomNav do AlunoDashboard.
+- **Fix recharts × Vite** (Claude Code): downgrade 3.8.1 → 2.15.4 — versão 3.x usa `victory-vendor` (CJS) que causa `require_isUnsafeProperty` com Vite; 2.x é ESM nativa sem workarounds. `vite.config.ts` limpo.
+
 ### Próximo passo
-**Painel Admin Fase 3:** Progresso e Perfil do Aluno (`/aluno/progresso`, `/aluno/perfil`).
+**Aba Perfil do Aluno** (`/aluno/perfil`) — dados pessoais, conexão Strava, logout.
 
 ---
 

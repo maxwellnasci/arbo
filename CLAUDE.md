@@ -44,6 +44,7 @@ npx supabase login
 - **Backend:** Supabase — PostgreSQL, Auth, Storage, Edge Functions
 - **Automações:** n8n (integração Strava, webhooks, notificações)
 - **Deploy:** Vercel (PWA, possível migração futura para React Native/Expo)
+- **Gráficos:** recharts `^2.x` — **não usar 3.x**: incompatível com Vite (erro `require_isUnsafeProperty` causado por `victory-vendor` CJS)
 
 ## Arquitetura
 
@@ -255,8 +256,11 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 12:** `/admin/treinos` — biblioteca de treinos implementada via colaboração Gemini + DeepSeek V4 Pro como subagente ✅
 - **Task 13:** `/admin/treinos` — visual refinado pelo Claude Code: padrão dark inline styles, pills de tipo coloridas, lint + TS zero erros ✅
 - **Task 14:** `/admin/alunos/:id` e `/aluno` — Chat Direto admin ↔ aluno com interface premium (Framer Motion, Glassmorphism, tempo real via Supabase) ✅
+- **Task 15:** Fix `<Toaster>` duplicado em `AdminAlunoDetail` ✅
+- **Task 16:** `/aluno/progresso` — `AlunoProgresso.tsx`, `useProgresso.ts`, gráfico recharts, recordes pessoais, histórico de check-ins, streak ✅
+- **Task 17:** Fix recharts 3.x → downgrade 2.15.4 (erro `require_isUnsafeProperty` com Vite) ✅
 
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-01)
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-02)
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan.ts` — join N→1 retorna objeto, não array: `wpt.trainings[0]` → `wpt.trainings`
@@ -349,8 +353,23 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-01)
 
+### O que foi feito em 2026-06-02
+
+**Aba Progresso — `/aluno/progresso` (Claude Code):**
+- `src/hooks/useProgresso.ts` — queries paralelas: recordes pessoais por categoria (`records`), histórico de check-ins com join `trainings`, cálculo de `paceHistory` (pace médio agrupado por mês), cálculo de `streak` (semanas consecutivas com check-in)
+- `src/pages/aluno/AlunoProgresso.tsx` — badge de streak, grid de recordes pessoais (5km, 10km, 21km, 42km), gráfico `LineChart` com `CustomTooltip` formatado em min:seg/km, lista de histórico recente de check-ins
+- `src/pages/aluno/AlunoProgresso.module.css` — CSS Modules dark mode
+- `src/pages/aluno/AlunoDashboard.tsx` — aba `progresso` integrada ao BottomNav; renderiza `<AlunoProgresso studentId={user.id} />`
+
+**Fix de compatibilidade recharts × Vite:**
+- Downgrade `recharts` 3.8.1 → **2.15.4**: versão 3.x usa `victory-vendor` (CJS) que o Vite não consegue pre-bundlar corretamente → `require_isUnsafeProperty`. Versão 2.x é ESM nativa.
+- `vite.config.ts` — `optimizeDeps.include: ['recharts']` removido (não efetivo e desnecessário com 2.x)
+
+**Repositório:** https://github.com/maxwellnasci/arbo  
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-02)
+
 ### Próximo passo
-Painel Admin Fase 3: Progresso do aluno (`/aluno/progresso`) e Perfil (`/aluno/perfil`).
+Aba Perfil (`/aluno/perfil`).
 
 ## Roadmap de telas
 
@@ -371,6 +390,7 @@ Painel Admin Fase 3: Progresso do aluno (`/aluno/progresso`) e Perfil (`/aluno/p
 | Painel Admin — Treinos | `/admin/treinos` | ✅ |
 | Chat Admin → Aluno | panel em `/admin/alunos/:id` | ✅ |
 | Chat Aluno → Admin | aba em `/aluno` | ✅ |
+| Progresso do Aluno | `/aluno/progresso` | ✅ |
 
 ### Pendentes
 
@@ -386,11 +406,7 @@ Painel Admin Fase 3: Progresso do aluno (`/aluno/progresso`) e Perfil (`/aluno/p
 - ~~Modal de mensagem direta ao aluno + aba chat aluno~~ ✅
 - ~~Schema: tabela `messages`~~ ✅
 
-**Bottom Nav — Progresso (`/aluno/progresso`)**
-- Histórico de check-ins por semana
-- Recordes pessoais (5km, 10km, 21km, 42km)
-- Gráfico de evolução de pace ao longo do tempo
-- Streak de consistência semanal
+~~**Bottom Nav — Progresso (`/aluno/progresso`)** — histórico, recordes, gráfico de pace, streak~~ ✅
 
 **Bottom Nav — Perfil (`/aluno/perfil`)**
 - Dados do aluno (nome, nível, foto)
@@ -404,5 +420,5 @@ Painel Admin Fase 3: Progresso do aluno (`/aluno/progresso`) e Perfil (`/aluno/p
 4. ~~`/admin/turmas/:id` — grid plano mensal~~ ✅
 5. ~~`/admin/alunos/:id` — perfil do aluno~~ ✅
 6. ~~Painel Admin Fase 3 (treinos ✅ + mensagem ✅)~~ ✅
-7. Aba Progresso
+7. ~~Aba Progresso~~ ✅
 8. Aba Perfil

@@ -271,7 +271,7 @@ npx supabase login
 
 **Project ID:** `jhfkflnixzivuichmkie`
 
-## Estado Atual (2026-06-01)
+## Estado Atual (2026-06-02)
 
 ### Progresso geral
 - Tasks 1–3: Schema, RLS, Auth stack ✅
@@ -287,8 +287,10 @@ npx supabase login
 - Task 13: `/admin/treinos` — visual refinado: dark inline styles, pills de tipo coloridas ✅
 - Task 14: Chat Admin ↔ Aluno implementado com UI Premium, framer-motion e banco Realtime ✅
 - Task 15: Fix `<Toaster>` duplicado em `AdminAlunoDetail` — Claude Code ✅
+- Task 16: `/aluno/progresso` — `AlunoProgresso.tsx`, `useProgresso.ts`, gráfico recharts, recordes e histórico ✅
+- Task 17: Fix recharts 3.x → downgrade 2.15.4 (compatibilidade Vite) ✅
 
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-01)
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-02)
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan`: join N→1 corrigido (`wpt.trainings[0]` → `wpt.trainings`)
@@ -351,8 +353,23 @@ npx supabase login
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-01)
 
+### O que foi feito em 2026-06-02
+
+**Aba Progresso — `/aluno/progresso` (Claude Code):**
+- `src/hooks/useProgresso.ts` — queries paralelas: recordes pessoais, histórico de check-ins com join `trainings`, `paceHistory` (pace médio por mês), `streak` (semanas consecutivas)
+- `src/pages/aluno/AlunoProgresso.tsx` — badge de streak, grid de recordes (5km, 10km, 21km, 42km), gráfico LineChart com CustomTooltip em min:seg/km, histórico recente
+- `src/pages/aluno/AlunoProgresso.module.css` — CSS Modules dark mode
+- `src/pages/aluno/AlunoDashboard.tsx` — aba `progresso` integrada ao BottomNav
+
+**Fix compatibilidade recharts × Vite:**
+- Downgrade `recharts` 3.8.1 → **2.15.4** — versão 3.x usa `victory-vendor` (CJS) que causa `require_isUnsafeProperty`; 2.x é ESM nativa
+- `vite.config.ts` — `optimizeDeps` removido
+
+**Repositório:** https://github.com/maxwellnasci/arbo  
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-02)
+
 ### Próximo Passo
-Aba Progresso (`/aluno/progresso`) e Aba Perfil (`/aluno/perfil`).
+Aba Perfil (`/aluno/perfil`).
 
 ## Roadmap de Telas
 
@@ -373,6 +390,7 @@ Aba Progresso (`/aluno/progresso`) e Aba Perfil (`/aluno/perfil`).
 | Painel Admin — Treinos | `/admin/treinos` | ✅ |
 | Chat Admin → Aluno | panel em `/admin/alunos/:id` | ✅ |
 | Chat Aluno → Admin | aba em `/aluno` | ✅ |
+| Progresso do Aluno | `/aluno/progresso` | ✅ |
 
 ### Pendentes
 
@@ -387,10 +405,7 @@ Aba Progresso (`/aluno/progresso`) e Aba Perfil (`/aluno/perfil`).
 - ~~`/admin/treinos` — biblioteca de treinos (CRUD) + visual refinado~~ ✅
 - ~~Chat direto admin ↔ aluno + schema `messages`~~ ✅
 
-**Bottom Nav — Progresso (`/aluno/progresso`)**
-- Histórico de check-ins por semana
-- Recordes pessoais (5km, 10km, 21km, 42km)
-- Gráfico de evolução de pace
+~~**Bottom Nav — Progresso (`/aluno/progresso`)** — histórico, recordes, gráfico de pace, streak~~ ✅
 
 **Bottom Nav — Perfil (`/aluno/perfil`)**
 - Dados do aluno, Strava, logout
@@ -402,5 +417,5 @@ Aba Progresso (`/aluno/progresso`) e Aba Perfil (`/aluno/perfil`).
 4. ~~`/admin/turmas/:id` — grid plano mensal~~ ✅
 5. ~~`/admin/alunos/:id` — perfil do aluno~~ ✅
 6. ~~Painel Admin Fase 3 (treinos ✅ + mensagem ✅)~~ ✅
-7. Aba Progresso
+7. ~~Aba Progresso~~ ✅
 8. Aba Perfil
