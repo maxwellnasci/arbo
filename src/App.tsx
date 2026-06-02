@@ -14,6 +14,7 @@ import AdminConvites from './pages/admin/AdminConvites'
 import AdminTurmas from './pages/admin/AdminTurmas'
 import AdminTurmaDetail from './pages/admin/AdminTurmaDetail'
 import AdminAlunoDetail from './pages/admin/AdminAlunoDetail'
+import AdminTreinos from './pages/admin/AdminTreinos'
 import AlunoDashboard from './pages/aluno/AlunoDashboard'
 import AnamnesisForm from './pages/aluno/AnamnesisForm'
 
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
               { path: 'turmas', element: <AdminTurmas /> },
               { path: 'turmas/:id', element: <AdminTurmaDetail /> },
               { path: 'alunos/:id', element: <AdminAlunoDetail /> },
+              { path: 'treinos', element: <AdminTreinos /> },
             ]
           },
         ],

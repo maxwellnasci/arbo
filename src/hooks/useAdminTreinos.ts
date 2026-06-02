@@ -1,0 +1,68 @@
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
+import type { Training, Tag } from '../lib/types';
+
+export type TrainingWithTag = Training & {
+  tag: Tag | null;
+};
+
+export interface UseAdminTreinosReturn {
+  treinos: TrainingWithTag[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+}
+
+export function useAdminTreinos(): UseAdminTreinosReturn {
+  const [treinos, setTreinos] = useState<TrainingWithTag[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refetchFlag, setRefetchFlag] = useState<number>(0);
+
+  const refetch = useCallback(() => {
+    setRefetchFlag((prev) => prev + 1);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchTrainings() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const { data, error: fetchError } = await supabase
+          .from('trainings')
+          .select(`
+            *,
+            tag:tags(*)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (cancelled) return;
+
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        setTreinos((data as TrainingWithTag[]) || []);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Erro ao carregar treinos');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchTrainings();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [refetchFlag]);
+
+  return { treinos, loading, error, refetch };
+}

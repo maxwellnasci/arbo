@@ -323,9 +323,10 @@ npx supabase login
 - Lint zerado: padrão `async function load()` com flag `cancelled` em todos os hooks; `catch (e: unknown)`
 - **Sistema de Etiquetas Personalizadas**: Tabela `tags`, FK em `trainings`, tag pill colorida nos cards e criação/seleção inline com 8 cores. 100% completo.
 - **Controle de Liberação do Plano**: `released_through_week smallint DEFAULT 0` em `group_plans`; `releaseThrough()` em `useGroupPlanMutations`; lock check em `useWeeklyPlan` (`isLocked`, `lockedWeekNumber`, `lastWeekSummary`); chips S1–S4 + banner admin; `LockedScreen` no AlunoDashboard; `<Toaster />` adicionado ao `App.tsx`.
+- **Biblioteca de Treinos**: `/admin/treinos` — biblioteca de treinos implementada via colaboração Gemini + DeepSeek V4 Pro como subagente ✅
 
 ### Próximo Passo
-Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin ↔ aluno.
+Painel Admin Fase 3: Chat admin ↔ aluno. O visual do `/admin/treinos` precisa de refinamento pelo Claude.
 
 ## Roadmap de Telas
 
@@ -354,7 +355,7 @@ Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin
 - Schema pendente: tabela `invites`
 
 **Painel Admin — Fase 3**
-- `/admin/treinos` — biblioteca de treinos (CRUD)
+- ~~`/admin/treinos` — biblioteca de treinos (CRUD)~~ ✅ (Implementado com Gemini + DeepSeek, visual requer refinamento pelo Claude)
 - Modal de mensagem direta ao aluno
 - Schema: tabela `messages`
 
@@ -372,6 +373,6 @@ Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin
 3. ~~`/admin/turmas` lista~~ ✅
 4. ~~`/admin/turmas/:id` — grid plano mensal~~ ✅
 5. ~~`/admin/alunos/:id` — perfil do aluno~~ ✅
-6. Painel Admin Fase 3 (treinos + mensagem)
+6. Painel Admin Fase 3 (treinos ✅ + mensagem)
 7. Aba Progresso
 8. Aba Perfil

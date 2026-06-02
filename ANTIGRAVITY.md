@@ -50,15 +50,16 @@ Somos um **time de 3**:
 - **11 telas implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
 - Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação): ✅ 100%
-- Fase 3 (Treinos + Chat + Progresso): 0%
+- Fase 3 (Treinos + Chat + Progresso): 33% (Treinos ✅)
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
 - Sistema de Etiquetas Personalizadas (tabela `tags`, pills nos treinos, form inline com 8 cores). Lint zerado.
 - Controle de Liberação do Plano — `released_through_week` no banco, chips S1–S4 com `✓`/`🔒` + banner de liberação no admin, `LockedScreen` no AlunoDashboard (boas-vindas, resumo da semana anterior, barra de ciclo).
+- Biblioteca de Treinos (`/admin/treinos`) implementada via colaboração Gemini + DeepSeek V4 Pro como subagente.
 
 ### Próximo passo
-**Painel Admin Fase 3:** `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin ↔ aluno.
+**Painel Admin Fase 3:** Chat admin ↔ aluno. O visual do `/admin/treinos` precisa de refinamento pelo Claude Code.
 
 ---
 

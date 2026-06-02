@@ -18,6 +18,7 @@
 | `/admin/alunos/:id` | ✅ Perfil completo do aluno, histórico, PRs e design premium |
 | Sistema de Etiquetas | ✅ Tabela `tags`, pills coloridas nos cards, form inline com 8 cores |
 | Controle de Liberação | ✅ `released_through_week`, chips admin `✓`/`🔒`, `LockedScreen` no aluno |
+| `/admin/treinos` | ✅ Biblioteca de treinos — CRUD implementado via Gemini + DeepSeek |
 | **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-05-31) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
@@ -150,7 +151,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 
 | Tela | Descrição |
 |------|-----------|
-| `/admin/treinos` | Biblioteca de treinos — CRUD completo |
+| `/admin/treinos` | ~~Biblioteca de treinos — CRUD completo~~ ✅ (Visual requer refino do Claude) |
 | Mensagem direta | Campo já na Fase 2, evolução na Fase 3 |
 | `/aluno/progresso` | Histórico, recordes, gráfico de pace |
 | `/aluno/perfil` | Dados pessoais, Strava, logout |
@@ -197,9 +198,10 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 3. ✅ /admin/turmas/:id — grid plano mensal + toggle semana/mês
 4. ✅ Sistema de etiquetas personalizadas
 5. ✅ Controle de liberação do plano (por semana ou tudo de uma vez)
-6. ✅ /admin/alunos/:id — perfil do aluno
-7. Chat admin ↔ aluno
-8. Notificações de PR no painel
+6. ✅ `/admin/alunos/:id` — perfil do aluno
+7. ✅ `/admin/treinos` — biblioteca de treinos
+8. Chat admin ↔ aluno
+9. Notificações de PR no painel
 ```
 
 ---

@@ -251,6 +251,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 9:** `/admin/alunos/:id` — perfil do aluno, hook, CSS, lint zero ✅
 - **Task 10:** Sistema de Etiquetas — tabela `tags`, pills coloridas, color picker inline ✅
 - **Task 11:** Controle de Liberação — `released_through_week`, chips admin, `LockedScreen` aluno ✅
+- **Task 12:** `/admin/treinos` — biblioteca de treinos implementada via colaboração Gemini + DeepSeek V4 Pro como subagente ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-05-31)
 
@@ -324,7 +325,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅
 
 ### Próximo passo
-Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin ↔ aluno.
+Painel Admin Fase 3: Chat admin ↔ aluno. Visual do `/admin/treinos` precisa de refinamento pelo Claude Code.
 
 ## Roadmap de telas
 
@@ -353,7 +354,7 @@ Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin
 - Schema pendente: tabela `invites`
 
 **Painel Admin — Fase 3**
-- `/admin/treinos` — biblioteca de treinos (CRUD)
+- ~~`/admin/treinos` — biblioteca de treinos (CRUD)~~ ✅ (Implementado com Gemini + DeepSeek, visual requer refinamento pelo Claude)
 - Modal de mensagem direta ao aluno
 - Schema: tabela `messages`
 
@@ -374,6 +375,6 @@ Painel Admin Fase 3: `/admin/treinos` (biblioteca de treinos CRUD) ou Chat admin
 3. ~~`/admin/turmas` lista~~ ✅
 4. ~~`/admin/turmas/:id` — grid plano mensal~~ ✅
 5. ~~`/admin/alunos/:id` — perfil do aluno~~ ✅
-6. Painel Admin Fase 3 (treinos + mensagem)
+6. Painel Admin Fase 3 (treinos ✅ + mensagem)
 7. Aba Progresso
 8. Aba Perfil

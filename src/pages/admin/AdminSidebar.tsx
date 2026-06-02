@@ -11,7 +11,7 @@ export function AdminSidebar() {
     { to: '/admin', label: 'Início', exact: true },
     { to: '/admin/alunos', label: 'Alunos', exact: false },
     { to: '/admin/turmas', label: 'Turmas', exact: false },
-    { to: '/admin/treinos', label: 'Treinos (em breve)', disabled: true },
+    { to: '/admin/treinos', label: 'Treinos', exact: false },
     { to: '/admin/feedbacks', label: 'Feedbacks', exact: false },
     { to: '/admin/convites', label: 'Convites', exact: false },
   ]

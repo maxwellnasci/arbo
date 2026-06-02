@@ -1,0 +1,218 @@
+.login-page {
+  min-height: 100svh;
+  width: 100vw;
+  background: #111111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 390px;
+  background: #1c1c1e;
+  border-radius: 24px;
+  padding: 36px 28px 28px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Logo ── */
+.login-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.login-logo-img {
+  width: 210px;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.login-title {
+  font-size: 38px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  color: #ffffff;
+  margin: 0 0 10px;
+  font-family: 'Arial Black', 'Arial Bold', Arial, sans-serif;
+  line-height: 1;
+}
+
+.login-badge {
+  background: #e8521a;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  font-family: 'Arial Black', 'Arial Bold', Arial, sans-serif;
+}
+
+/* ── Form ── */
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.login-field label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #d0d0d0;
+}
+
+.login-field input {
+  background: #2a2a2a;
+  border: 1.5px solid #3a3a3a;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+  padding: 14px 16px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.login-field input::placeholder {
+  color: #4a4a4a;
+}
+
+.login-field input:focus {
+  border-color: #e8521a;
+}
+
+/* ── Botão Entrar ── */
+.login-button {
+  background: #e8521a;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 16px;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 4px;
+  transition: opacity 0.2s;
+  letter-spacing: 0.02em;
+}
+
+.login-button:hover {
+  opacity: 0.88;
+}
+
+.login-button:active {
+  opacity: 0.75;
+}
+
+/* ── Esqueci senha ── */
+.login-forgot {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 13px;
+  text-decoration: none;
+  margin-bottom: 22px;
+  transition: color 0.2s;
+  cursor: pointer;
+  padding: 0;
+}
+
+.login-forgot:hover {
+  color: #e8521a;
+}
+
+/* ── Divisor "ou" ── */
+.login-divider {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #555;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #333;
+}
+
+/* ── Botão Criar conta ── */
+.login-create {
+  background: transparent;
+  color: #ffffff;
+  border: 1.5px solid #444;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 15px;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom: 26px;
+  transition: border-color 0.2s;
+}
+
+.login-create:hover {
+  border-color: #e8521a;
+}
+
+/* ── Mensagens de feedback ── */
+.login-error {
+  color: #ff6b6b;
+  font-size: 13px;
+  text-align: center;
+  margin: 0;
+}
+
+.login-info {
+  color: #4caf50;
+  font-size: 13px;
+  text-align: center;
+  margin: 0;
+}
+
+/* ── Botão desabilitado ── */
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Termos ── */
+.login-terms {
+  font-size: 11px;
+  color: #555;
+  text-align: center;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.login-terms a {
+  color: #e8521a;
+  text-decoration: none;
+}
+
+.login-terms a:hover {
+  text-decoration: underline;
+}
