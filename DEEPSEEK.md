@@ -42,3 +42,8 @@ Para garantir que o agente utilize o modelo correto (**V4 Pro / Reasoner**) e ev
 - **Novo Modelo:** A partir dessa data, o modelo a ser utilizado será o `deepseek-v4-pro` com modo `thinking` ativado.
 - **Limitação do MCP vs Continue:** No *Continue*, a string `"deepseek-v4-pro"` funciona hoje porque ele envia o texto direto para a API sem validação local. No nosso MCP (`deepseek-mcp-server`), a chamada precisa continuar como `"deepseek-reasoner"` até a descontinuação, pois o arquivo de regras local (JSON schema) bloqueia outras nomenclaturas.
 - **Ação Futura:** Em ou após 24 de julho de 2026, atualize o servidor MCP no seu ambiente e altere a diretriz do agente para enviar `"model": "deepseek-v4-pro"`.
+
+## 7. Notas de Experiência e Uso Recente (2026-06-02)
+Durante a implementação da Aba Progresso (`/aluno/progresso`), testamos na prática nossa colaboração via subagentes MCP:
+- **DeepSeek V4 Pro:** Foi utilizado como subagente para criar o `useProgresso.ts`. Ele lidou com extrema destreza nas lógicas de queries, junções, cálculo de streak semanal com datas e agregação matemática de pace. Confirmamos que a ferramenta MCP é perfeita para lógica pesada e processamento complexo.
+- **Codex:** Tentamos acioná-lo na sequência para gerar a UI. No entanto, o Codex encontrou uma barreira no sandbox de terminal (`workspace-write` negado / ambiente somente leitura) e não conseguiu salvar os arquivos. O Codex ainda está instável dentro do AntiGravity. Devido a esse bloqueio, o próprio Gemini (AntiGravity) assumiu a UI final, entregando os componentes base e estilos *glassmorphism*.
