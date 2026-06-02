@@ -1,0 +1,205 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px;
+  padding-bottom: 90px;
+  background-color: #09090B;
+  min-height: 100%;
+  color: #fafafa;
+}
+
+.loadingState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  color: #E8521A;
+  font-weight: 600;
+  background-color: #09090B;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 28px;
+  letter-spacing: 1px;
+  margin: 0;
+  background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.streakBadge {
+  background: rgba(232, 82, 26, 0.15);
+  border: 1px solid rgba(232, 82, 26, 0.3);
+  color: #E8521A;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 10px rgba(232, 82, 26, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.recordsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.recordCard {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.recordCategory {
+  font-size: 14px;
+  color: #71717a;
+  font-weight: 600;
+}
+
+.recordTime {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fafafa;
+  font-variant-numeric: tabular-nums;
+}
+
+.recordEmpty {
+  font-size: 18px;
+  font-weight: 600;
+  color: #3f3f46;
+}
+
+.chartContainer {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 16px 16px 16px 0;
+  height: 220px;
+  backdrop-filter: blur(10px);
+}
+
+.tooltip {
+  background: rgba(9, 9, 11, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 12px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.tooltipLabel {
+  margin: 0;
+  color: #a1a1aa;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.tooltipPace {
+  margin: 0;
+  color: #E8521A;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.emptyChart {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #71717a;
+  font-size: 14px;
+  text-align: center;
+  padding: 0 20px;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.historyItem {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.historyIcon {
+  font-size: 18px;
+}
+
+.historyDetails {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.historyType {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fafafa;
+  letter-spacing: 0.5px;
+}
+
+.historyStats {
+  font-size: 12px;
+  color: #a1a1aa;
+}
+
+.historyDate {
+  font-size: 12px;
+  color: #71717a;
+  font-weight: 500;
+}
+
+.emptyHistory {
+  color: #71717a;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}

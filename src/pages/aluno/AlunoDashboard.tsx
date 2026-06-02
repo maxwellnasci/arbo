@@ -5,6 +5,7 @@ import { useWeeklyPlan, type DayTraining, type LastWeekSummary } from '../../hoo
 import { supabase } from '../../lib/supabase'
 import type { Checkin, TrainingType, UserLevel } from '../../lib/types'
 import AlunoChat from './AlunoChat'
+import AlunoProgresso from './AlunoProgresso'
 import styles from './AlunoDashboard.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -688,6 +689,8 @@ export default function AlunoDashboard() {
     <div className={styles.page}>
       {activeTab === 'chat' ? (
         <AlunoChat studentId={user.id} />
+      ) : activeTab === 'progresso' ? (
+        <AlunoProgresso studentId={user.id} />
       ) : (
         <div className={styles.container}>
 
