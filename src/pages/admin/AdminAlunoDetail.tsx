@@ -4,7 +4,7 @@ import { useAdminAlunoDetail } from '../../hooks/useAdminAlunoDetail'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Toaster, toast } from 'sonner'
+import { toast } from 'sonner'
 import { MessageSquare, RefreshCw, ChevronLeft } from 'lucide-react'
 import styles from './AdminAlunoDetail.module.css'
 import AdminChatPanel from '../../components/admin/AdminChatPanel'
@@ -102,8 +102,6 @@ export default function AdminAlunoDetail() {
 
   return (
     <motion.div className={styles.page} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-      <Toaster theme="dark" position="top-right" />
-      
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: -8 }}>
         <button onClick={() => navigate('/admin/alunos')} style={{ background: 'none', border: 'none', color: '#E8521A', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, fontSize: 14 }}>
           <ChevronLeft size={18} /> Alunos
