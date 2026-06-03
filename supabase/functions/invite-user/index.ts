@@ -45,9 +45,13 @@ Deno.serve(async (req) => {
   }
 
   let email: string
+  let role: 'aluno' | 'admin' = 'aluno'
   try {
     const body = await req.json()
     email = body?.email?.trim()
+    if (body?.role === 'admin' || body?.role === 'aluno') {
+      role = body.role
+    }
   } catch {
     return new Response('Corpo da requisição inválido.', { status: 400, headers: corsHeaders })
   }
@@ -60,7 +64,7 @@ Deno.serve(async (req) => {
   const adminClient = createClient(supabaseUrl, serviceRoleKey)
 
   const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    data: { role: 'aluno' },   // injeta role no convite (vai para raw_user_meta_data)
+    data: { role },   // injeta role no convite (vai para raw_user_meta_data)
     redirectTo: `${siteUrl}/set-password`,
   })
 

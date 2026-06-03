@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase'
 
 export function useInvite() {
-  const invite = async (email: string) => {
+  const invite = async (email: string, role: 'aluno' | 'admin' = 'aluno') => {
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session) throw new Error('Sessão inválida. Faça login novamente.')
@@ -14,7 +14,7 @@ export function useInvite() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, role }),
       }
     )
 
