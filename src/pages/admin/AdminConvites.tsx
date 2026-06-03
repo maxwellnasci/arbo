@@ -30,7 +30,16 @@ export default function AdminConvites() {
   }
 
   useEffect(() => {
-    fetchInvites()
+    let cancelled = false
+    async function load() {
+      const { data, error } = await supabase
+        .from('invites')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (!error && data && !cancelled) setInvites(data)
+    }
+    load()
+    return () => { cancelled = true }
   }, [])
 
   const handleInvite = async (e: React.FormEvent) => {
