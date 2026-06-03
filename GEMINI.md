@@ -271,7 +271,7 @@ npx supabase login
 
 **Project ID:** `jhfkflnixzivuichmkie`
 
-## Estado Atual (2026-06-02)
+## Estado Atual (2026-06-03)
 
 ### Progresso geral
 - Tasks 1–3: Schema, RLS, Auth stack ✅
@@ -289,8 +289,16 @@ npx supabase login
 - Task 15: Fix `<Toaster>` duplicado em `AdminAlunoDetail` — Claude Code ✅
 - Task 16: `/aluno/progresso` — `AlunoProgresso.tsx`, `useProgresso.ts`, gráfico recharts, recordes e histórico ✅
 - Task 17: Fix recharts 3.x → downgrade 2.15.4 (compatibilidade Vite) ✅
+- Task 18: `/aluno/perfil` — AlunoPerfil.tsx, useAlunoPerfil.ts, avatar, dados pessoais, Strava placeholder, logout ✅
+- Task 19: Notificações de PR — AdminPRFeed.tsx, feed de recordes no AdminHome ✅
+- Task 20: Code Splitting — React.lazy() + Suspense em todas as rotas ✅
+- Task 21: Botão Nova Turma — CreateGroupModal.tsx funcional em /admin/turmas ✅
+- Task 22: Error Boundary global — ErrorBoundary.tsx com fallback elegante ✅
+- Task 23: Tabela `invites` — Supabase + RLS + log em /admin/convites ✅
+- Task 24: Filtros em /admin/alunos — busca por nome + filtro por Turma e Nível ✅
+- Task 25: Deploy no Vercel — **https://arbo-weld.vercel.app** ✅
 
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-02)
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-03)
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan`: join N→1 corrigido (`wpt.trainings[0]` → `wpt.trainings`)
@@ -385,15 +393,29 @@ npx supabase login
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-03)
 
 ### O que foi feito em 2026-06-03
-- **Error Boundary:** Implementado `ErrorBoundary` global com fallback elegante e botão de retry.
-- **Schema `invites`:** Tabela criada no banco (id, email, role, created_at, used_at, token) para controle de convites.
-- **Refatoração:** Padronização de estados de carregamento em hooks de administração e ajuste fino de renderização condicional.
+
+**Deploy no Vercel:**
+- App publicado em **https://arbo-weld.vercel.app** com SPA routing via `vercel.json`
+
+**Implementação em Paralelo (Antigravity + Subagentes):**
+- **Nova Turma:** `CreateGroupModal.tsx` — modal com form completo (nome, objetivo, frequência, tipo de plano, data de início); cria registro na tabela `groups`; ativado pelo botão `+ Nova Turma` em `AdminTurmas.tsx`
+- **Error Boundary:** `ErrorBoundary.tsx` — class component global com fallback elegante (mensagem de erro + botão "Tentar novamente"); integrado em `App.tsx` envolvendo todas as rotas
+- **Tabela `invites`:** criada no Supabase (id, email, role, status, invited_by, created_at); RLS + policies + GRANT; Edge Function `invite-user` atualizada para registrar no banco; `AdminConvites.tsx` exibe log com email, role, status, data
+- **Filtros em Alunos:** `AdminAlunos.tsx` — busca por nome + filtro por Turma (select dinâmico dos grupos) e Nível (`user_level`); filtragem via `useMemo` sobre lista local
+
+**Fix de lint (Claude Code — revisão):**
+- `AdminConvites.tsx` — `useEffect` refatorado para `async function load()` com `cancelled` flag (padrão do projeto)
+
+**Types regenerados:** `database.types.ts` atualizado com tabela `invites`
 
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-03)
 
 ### Próximos passos sugeridos
 - Integração Strava (Edge Function via n8n)
+- **Ícone do app** — favicon personalizado (árvore/corrida) para aba do navegador, PWA e home screen
+- **PWA completo** — manifest.json, service worker, instalável no celular
+- **Domínio customizado** — apontar domínio próprio no Vercel (arbo-weld.vercel.app é o atual)
 
 ## Roadmap de Telas
 

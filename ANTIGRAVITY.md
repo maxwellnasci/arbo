@@ -1,6 +1,6 @@
 # 🌳 Arbo — Briefing do Time de IA
 
-> Última atualização: 2026-06-02
+> Última atualização: 2026-06-03
 > Autor: Maxwell + Antigravity
 
 ---
@@ -46,11 +46,12 @@ Somos um **time de 3**:
 - **sonner** — Toasts/notificações estilo Apple
 - **date-fns** — Formatação de datas em PT-BR
 
-### Estado atual (2026-06-02)
-- **17 telas/features implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
+### Estado atual (2026-06-03)
+- **App publicado:** **https://arbo-weld.vercel.app** (Vercel, SPA routing)
+- **22+ telas/features implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
-- Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação): ✅ 100%
-- Fase 3 (Treinos + Chat + Progresso + Perfil + PRs): ✅ **100%**
+- Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação + Nova Turma + Filtros + Invites): ✅ 100%
+- Fase 3 (Treinos + Chat + Progresso + Perfil + PRs + Error Boundary + Code Splitting): ✅ **100%**
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
@@ -70,14 +71,20 @@ Somos um **time de 3**:
 - **Notificações de PR no admin** (Gemini + revisão Claude Code): `useAdminPRs.ts` + `AdminPRFeed.tsx` — feed dos 5 recordes mais recentes no `AdminHome`, clicável para `/admin/alunos/:id`. `AdminHome.tsx` — `fetchStats` refatorada com `cancelled` flag e `try/finally`. tsc + lint: 0 erros.
 
 ### O que foi feito em 2026-06-03
-- **Implementação Massiva em Paralelo** (Antigravity + Subagentes): 
-  - **Nova Turma:** Botão `+ Nova Turma` funcional em `/admin/turmas` com formulário/modal criando registros na tabela `groups`.
-  - **Error Boundary:** Criado `ErrorBoundary.tsx` global com design premium envolvendo as rotas em `App.tsx` para prevenir telas brancas.
-  - **Histórico de Convites:** Tabela `invites` criada com RLS; Edge Function `invite-user` atualizada para registrar convites; Tela `/admin/convites` atualizada para exibir o log de convites.
-  - **Filtros em Alunos:** Busca por nome e filtro por Turma/Nível adicionados em `/admin/alunos` (local state filter).
+- **Deploy no Vercel:** App publicado em **https://arbo-weld.vercel.app** com SPA routing via `vercel.json`
+- **Implementação em Paralelo** (Antigravity + Subagentes):
+  - **Nova Turma:** `CreateGroupModal.tsx` — modal com form (nome, objetivo, frequência, tipo de plano, data de início); cria registro na tabela `groups`; botão `+ Nova Turma` em `AdminTurmas.tsx`
+  - **Error Boundary:** `ErrorBoundary.tsx` — class component global com fallback elegante e botão "Tentar novamente"; integrado em `App.tsx` envolvendo todas as rotas
+  - **Tabela `invites`:** criada no Supabase (id, email, role, status, invited_by, created_at) com RLS + policies + GRANT; Edge Function `invite-user` registra no banco; `AdminConvites.tsx` exibe log completo
+  - **Filtros em Alunos:** busca por nome + filtro por Turma (dinâmico, vem do banco) e Nível; filtragem via `useMemo` sobre lista local em `AdminAlunos.tsx`
+- **Types regenerados:** `database.types.ts` atualizado com tabela `invites` após criar no Supabase
+- **Fix de lint (Claude Code):** `AdminConvites.tsx` — `useEffect` refatorado para `async function load()` com `cancelled` flag
 
 ### Próximo passo
-Próximos candidatos: Integração Strava (Edge Function via n8n).
+- Integração Strava (Edge Function via n8n)
+- Ícone do app / favicon personalizado
+- PWA completo (manifest, service worker, instalável)
+- Domínio customizado no Vercel
 
 ---
 
@@ -149,7 +156,7 @@ Utilize os comandos abaixo para acionar a revisão e melhoria visual pelo AntiGr
 | # | Melhoria | Por quê | Quando |
 |---|---|---|---|
 | 1 | ~~**Code Splitting (lazy loading)**~~ ✅ | ~~Build gera chunk >500KB.~~ Implementado: `React.lazy()` + `Suspense` em todas as rotas. Chunks isolados por rota. | ✅ Concluído 2026-06-02 |
-| 2 | **Error Boundary** | Se um componente quebra, o app inteiro morre (tela branca). Adicionar `ErrorBoundary` global + por seção (admin, aluno) para mostrar fallback amigável ao invés de quebrar tudo. | Próxima sessão |
+| 2 | ~~**Error Boundary**~~ ✅ | ~~Se um componente quebra, o app inteiro morre (tela branca).~~ `ErrorBoundary.tsx` global implementado com fallback elegante e retry. | ✅ Concluído 2026-06-03 |
 | 3 | **Git config no WSL** | `user.name` e `user.email` não configurados — commits ficam sem autor identificado. Rodar `git config --global user.name "Maxwell"` e `git config --global user.email "email"`. | Antes do próximo push |
 
 ### 🟡 Prioridade Média (quando houver tempo)
@@ -157,10 +164,11 @@ Utilize os comandos abaixo para acionar a revisão e melhoria visual pelo AntiGr
 | # | Melhoria | Por quê | Quando |
 |---|---|---|---|
 | 4 | **README.md real** | Ainda é o template padrão do Vite ("React + Vite"). Deveria ter descrição do Arbo, como rodar, stack, screenshots. Importante para o GitHub ficar profissional. | Quando publicar |
-| 5 | **PWA (Progressive Web App)** | O Arbo é focado em corrida/mobile. Com PWA, o aluno instala no celular como se fosse app nativo — ícone na home, abre fullscreen, pode funcionar offline. Sem precisar de app store. | Fase 3 |
+| 5 | **PWA (Progressive Web App)** | O Arbo é focado em corrida/mobile. Com PWA, o aluno instala no celular como se fosse app nativo — ícone na home, abre fullscreen, pode funcionar offline. Sem precisar de app store. App já publicado (arbo-weld.vercel.app) — próximo passo natural. | Próxima sessão |
 | 6 | **SMTP externo** | Supabase gratuito limita 3-4 emails/hora (convites, recuperação de senha). Antes de produção, configurar Resend ou AWS SES para não travar convites. | Antes de lançar |
 | 7 | **CSS unificado** | Mix de abordagens (global CSS em `index.css`, CSS Modules em `AlunoDashboard.module.css`, CSS em `Login.css`). Padronizar para CSS Modules em todos os componentes — mais organizado e sem conflito de nomes. | Refatoração geral |
-| 8 | **Favicon personalizado** | Ainda usa o SVG padrão do Vite. Criar ícone do Arbo (árvore/corrida) que apareça na aba do navegador e no PWA. | Design sprint |
+| 8 | **Ícone do app / Favicon** | Ainda usa o SVG padrão do Vite. Criar ícone do Arbo (árvore/corrida) para aba do navegador, PWA home screen e splash screen. Pré-requisito para o PWA ficar profissional. | Próxima sessão |
+| 9 | **Domínio customizado** | App no ar em arbo-weld.vercel.app. Apontar domínio próprio no Vercel para URL profissional ao compartilhar com alunos. | Antes de lançar |
 
 ### 🟢 Prioridade Baixa (futuro)
 

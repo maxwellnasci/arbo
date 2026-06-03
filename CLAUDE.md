@@ -241,7 +241,7 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-06-02)
+## Estado atual (2026-06-03)
 
 ### Progresso geral
 - **Task 1–3:** Schema, RLS, Auth stack ✅
@@ -262,8 +262,13 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 18:** `/aluno/perfil` — `AlunoPerfil.tsx`, `useAlunoPerfil.ts`, dados pessoais, Strava placeholder, logout (Gemini + revisão Claude Code) ✅
 - **Task 19:** Notificações de PR no admin — `AdminPRFeed.tsx`, `useAdminPRs.ts`, feed de recordes recentes clicável no `AdminHome` (Gemini + revisão Claude Code) ✅
 - **Task 20:** Code Splitting — `React.lazy()` + `Suspense` em todas as rotas; cada página gera chunk separado; spinner on-brand como fallback (Opus 4.6) ✅
+- **Task 21:** Botão Nova Turma — `CreateGroupModal.tsx` funcional em `/admin/turmas`; cria registro na tabela `groups` ✅
+- **Task 22:** Error Boundary global — `ErrorBoundary.tsx` com design premium, envolvendo rotas em `App.tsx` ✅
+- **Task 23:** Tabela `invites` no Supabase — RLS + policies + GRANT; Edge Function `invite-user` registra convite no banco; `/admin/convites` exibe log ✅
+- **Task 24:** Filtros em `/admin/alunos` — busca por nome + filtro por Turma (dinâmico) e Nível via state local ✅
+- **Task 25:** Deploy no Vercel — app publicado em **https://arbo-weld.vercel.app** ✅
 
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-02)
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-03)
 **Fase 3:** 100% completa ✅
 
 ### O que foi feito em 2026-05-21
@@ -395,14 +400,30 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - tsc + lint + build: 0 erros ✅
 
 ### O que foi feito em 2026-06-03
-- **Implementação Massiva em Paralelo** (Antigravity + Subagentes): 
-  - **Nova Turma:** Botão `+ Nova Turma` funcional em `/admin/turmas` com `CreateGroupModal.tsx` criando registros na tabela `groups`.
-  - **Error Boundary:** Criado `ErrorBoundary.tsx` global com design premium, envolvendo as rotas em `App.tsx` para evitar telas brancas em falhas de renderização.
-  - **Histórico de Convites:** Tabela `invites` criada com RLS; Edge Function `invite-user` atualizada para registrar os convites; `/admin/convites` exibe log de convites.
-  - **Filtros em Alunos:** Busca por nome e filtros por Turma (dinâmico) e Nível adicionados em `/admin/alunos` usando state local para filtro iterativo.
+
+**Deploy no Vercel:**
+- App publicado em **https://arbo-weld.vercel.app** (Vercel, SPA routing via `vercel.json`)
+
+**Implementação em Paralelo (Antigravity + Subagentes):**
+- **Nova Turma:** `src/components/CreateGroupModal.tsx` — modal com form (nome, objetivo, frequência, tipo de plano, data de início); cria registro na tabela `groups` via insert Supabase; `AdminTurmas.tsx` exibe modal ao clicar em `+ Nova Turma`
+- **Error Boundary:** `src/components/ErrorBoundary.tsx` — class component global com fallback elegante (botão "Tentar novamente"); integrado em `App.tsx` envolvendo todas as rotas
+- **Tabela `invites`:** criada no Supabase (id, email, role, status, invited_by, created_at); RLS + policies (admin: tudo, aluno: sem acesso); GRANT INSERT/SELECT para `authenticated`; Edge Function `invite-user` atualizada para inserir registro após `inviteUserByEmail`; `AdminConvites.tsx` exibe tabela de log com email, role, status, data
+- **Filtros em Alunos:** `AdminAlunos.tsx` — busca por nome (input), filtro por Turma (select dinâmico dos grupos) e Nível (select de `user_level`); filtros via `useMemo` sobre a lista local
+
+**Fix de lint (Claude Code — revisão):**
+- `AdminConvites.tsx` — `useEffect` que chamava `fetchInvites()` diretamente refatorado para `async function load()` com flag `cancelled` (padrão CLAUDE.md)
+
+**Types regenerados:**
+- `src/lib/database.types.ts` regenerado após criação da tabela `invites` (`npx supabase gen types typescript`)
+
+**Repositório:** https://github.com/maxwellnasci/arbo  
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-03)
 
 ### Próximo passo
-Próximos candidatos: Integração Strava (Edge Function via n8n).
+- Integração Strava (Edge Function via n8n)
+- Ícone do app / favicon personalizado (árvore/corrida — aparece na aba, PWA e home screen)
+- PWA completo (manifest, service worker, offline, instalável no celular)
+- Domínio customizado (apontar domínio próprio no Vercel)
 
 ## Roadmap de telas
 
@@ -434,7 +455,9 @@ Próximos candidatos: Integração Strava (Edge Function via n8n).
 - ~~Controle de liberação do plano~~ ✅
 - ~~Chat admin ↔ aluno~~ ✅
 - ~~Notificações de PR no painel~~ ✅
-- Schema pendente: tabela `invites`
+- ~~Schema: tabela `invites`~~ ✅
+- ~~Botão Nova Turma com modal~~ ✅
+- ~~Filtros em `/admin/alunos`~~ ✅
 
 ~~**Painel Admin — Fase 3**~~ ✅ **100% completa**
 - ~~`/admin/treinos` — biblioteca de treinos (CRUD) + visual refinado~~ ✅
@@ -447,8 +470,11 @@ Próximos candidatos: Integração Strava (Edge Function via n8n).
 
 ### Próximos passos sugeridos
 - ~~Error Boundary global~~ ✅
-- Integração Strava (Edge Function via n8n)
 - ~~Tabela `invites` (schema pendente)~~ ✅
+- Integração Strava (Edge Function via n8n)
+- **Ícone do app** — favicon personalizado (árvore/corrida) para aba do navegador, PWA e home screen
+- **PWA completo** — manifest.json, service worker, instalável no celular (foco mobile do Arbo)
+- **Domínio customizado** — apontar domínio próprio ao Vercel (arbo-weld.vercel.app é o atual)
 
 ### Ordem de desenvolvimento
 1. ~~Testar visualmente Fase 1 do admin~~ ✅

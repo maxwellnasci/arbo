@@ -1,15 +1,15 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-06-02 (sessão 7)
+> Gerado em 2026-05-29 | Atualizado em 2026-06-03 (sessão 8)
 
 ---
 
-## Estado atual (2026-06-02)
+## Estado atual (2026-06-03)
 
 | Área | Status |
 |------|--------|
-| Schema + RLS | ✅ 16 tabelas, enums, triggers, policies, GRANTs |
-| Auth stack | ✅ AuthContext, rotas protegidas por role, convite via Edge Function |
+| Schema + RLS | ✅ 17 tabelas (`invites` adicionada), enums, triggers, policies, GRANTs |
+| Auth stack | ✅ AuthContext, rotas protegidas por role, convite via Edge Function + log na tabela `invites` |
 | Dashboard do Aluno `/aluno` | ✅ Dados reais, redesign premium (Bebas Neue, glow, bottom sheet, skeleton, PR tracking) |
 | Painel Admin Fase 1 | ✅ AdminLayout, AdminHome, AdminAlunos, AdminFeedbacks, AdminConvites |
 | Schema Fase 2 | ✅ `profiles.role`, `profiles.group_id`, tabela `groups` com RLS |
@@ -23,7 +23,12 @@
 | `/aluno/progresso` — Aba Progresso | ✅ `AlunoProgresso.tsx`, `useProgresso.ts`, gráfico recharts 2.x, recordes pessoais, histórico, streak |
 | `/aluno/perfil` — Aba Perfil | ✅ `AlunoPerfil.tsx`, `useAlunoPerfil.ts`, avatar, dados pessoais, Strava placeholder, logout |
 | Notificações de PR no admin | ✅ `AdminPRFeed.tsx`, `useAdminPRs.ts`, feed de recordes recentes no `AdminHome` |
-| **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-02) |
+| Botão Nova Turma | ✅ `CreateGroupModal.tsx` funcional, cria registro em `groups` |
+| Error Boundary global | ✅ `ErrorBoundary.tsx` com fallback elegante e retry, envolvendo todas as rotas |
+| Tabela `invites` + log | ✅ Schema no Supabase, RLS, Edge Function atualizada, log visível em `/admin/convites` |
+| Filtros em `/admin/alunos` | ✅ Busca por nome + filtro por Turma (dinâmico) e Nível |
+| **Deploy** | ✅ **https://arbo-weld.vercel.app** (Vercel, SPA routing) |
+| **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-03) |
 | **Fase 3** | ✅ **100% completa** |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
@@ -173,6 +178,16 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 
 ---
 
+## Próximos Passos Imediatos
+
+| Prioridade | Item | Descrição |
+|-----------|------|-----------|
+| 🔴 Alta | **Ícone do app / favicon** | Substituir SVG padrão do Vite por ícone do Arbo (árvore/corrida); aparece na aba, PWA e home screen |
+| 🔴 Alta | **PWA completo** | `manifest.json`, service worker, instalável no celular; App já está no ar em arbo-weld.vercel.app |
+| 🟡 Média | **Domínio customizado** | Apontar domínio próprio no Vercel em vez de arbo-weld.vercel.app |
+| 🟡 Média | **Integração Strava** | Edge Function via n8n para OAuth + importação de atividades |
+| 🟢 Baixa | **SMTP externo** | Resend ou AWS SES para não travar com limite de 3-4 emails/hora do Supabase gratuito |
+
 ## Futuro — Base já estruturada no MVP
 
 | Feature | Descrição |
@@ -199,20 +214,26 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 ## Ordem de desenvolvimento
 
 ```
-1. ✅ Schema: coluna role + group_id + tabela groups
-2. ✅ /admin/turmas — lista
-3. ✅ /admin/turmas/:id — grid plano mensal + toggle semana/mês
-4. ✅ Sistema de etiquetas personalizadas
-5. ✅ Controle de liberação do plano (por semana ou tudo de uma vez)
-6. ✅ /admin/alunos/:id — perfil do aluno
-7. ✅ /admin/treinos — biblioteca de treinos CRUD + visual dark refinado
-8. ✅ Chat admin ↔ aluno (Tabela messages, RLS, Realtime, interface premium)
-9. ✅ /aluno/progresso — Aba Progresso (histórico, recordes, gráfico recharts, streak)
+1.  ✅ Schema: coluna role + group_id + tabela groups
+2.  ✅ /admin/turmas — lista
+3.  ✅ /admin/turmas/:id — grid plano mensal + toggle semana/mês
+4.  ✅ Sistema de etiquetas personalizadas
+5.  ✅ Controle de liberação do plano (por semana ou tudo de uma vez)
+6.  ✅ /admin/alunos/:id — perfil do aluno
+7.  ✅ /admin/treinos — biblioteca de treinos CRUD + visual dark refinado
+8.  ✅ Chat admin ↔ aluno (Tabela messages, RLS, Realtime, interface premium)
+9.  ✅ /aluno/progresso — Aba Progresso (histórico, recordes, gráfico recharts, streak)
 10. ✅ /aluno/perfil — Aba Perfil (dados pessoais, Strava placeholder, logout)
 11. ✅ Notificações de PR no painel (AdminPRFeed, feed de recordes recentes)
+12. ✅ Code Splitting (React.lazy + Suspense em todas as rotas)
+13. ✅ Deploy no Vercel (arbo-weld.vercel.app)
+14. ✅ Botão Nova Turma (CreateGroupModal)
+15. ✅ Error Boundary global (ErrorBoundary.tsx)
+16. ✅ Tabela invites + log em /admin/convites
+17. ✅ Filtros em /admin/alunos (nome + turma + nível)
 ```
 
 ---
 
 *Documento gerado com base nas respostas do professor e alinhamento de produto.*
-*Atualizado em 2026-06-02 com Aba Perfil, Notificações de PR e Fase 3 100% concluída.*
+*Atualizado em 2026-06-03 com deploy no Vercel, Nova Turma, Error Boundary, tabela invites e filtros.*
