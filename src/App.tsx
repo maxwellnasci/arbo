@@ -1,22 +1,50 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useAuth } from './contexts/AuthContext'
-import Login from './components/Login'
+
+// Componentes estruturais — estáticos (necessários no primeiro render)
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
-import SetPassword from './pages/SetPassword'
-import DashboardRedirect from './pages/DashboardRedirect'
 import { AdminLayout } from './pages/admin/AdminLayout'
-import AdminHome from './pages/admin/AdminHome'
-import AdminAlunos from './pages/admin/AdminAlunos'
-import AdminFeedbacks from './pages/admin/AdminFeedbacks'
-import AdminConvites from './pages/admin/AdminConvites'
-import AdminTurmas from './pages/admin/AdminTurmas'
-import AdminTurmaDetail from './pages/admin/AdminTurmaDetail'
-import AdminAlunoDetail from './pages/admin/AdminAlunoDetail'
-import AdminTreinos from './pages/admin/AdminTreinos'
-import AlunoDashboard from './pages/aluno/AlunoDashboard'
-import AnamnesisForm from './pages/aluno/AnamnesisForm'
+
+// ── Lazy imports por rota ────────────────────────────────────────────────────
+const Login            = lazy(() => import('./components/Login'))
+const SetPassword      = lazy(() => import('./pages/SetPassword'))
+const DashboardRedirect = lazy(() => import('./pages/DashboardRedirect'))
+const AdminHome        = lazy(() => import('./pages/admin/AdminHome'))
+const AdminAlunos      = lazy(() => import('./pages/admin/AdminAlunos'))
+const AdminFeedbacks   = lazy(() => import('./pages/admin/AdminFeedbacks'))
+const AdminConvites    = lazy(() => import('./pages/admin/AdminConvites'))
+const AdminTurmas      = lazy(() => import('./pages/admin/AdminTurmas'))
+const AdminTurmaDetail = lazy(() => import('./pages/admin/AdminTurmaDetail'))
+const AdminAlunoDetail = lazy(() => import('./pages/admin/AdminAlunoDetail'))
+const AdminTreinos     = lazy(() => import('./pages/admin/AdminTreinos'))
+const AlunoDashboard   = lazy(() => import('./pages/aluno/AlunoDashboard'))
+const AnamnesisForm    = lazy(() => import('./pages/aluno/AnamnesisForm'))
+
+// ── Suspense fallback ────────────────────────────────────────────────────────
+function PageLoader() {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100dvh',
+      background: '#111111',
+    }}>
+      <div style={{
+        width: 32,
+        height: 32,
+        border: '3px solid rgba(232, 82, 26, 0.2)',
+        borderTopColor: '#E8521A',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
+      }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+    </div>
+  )
+}
 
 function LoginPage() {
   const { session, isLoading } = useAuth()
@@ -26,12 +54,12 @@ function LoginPage() {
 }
 
 const router = createBrowserRouter([
-  { path: '/login', element: <LoginPage /> },
-  { path: '/set-password', element: <SetPassword /> },
+  { path: '/login', element: <Suspense fallback={<PageLoader />}><LoginPage /></Suspense> },
+  { path: '/set-password', element: <Suspense fallback={<PageLoader />}><SetPassword /></Suspense> },
   {
     element: <ProtectedRoute />,
     children: [
-      { path: '/dashboard', element: <DashboardRedirect /> },
+      { path: '/dashboard', element: <Suspense fallback={<PageLoader />}><DashboardRedirect /></Suspense> },
       {
         element: <AdminRoute />,
         children: [
@@ -39,20 +67,20 @@ const router = createBrowserRouter([
             path: '/admin',
             element: <AdminLayout />,
             children: [
-              { index: true, element: <AdminHome /> },
-              { path: 'alunos', element: <AdminAlunos /> },
-              { path: 'feedbacks', element: <AdminFeedbacks /> },
-              { path: 'convites', element: <AdminConvites /> },
-              { path: 'turmas', element: <AdminTurmas /> },
-              { path: 'turmas/:id', element: <AdminTurmaDetail /> },
-              { path: 'alunos/:id', element: <AdminAlunoDetail /> },
-              { path: 'treinos', element: <AdminTreinos /> },
+              { index: true, element: <Suspense fallback={<PageLoader />}><AdminHome /></Suspense> },
+              { path: 'alunos', element: <Suspense fallback={<PageLoader />}><AdminAlunos /></Suspense> },
+              { path: 'feedbacks', element: <Suspense fallback={<PageLoader />}><AdminFeedbacks /></Suspense> },
+              { path: 'convites', element: <Suspense fallback={<PageLoader />}><AdminConvites /></Suspense> },
+              { path: 'turmas', element: <Suspense fallback={<PageLoader />}><AdminTurmas /></Suspense> },
+              { path: 'turmas/:id', element: <Suspense fallback={<PageLoader />}><AdminTurmaDetail /></Suspense> },
+              { path: 'alunos/:id', element: <Suspense fallback={<PageLoader />}><AdminAlunoDetail /></Suspense> },
+              { path: 'treinos', element: <Suspense fallback={<PageLoader />}><AdminTreinos /></Suspense> },
             ]
           },
         ],
       },
-      { path: '/aluno', element: <AlunoDashboard /> },
-      { path: '/onboarding', element: <AnamnesisForm /> },
+      { path: '/aluno', element: <Suspense fallback={<PageLoader />}><AlunoDashboard /></Suspense> },
+      { path: '/onboarding', element: <Suspense fallback={<PageLoader />}><AnamnesisForm /></Suspense> },
     ],
   },
   { path: '*', element: <Navigate to="/dashboard" replace /> },
