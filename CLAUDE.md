@@ -261,6 +261,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 17:** Fix recharts 3.x → downgrade 2.15.4 (erro `require_isUnsafeProperty` com Vite) ✅
 - **Task 18:** `/aluno/perfil` — `AlunoPerfil.tsx`, `useAlunoPerfil.ts`, dados pessoais, Strava placeholder, logout (Gemini + revisão Claude Code) ✅
 - **Task 19:** Notificações de PR no admin — `AdminPRFeed.tsx`, `useAdminPRs.ts`, feed de recordes recentes clicável no `AdminHome` (Gemini + revisão Claude Code) ✅
+- **Task 20:** Code Splitting — `React.lazy()` + `Suspense` em todas as rotas; cada página gera chunk separado; spinner on-brand como fallback (Opus 4.6) ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-02)
 **Fase 3:** 100% completa ✅
@@ -387,8 +388,14 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-02)
 
+**Code Splitting (Opus 4.6):**
+- `src/App.tsx` — todos os imports de páginas convertidos para `React.lazy()`, cada rota envolvida com `Suspense` + `PageLoader` (spinner laranja on-brand)
+- Componentes estruturais (`ProtectedRoute`, `AdminRoute`, `AdminLayout`) ficam estáticos (necessários no primeiro render)
+- Build gera chunks isolados: AdminHome 4KB, AdminTurmaDetail 24KB, AlunoDashboard 420KB, etc. — aluno nunca baixa código do admin
+- tsc + lint + build: 0 erros ✅
+
 ### Próximo passo
-**Fase 3 completa.** Próximos candidatos: Code Splitting (lazy loading por rota), Error Boundary, ou integrações Strava.
+Próximos candidatos: Error Boundary global, integração Strava (Edge Function via n8n), tabela `invites`.
 
 ## Roadmap de telas
 
@@ -432,7 +439,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 ~~**Bottom Nav — Perfil (`/aluno/perfil`)** — dados pessoais, Strava placeholder, logout~~ ✅
 
 ### Próximos passos sugeridos
-- Code Splitting (lazy loading por rota — chunk >500KB)
+- ~~Code Splitting (lazy loading por rota — chunk >500KB)~~ ✅
 - Error Boundary global
 - Integração Strava (Edge Function via n8n)
 - Tabela `invites` (schema pendente)
@@ -447,3 +454,4 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 7. ~~Aba Progresso~~ ✅
 8. ~~Aba Perfil~~ ✅
 9. ~~Notificações de PR no admin~~ ✅
+10. ~~Code Splitting (React.lazy + Suspense)~~ ✅

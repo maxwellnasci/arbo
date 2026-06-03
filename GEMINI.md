@@ -377,11 +377,16 @@ npx supabase login
 - `src/pages/admin/AdminPRFeed.module.css` — CSS Modules dark
 - `src/pages/admin/AdminHome.tsx` — substitui lista inline por `<AdminPRFeed />`; `fetchStats` com `cancelled` flag e `try/finally`
 
+**Code Splitting (Opus 4.6):**
+- `src/App.tsx` — todos os imports de páginas convertidos para `React.lazy()`, cada rota envolvida com `Suspense` + `PageLoader` (spinner laranja on-brand)
+- Componentes estruturais (`ProtectedRoute`, `AdminRoute`, `AdminLayout`) ficam estáticos
+- Build gera chunks isolados por rota — aluno nunca baixa código do admin
+
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-02)
 
 ### Próximo Passo
-**Fase 3 completa.** Próximos candidatos: Code Splitting (lazy loading), Error Boundary, integração Strava.
+Próximos candidatos: Error Boundary global, integração Strava (Edge Function via n8n), tabela `invites`.
 
 ## Roadmap de Telas
 
@@ -433,3 +438,4 @@ npx supabase login
 7. ~~Aba Progresso~~ ✅
 8. ~~Aba Perfil~~ ✅
 9. ~~Notificações de PR no admin~~ ✅
+10. ~~Code Splitting (React.lazy + Suspense)~~ ✅

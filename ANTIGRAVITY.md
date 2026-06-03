@@ -69,8 +69,11 @@ Somos um **time de 3**:
 - **Aba Perfil `/aluno/perfil`** (Gemini + revisão Claude Code): `useAlunoPerfil.ts` — queries paralelas profile/groups + strava_connections (placeholder RLS); padrão `async load()`, `cancelled` flag. `AlunoPerfil.tsx` — avatar com fallback, dados pessoais (nível, turma), card Strava placeholder, logout. `AlunoDashboard.tsx` — substitui `ProfileMenu` inline por `<AlunoPerfil>`. Revisão Claude Code: `padding-bottom: 96px` no CSS para BottomNav.
 - **Notificações de PR no admin** (Gemini + revisão Claude Code): `useAdminPRs.ts` + `AdminPRFeed.tsx` — feed dos 5 recordes mais recentes no `AdminHome`, clicável para `/admin/alunos/:id`. `AdminHome.tsx` — `fetchStats` refatorada com `cancelled` flag e `try/finally`. tsc + lint: 0 erros.
 
+### O que foi feito em 2026-06-02 (Parte 3)
+- **Code Splitting** (Opus 4.6): `App.tsx` — todos os imports de páginas convertidos para `React.lazy()` + `Suspense` com `PageLoader` (spinner laranja). Componentes estruturais ficam estáticos. Build gera chunks isolados por rota. tsc + lint + build: 0 erros.
+
 ### Próximo passo
-**Fase 3 completa.** Candidatos: Code Splitting (lazy loading por rota), Error Boundary, integração Strava.
+Próximos candidatos: Error Boundary global, integração Strava (Edge Function via n8n), tabela `invites`.
 
 ---
 
@@ -141,7 +144,7 @@ Utilize os comandos abaixo para acionar a revisão e melhoria visual pelo AntiGr
 
 | # | Melhoria | Por quê | Quando |
 |---|---|---|---|
-| 1 | **Code Splitting (lazy loading)** | Build gera chunk >500KB. Usar `React.lazy()` + `Suspense` nas rotas para dividir admin/aluno/login em bundles separados. Aluno nunca baixa código do admin, app abre mais rápido no celular. | Após concluir Fase 2 |
+| 1 | ~~**Code Splitting (lazy loading)**~~ ✅ | ~~Build gera chunk >500KB.~~ Implementado: `React.lazy()` + `Suspense` em todas as rotas. Chunks isolados por rota. | ✅ Concluído 2026-06-02 |
 | 2 | **Error Boundary** | Se um componente quebra, o app inteiro morre (tela branca). Adicionar `ErrorBoundary` global + por seção (admin, aluno) para mostrar fallback amigável ao invés de quebrar tudo. | Próxima sessão |
 | 3 | **Git config no WSL** | `user.name` e `user.email` não configurados — commits ficam sem autor identificado. Rodar `git config --global user.name "Maxwell"` e `git config --global user.email "email"`. | Antes do próximo push |
 
