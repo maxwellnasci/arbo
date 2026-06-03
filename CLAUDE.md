@@ -241,7 +241,7 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-05-31)
+## Estado atual (2026-06-02)
 
 ### Progresso geral
 - **Task 1–3:** Schema, RLS, Auth stack ✅
@@ -259,8 +259,11 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 15:** Fix `<Toaster>` duplicado em `AdminAlunoDetail` ✅
 - **Task 16:** `/aluno/progresso` — `AlunoProgresso.tsx`, `useProgresso.ts`, gráfico recharts, recordes pessoais, histórico de check-ins, streak ✅
 - **Task 17:** Fix recharts 3.x → downgrade 2.15.4 (erro `require_isUnsafeProperty` com Vite) ✅
+- **Task 18:** `/aluno/perfil` — `AlunoPerfil.tsx`, `useAlunoPerfil.ts`, dados pessoais, Strava placeholder, logout (Gemini + revisão Claude Code) ✅
+- **Task 19:** Notificações de PR no admin — `AdminPRFeed.tsx`, `useAdminPRs.ts`, feed de recordes recentes clicável no `AdminHome` (Gemini + revisão Claude Code) ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-02)
+**Fase 3:** 100% completa ✅
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan.ts` — join N→1 retorna objeto, não array: `wpt.trainings[0]` → `wpt.trainings`
@@ -368,8 +371,24 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-02)
 
+### O que foi feito em 2026-06-02 (Parte 2)
+
+**Aba Perfil — `/aluno/perfil` (Gemini + revisão Claude Code):**
+- `src/hooks/useAlunoPerfil.ts` — queries paralelas: `profiles` com join `groups(name)` + `strava_connections` (placeholder RLS); `async function load()` com `cancelled` flag, `catch (e: unknown)`
+- `src/pages/aluno/AlunoPerfil.tsx` — avatar com fallback (inicial do nome), dados pessoais (nível, turma), card Strava placeholder (botão desabilitado se conectado), botão logout (`supabase.auth.signOut()` + redirect)
+- `src/pages/aluno/AlunoPerfil.module.css` — CSS Modules dark, avatar com glow laranja, `padding-bottom: 96px` para BottomNav
+- `src/pages/aluno/AlunoDashboard.tsx` — aba `perfil` substitui `ProfileMenu` inline antigo; `useLogout` e estado `showProfileMenu` removidos
+
+**Notificações de PR no admin (Gemini + revisão Claude Code):**
+- `src/hooks/useAdminPRs.ts` — query paginada em `records` com join `profiles(full_name, avatar_url)`; padrão `async load()` com `cancelled` flag
+- `src/pages/admin/AdminPRFeed.tsx` — feed de cards clicáveis dos 5 recordes mais recentes; navega para `/admin/alunos/:id`; formatação de tempo `h:mm:ss` / `m:ss`
+- `src/pages/admin/AdminPRFeed.module.css` — CSS Modules dark
+- `src/pages/admin/AdminHome.tsx` — substitui lista inline de PRs por `<AdminPRFeed />`; `fetchStats` refatorada com `cancelled` flag e `try/finally`
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-02)
+
 ### Próximo passo
-Aba Perfil (`/aluno/perfil`).
+**Fase 3 completa.** Próximos candidatos: Code Splitting (lazy loading por rota), Error Boundary, ou integrações Strava.
 
 ## Roadmap de telas
 
@@ -391,6 +410,8 @@ Aba Perfil (`/aluno/perfil`).
 | Chat Admin → Aluno | panel em `/admin/alunos/:id` | ✅ |
 | Chat Aluno → Admin | aba em `/aluno` | ✅ |
 | Progresso do Aluno | `/aluno/progresso` | ✅ |
+| Perfil do Aluno | aba em `/aluno` | ✅ |
+| Notificações de PR | widget em `/admin` | ✅ |
 
 ### Pendentes
 
@@ -398,20 +419,23 @@ Aba Perfil (`/aluno/perfil`).
 - ~~Sistema de etiquetas personalizadas~~ ✅
 - ~~Controle de liberação do plano~~ ✅
 - ~~Chat admin ↔ aluno~~ ✅
-- Notificações de PR no painel
+- ~~Notificações de PR no painel~~ ✅
 - Schema pendente: tabela `invites`
 
-**Painel Admin — Fase 3**
+~~**Painel Admin — Fase 3**~~ ✅ **100% completa**
 - ~~`/admin/treinos` — biblioteca de treinos (CRUD) + visual refinado~~ ✅
 - ~~Modal de mensagem direta ao aluno + aba chat aluno~~ ✅
 - ~~Schema: tabela `messages`~~ ✅
 
 ~~**Bottom Nav — Progresso (`/aluno/progresso`)** — histórico, recordes, gráfico de pace, streak~~ ✅
 
-**Bottom Nav — Perfil (`/aluno/perfil`)**
-- Dados do aluno (nome, nível, foto)
-- Botão conectar/desconectar Strava
-- Logout
+~~**Bottom Nav — Perfil (`/aluno/perfil`)** — dados pessoais, Strava placeholder, logout~~ ✅
+
+### Próximos passos sugeridos
+- Code Splitting (lazy loading por rota — chunk >500KB)
+- Error Boundary global
+- Integração Strava (Edge Function via n8n)
+- Tabela `invites` (schema pendente)
 
 ### Ordem de desenvolvimento
 1. ~~Testar visualmente Fase 1 do admin~~ ✅
@@ -421,4 +445,5 @@ Aba Perfil (`/aluno/perfil`).
 5. ~~`/admin/alunos/:id` — perfil do aluno~~ ✅
 6. ~~Painel Admin Fase 3 (treinos ✅ + mensagem ✅)~~ ✅
 7. ~~Aba Progresso~~ ✅
-8. Aba Perfil
+8. ~~Aba Perfil~~ ✅
+9. ~~Notificações de PR no admin~~ ✅

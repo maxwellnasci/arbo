@@ -1,10 +1,10 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-06-02 (sessão 6)
+> Gerado em 2026-05-29 | Atualizado em 2026-06-02 (sessão 7)
 
 ---
 
-## Estado atual (2026-06-01)
+## Estado atual (2026-06-02)
 
 | Área | Status |
 |------|--------|
@@ -21,7 +21,10 @@
 | `/admin/treinos` | ✅ CRUD completo + visual dark refinado (pills de tipo, inline styles, padrão do projeto) |
 | Chat Admin ↔ Aluno | ✅ Tabela `messages` (RLS + Realtime), SidePanel Admin, Aba Chat no Aluno, Framer Motion |
 | `/aluno/progresso` — Aba Progresso | ✅ `AlunoProgresso.tsx`, `useProgresso.ts`, gráfico recharts 2.x, recordes pessoais, histórico, streak |
+| `/aluno/perfil` — Aba Perfil | ✅ `AlunoPerfil.tsx`, `useAlunoPerfil.ts`, avatar, dados pessoais, Strava placeholder, logout |
+| Notificações de PR no admin | ✅ `AdminPRFeed.tsx`, `useAdminPRs.ts`, feed de recordes recentes no `AdminHome` |
 | **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-02) |
+| **Fase 3** | ✅ **100% completa** |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 
@@ -149,23 +152,24 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 
 ---
 
-## Fase 3 — Em andamento
+## Fase 3 — ✅ CONCLUÍDA (2026-06-02)
 
 | Tela | Descrição |
 |------|-----------|
 | `/admin/treinos` | ~~Biblioteca de treinos — CRUD completo + visual dark refinado~~ ✅ |
 | Mensagem direta | ~~Chat admin ↔ aluno — schema: tabela `messages`~~ ✅ |
 | ~~`/aluno/progresso`~~ | ~~Histórico, recordes, gráfico de pace~~ ✅ |
-| `/aluno/perfil` | Dados pessoais, Strava, logout |
+| ~~`/aluno/perfil`~~ | ~~Dados pessoais, Strava placeholder, logout~~ ✅ |
+| ~~Notificações de PR~~ | ~~Feed de recordes recentes no `AdminHome`~~ ✅ |
 
 ---
 
-## Telas do Aluno — Pendentes
+## Telas do Aluno — Concluídas
 
 | Tela | Descrição |
 |------|-----------|
 | ~~`/aluno/progresso`~~ | ~~Histórico de check-ins, recordes pessoais (5km, 10km...), gráfico de evolução de pace~~ ✅ |
-| `/aluno/perfil` | Dados pessoais, conexão Strava, logout |
+| ~~`/aluno/perfil`~~ | ~~Dados pessoais, conexão Strava, logout~~ ✅ |
 
 ---
 
@@ -200,14 +204,15 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 3. ✅ /admin/turmas/:id — grid plano mensal + toggle semana/mês
 4. ✅ Sistema de etiquetas personalizadas
 5. ✅ Controle de liberação do plano (por semana ou tudo de uma vez)
-6. ✅ `/admin/alunos/:id` — perfil do aluno
-7. ✅ `/admin/treinos` — biblioteca de treinos CRUD + visual dark refinado (Claude Code, 2026-06-01)
-8. ✅ Chat admin ↔ aluno (Tabela messages, RLS, interface premium - AntiGravity)
-9. ~~`/aluno/progresso` — Aba Progresso (histórico, recordes, gráfico recharts, streak)~~ ✅
-10. Notificações de PR no painel
+6. ✅ /admin/alunos/:id — perfil do aluno
+7. ✅ /admin/treinos — biblioteca de treinos CRUD + visual dark refinado
+8. ✅ Chat admin ↔ aluno (Tabela messages, RLS, Realtime, interface premium)
+9. ✅ /aluno/progresso — Aba Progresso (histórico, recordes, gráfico recharts, streak)
+10. ✅ /aluno/perfil — Aba Perfil (dados pessoais, Strava placeholder, logout)
+11. ✅ Notificações de PR no painel (AdminPRFeed, feed de recordes recentes)
 ```
 
 ---
 
 *Documento gerado com base nas respostas do professor e alinhamento de produto.*
-*Atualizado em 2026-06-01 com chat implementado e lint zerado.*
+*Atualizado em 2026-06-02 com Aba Perfil, Notificações de PR e Fase 3 100% concluída.*

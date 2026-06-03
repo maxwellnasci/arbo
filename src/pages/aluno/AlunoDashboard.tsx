@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { useLogout } from '../../hooks/useLogout'
+
 import { useWeeklyPlan, type DayTraining, type LastWeekSummary } from '../../hooks/useWeeklyPlan'
 import { supabase } from '../../lib/supabase'
 import type { Checkin, TrainingType, UserLevel } from '../../lib/types'
 import AlunoChat from './AlunoChat'
 import AlunoProgresso from './AlunoProgresso'
+import AlunoPerfil from './AlunoPerfil'
 import styles from './AlunoDashboard.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -258,40 +259,6 @@ function BottomNav({ activeTab, onTabChange }: { activeTab: NavTab; onTabChange:
         </button>
       ))}
     </nav>
-  )
-}
-
-// ── Profile Menu ──────────────────────────────────────────────────────────────
-
-type ProfileMenuProps = {
-  name: string | null | undefined
-  level: UserLevel | null | undefined
-  onClose: () => void
-  onLogout: () => void
-}
-
-function ProfileMenu({ name, level, onClose, onLogout }: ProfileMenuProps) {
-  return (
-    <>
-      <div className={styles.profileMenuOverlay} onClick={onClose} />
-      <div className={styles.profileMenu}>
-        {name && (
-          <>
-            <div className={styles.profileMenuInfo}>
-              <p className={styles.profileMenuName}>{name}</p>
-              {level && <p className={styles.profileMenuLevel}>{LEVEL_LABEL[level] ?? level}</p>}
-            </div>
-            <div className={styles.profileMenuDivider} />
-          </>
-        )}
-        <button
-          className={`${styles.profileMenuItem} ${styles.profileMenuLogout}`}
-          onClick={onLogout}
-        >
-          Sair da conta
-        </button>
-      </div>
-    </>
   )
 }
 
@@ -645,10 +612,8 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
 
 export default function AlunoDashboard() {
   const { user } = useAuth()
-  const logout = useLogout()
   const { profile, plan, trainings, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh } = useWeeklyPlan(user?.id)
   const [activeTab, setActiveTab] = useState<NavTab>('inicio')
-  const [showProfileMenu, setShowProfileMenu] = useState(false)
 
   const todayDow    = new Date().getDay()
   const completed   = trainings.filter(t => t.checkin !== null).length
@@ -656,12 +621,7 @@ export default function AlunoDashboard() {
   const progressPct = total > 0 ? Math.round((completed / total) * 100) : 0
 
   function handleTabChange(tab: NavTab) {
-    if (tab === 'perfil') {
-      setShowProfileMenu(prev => !prev)
-    } else {
-      setShowProfileMenu(false)
-      setActiveTab(tab)
-    }
+    setActiveTab(tab)
   }
 
   if (isLoading) return <SkeletonLoader />
@@ -691,6 +651,8 @@ export default function AlunoDashboard() {
         <AlunoChat studentId={user.id} />
       ) : activeTab === 'progresso' ? (
         <AlunoProgresso studentId={user.id} />
+      ) : activeTab === 'perfil' ? (
+        <AlunoPerfil studentId={user.id} />
       ) : (
         <div className={styles.container}>
 
@@ -749,15 +711,7 @@ export default function AlunoDashboard() {
       </div>
       )}
 
-      {/* Profile menu */}
-      {showProfileMenu && (
-        <ProfileMenu
-          name={profile?.full_name}
-          level={profile?.level}
-          onClose={() => setShowProfileMenu(false)}
-          onLogout={logout}
-        />
-      )}
+
 
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </div>

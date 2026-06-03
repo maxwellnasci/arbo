@@ -46,11 +46,11 @@ Somos um **time de 3**:
 - **sonner** — Toasts/notificações estilo Apple
 - **date-fns** — Formatação de datas em PT-BR
 
-### Estado atual (2026-06-01)
-- **15 telas implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
+### Estado atual (2026-06-02)
+- **17 telas/features implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
 - Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação): ✅ 100%
-- Fase 3 (Treinos + Chat + Progresso): 75% (Treinos ✅, Chat ✅, Progresso ✅ — falta Perfil)
+- Fase 3 (Treinos + Chat + Progresso + Perfil + PRs): ✅ **100%**
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
@@ -66,9 +66,11 @@ Somos um **time de 3**:
 ### O que foi feito em 2026-06-02
 - **Aba Progresso `/aluno/progresso`** (Claude Code): `useProgresso.ts` — queries paralelas de recordes, histórico de check-ins, cálculo de pace médio por mês e streak semanal. `AlunoProgresso.tsx` — badge de streak, grid de recordes (5km/10km/21km/42km), gráfico LineChart recharts com CustomTooltip formatado, histórico recente. CSS Modules dark. Integrado ao BottomNav do AlunoDashboard.
 - **Fix recharts × Vite** (Claude Code): downgrade 3.8.1 → 2.15.4 — versão 3.x usa `victory-vendor` (CJS) que causa `require_isUnsafeProperty` com Vite; 2.x é ESM nativa sem workarounds. `vite.config.ts` limpo.
+- **Aba Perfil `/aluno/perfil`** (Gemini + revisão Claude Code): `useAlunoPerfil.ts` — queries paralelas profile/groups + strava_connections (placeholder RLS); padrão `async load()`, `cancelled` flag. `AlunoPerfil.tsx` — avatar com fallback, dados pessoais (nível, turma), card Strava placeholder, logout. `AlunoDashboard.tsx` — substitui `ProfileMenu` inline por `<AlunoPerfil>`. Revisão Claude Code: `padding-bottom: 96px` no CSS para BottomNav.
+- **Notificações de PR no admin** (Gemini + revisão Claude Code): `useAdminPRs.ts` + `AdminPRFeed.tsx` — feed dos 5 recordes mais recentes no `AdminHome`, clicável para `/admin/alunos/:id`. `AdminHome.tsx` — `fetchStats` refatorada com `cancelled` flag e `try/finally`. tsc + lint: 0 erros.
 
 ### Próximo passo
-**Aba Perfil do Aluno** (`/aluno/perfil`) — dados pessoais, conexão Strava, logout.
+**Fase 3 completa.** Candidatos: Code Splitting (lazy loading por rota), Error Boundary, integração Strava.
 
 ---
 
