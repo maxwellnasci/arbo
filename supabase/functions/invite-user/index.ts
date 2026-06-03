@@ -78,6 +78,17 @@ Deno.serve(async (req) => {
     )
   }
 
+  const { error: insertError } = await adminClient.from('invites').insert({
+    email,
+    role,
+    status: 'sent',
+    invited_by: user.id,
+  })
+
+  if (insertError) {
+    console.error('Erro ao salvar no log de convites:', insertError.message)
+  }
+
   return new Response(
     JSON.stringify({ ok: true }),
     { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

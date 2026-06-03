@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminTurmas, type GroupWithCount } from '../../hooks/useAdminTurmas'
+import { CreateGroupModal } from '../../components/admin/CreateGroupModal'
 
 const goalLabel: Record<string, string> = {
   '5k': '5K',
@@ -20,15 +22,15 @@ const planTypeLabel: Record<string, string> = {
 }
 
 export default function AdminTurmas() {
-  const { turmas, isLoading, error } = useAdminTurmas()
+  const { turmas, isLoading, error, refetch } = useAdminTurmas()
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1>Turmas</h1>
         <button
-          disabled
-          title="Em breve"
+          onClick={() => setIsModalOpen(true)}
           style={{
             background: '#E8521A',
             color: '#fff',
@@ -36,9 +38,11 @@ export default function AdminTurmas() {
             padding: '10px 20px',
             borderRadius: '8px',
             fontWeight: 600,
-            opacity: 0.4,
-            cursor: 'not-allowed',
+            cursor: 'pointer',
+            transition: 'opacity 0.2s'
           }}
+          onMouseOver={e => (e.currentTarget.style.opacity = '0.9')}
+          onMouseOut={e => (e.currentTarget.style.opacity = '1')}
         >
           + Nova Turma
         </button>
@@ -58,6 +62,16 @@ export default function AdminTurmas() {
             <TurmaRow key={turma.id} turma={turma} />
           ))}
         </div>
+      )}
+
+      {isModalOpen && (
+        <CreateGroupModal
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={() => {
+            setIsModalOpen(false)
+            refetch()
+          }}
+        />
       )}
     </div>
   )

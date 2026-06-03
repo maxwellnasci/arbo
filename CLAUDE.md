@@ -394,8 +394,15 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - Build gera chunks isolados: AdminHome 4KB, AdminTurmaDetail 24KB, AlunoDashboard 420KB, etc. — aluno nunca baixa código do admin
 - tsc + lint + build: 0 erros ✅
 
+### O que foi feito em 2026-06-03
+- **Implementação Massiva em Paralelo** (Antigravity + Subagentes): 
+  - **Nova Turma:** Botão `+ Nova Turma` funcional em `/admin/turmas` com `CreateGroupModal.tsx` criando registros na tabela `groups`.
+  - **Error Boundary:** Criado `ErrorBoundary.tsx` global com design premium, envolvendo as rotas em `App.tsx` para evitar telas brancas em falhas de renderização.
+  - **Histórico de Convites:** Tabela `invites` criada com RLS; Edge Function `invite-user` atualizada para registrar os convites; `/admin/convites` exibe log de convites.
+  - **Filtros em Alunos:** Busca por nome e filtros por Turma (dinâmico) e Nível adicionados em `/admin/alunos` usando state local para filtro iterativo.
+
 ### Próximo passo
-Próximos candidatos: Error Boundary global, integração Strava (Edge Function via n8n), tabela `invites`.
+Próximos candidatos: Integração Strava (Edge Function via n8n).
 
 ## Roadmap de telas
 
@@ -439,10 +446,9 @@ Próximos candidatos: Error Boundary global, integração Strava (Edge Function 
 ~~**Bottom Nav — Perfil (`/aluno/perfil`)** — dados pessoais, Strava placeholder, logout~~ ✅
 
 ### Próximos passos sugeridos
-- ~~Code Splitting (lazy loading por rota — chunk >500KB)~~ ✅
-- Error Boundary global
+- ~~Error Boundary global~~ ✅
 - Integração Strava (Edge Function via n8n)
-- Tabela `invites` (schema pendente)
+- ~~Tabela `invites` (schema pendente)~~ ✅
 
 ### Ordem de desenvolvimento
 1. ~~Testar visualmente Fase 1 do admin~~ ✅

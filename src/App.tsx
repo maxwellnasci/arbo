@@ -7,6 +7,7 @@ import { useAuth } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import { AdminLayout } from './pages/admin/AdminLayout'
+import ErrorBoundary from './components/ErrorBoundary'
 
 // ── Lazy imports por rota ────────────────────────────────────────────────────
 const Login            = lazy(() => import('./components/Login'))
@@ -88,9 +89,9 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-    <>
+    <ErrorBoundary>
       <RouterProvider router={router} />
       <Toaster theme="dark" position="bottom-center" richColors />
-    </>
+    </ErrorBoundary>
   )
 }

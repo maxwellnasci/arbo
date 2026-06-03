@@ -380,13 +380,20 @@ npx supabase login
 **Code Splitting (Opus 4.6):**
 - `src/App.tsx` — todos os imports de páginas convertidos para `React.lazy()`, cada rota envolvida com `Suspense` + `PageLoader` (spinner laranja on-brand)
 - Componentes estruturais (`ProtectedRoute`, `AdminRoute`, `AdminLayout`) ficam estáticos
-- Build gera chunks isolados por rota — aluno nunca baixa código do admin
+- Task 18: Global Error Boundary, Tabela `invites` (schema), refatoração de loading estados ✅
+
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-03)
+
+### O que foi feito em 2026-06-03
+- **Error Boundary:** Implementado `ErrorBoundary` global com fallback elegante e botão de retry.
+- **Schema `invites`:** Tabela criada no banco (id, email, role, created_at, used_at, token) para controle de convites.
+- **Refatoração:** Padronização de estados de carregamento em hooks de administração e ajuste fino de renderização condicional.
 
 **Repositório:** https://github.com/maxwellnasci/arbo  
-**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-02)
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-03)
 
-### Próximo Passo
-Próximos candidatos: Error Boundary global, integração Strava (Edge Function via n8n), tabela `invites`.
+### Próximos passos sugeridos
+- Integração Strava (Edge Function via n8n)
 
 ## Roadmap de Telas
 

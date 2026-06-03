@@ -69,11 +69,15 @@ Somos um **time de 3**:
 - **Aba Perfil `/aluno/perfil`** (Gemini + revisão Claude Code): `useAlunoPerfil.ts` — queries paralelas profile/groups + strava_connections (placeholder RLS); padrão `async load()`, `cancelled` flag. `AlunoPerfil.tsx` — avatar com fallback, dados pessoais (nível, turma), card Strava placeholder, logout. `AlunoDashboard.tsx` — substitui `ProfileMenu` inline por `<AlunoPerfil>`. Revisão Claude Code: `padding-bottom: 96px` no CSS para BottomNav.
 - **Notificações de PR no admin** (Gemini + revisão Claude Code): `useAdminPRs.ts` + `AdminPRFeed.tsx` — feed dos 5 recordes mais recentes no `AdminHome`, clicável para `/admin/alunos/:id`. `AdminHome.tsx` — `fetchStats` refatorada com `cancelled` flag e `try/finally`. tsc + lint: 0 erros.
 
-### O que foi feito em 2026-06-02 (Parte 3)
-- **Code Splitting** (Opus 4.6): `App.tsx` — todos os imports de páginas convertidos para `React.lazy()` + `Suspense` com `PageLoader` (spinner laranja). Componentes estruturais ficam estáticos. Build gera chunks isolados por rota. tsc + lint + build: 0 erros.
+### O que foi feito em 2026-06-03
+- **Implementação Massiva em Paralelo** (Antigravity + Subagentes): 
+  - **Nova Turma:** Botão `+ Nova Turma` funcional em `/admin/turmas` com formulário/modal criando registros na tabela `groups`.
+  - **Error Boundary:** Criado `ErrorBoundary.tsx` global com design premium envolvendo as rotas em `App.tsx` para prevenir telas brancas.
+  - **Histórico de Convites:** Tabela `invites` criada com RLS; Edge Function `invite-user` atualizada para registrar convites; Tela `/admin/convites` atualizada para exibir o log de convites.
+  - **Filtros em Alunos:** Busca por nome e filtro por Turma/Nível adicionados em `/admin/alunos` (local state filter).
 
 ### Próximo passo
-Próximos candidatos: Error Boundary global, integração Strava (Edge Function via n8n), tabela `invites`.
+Próximos candidatos: Integração Strava (Edge Function via n8n).
 
 ---
 

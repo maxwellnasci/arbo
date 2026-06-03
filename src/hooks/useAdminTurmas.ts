@@ -9,6 +9,8 @@ export function useAdminTurmas() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const [refreshKey, setRefreshKey] = useState(0)
+
   useEffect(() => {
     let cancelled = false
 
@@ -51,7 +53,9 @@ export function useAdminTurmas() {
 
     fetchTurmas()
     return () => { cancelled = true }
-  }, [])
+  }, [refreshKey])
 
-  return { turmas, isLoading, error }
+  const refetch = () => setRefreshKey(k => k + 1)
+
+  return { turmas, isLoading, error, refetch }
 }
