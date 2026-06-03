@@ -365,11 +365,23 @@ npx supabase login
 - Downgrade `recharts` 3.8.1 → **2.15.4** — versão 3.x usa `victory-vendor` (CJS) que causa `require_isUnsafeProperty`; 2.x é ESM nativa
 - `vite.config.ts` — `optimizeDeps` removido
 
+**Aba Perfil — `/aluno/perfil` (Gemini + revisão Claude Code):**
+- `src/hooks/useAlunoPerfil.ts` — queries paralelas: `profiles` com join `groups(name)` + `strava_connections` (placeholder); padrão `async load()`, `cancelled` flag, `catch (e: unknown)`
+- `src/pages/aluno/AlunoPerfil.tsx` — avatar com fallback, dados pessoais (nível, turma), card Strava placeholder, botão logout
+- `src/pages/aluno/AlunoPerfil.module.css` — dark mode, glow laranja, `padding-bottom: 96px` para BottomNav
+- `src/pages/aluno/AlunoDashboard.tsx` — aba `perfil` navega para `<AlunoPerfil>`; `ProfileMenu` inline antigo removido
+
+**Notificações de PR no admin (Gemini + revisão Claude Code):**
+- `src/hooks/useAdminPRs.ts` — query em `records` com join `profiles`; padrão `async load()`, `cancelled` flag
+- `src/pages/admin/AdminPRFeed.tsx` — feed dos 5 recordes mais recentes, clicável para `/admin/alunos/:id`
+- `src/pages/admin/AdminPRFeed.module.css` — CSS Modules dark
+- `src/pages/admin/AdminHome.tsx` — substitui lista inline por `<AdminPRFeed />`; `fetchStats` com `cancelled` flag e `try/finally`
+
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-02)
 
 ### Próximo Passo
-Aba Perfil (`/aluno/perfil`).
+**Fase 3 completa.** Próximos candidatos: Code Splitting (lazy loading), Error Boundary, integração Strava.
 
 ## Roadmap de Telas
 
@@ -391,6 +403,8 @@ Aba Perfil (`/aluno/perfil`).
 | Chat Admin → Aluno | panel em `/admin/alunos/:id` | ✅ |
 | Chat Aluno → Admin | aba em `/aluno` | ✅ |
 | Progresso do Aluno | `/aluno/progresso` | ✅ |
+| Perfil do Aluno | aba em `/aluno` | ✅ |
+| Notificações de PR | widget em `/admin` | ✅ |
 
 ### Pendentes
 
@@ -398,17 +412,16 @@ Aba Perfil (`/aluno/perfil`).
 - ~~Sistema de etiquetas personalizadas~~ ✅
 - ~~Controle de liberação do plano~~ ✅
 - ~~Chat admin ↔ aluno~~ ✅
-- Notificações de PR no painel
+- ~~Notificações de PR no painel~~ ✅
 - Schema pendente: tabela `invites`
 
-**Painel Admin — Fase 3**
+~~**Painel Admin — Fase 3**~~ ✅ **100% completa**
 - ~~`/admin/treinos` — biblioteca de treinos (CRUD) + visual refinado~~ ✅
 - ~~Chat direto admin ↔ aluno + schema `messages`~~ ✅
 
 ~~**Bottom Nav — Progresso (`/aluno/progresso`)** — histórico, recordes, gráfico de pace, streak~~ ✅
 
-**Bottom Nav — Perfil (`/aluno/perfil`)**
-- Dados do aluno, Strava, logout
+~~**Bottom Nav — Perfil (`/aluno/perfil`)** — dados pessoais, Strava placeholder, logout~~ ✅
 
 ### Ordem de Desenvolvimento
 1. ~~Testar Fase 1 do admin visualmente~~ ✅
@@ -418,4 +431,5 @@ Aba Perfil (`/aluno/perfil`).
 5. ~~`/admin/alunos/:id` — perfil do aluno~~ ✅
 6. ~~Painel Admin Fase 3 (treinos ✅ + mensagem ✅)~~ ✅
 7. ~~Aba Progresso~~ ✅
-8. Aba Perfil
+8. ~~Aba Perfil~~ ✅
+9. ~~Notificações de PR no admin~~ ✅
