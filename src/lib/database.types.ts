@@ -330,15 +330,7 @@ export type Database = {
           role?: string
           status?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "invites_invited_by_fkey"
-            columns: ["invited_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       messages: {
         Row: {
