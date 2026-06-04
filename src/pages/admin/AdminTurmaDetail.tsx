@@ -6,6 +6,8 @@ import { useAdminTurmaDetail, type GroupDayTraining } from '../../hooks/useAdmin
 import { useGroupPlanMutations, type NewTrainingInput } from '../../hooks/useGroupPlanMutations'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Tag, Training, TrainingType } from '../../lib/types'
+import { EditGroupModal } from '../../components/admin/EditGroupModal'
+import { Edit2 } from 'lucide-react'
 
 // ─── Labels ────────────────────────────────────────────────────────────────
 
@@ -83,6 +85,8 @@ export default function AdminTurmaDetail() {
   const [allTrainings, setAllTrainings] = useState<Training[]>([])
   const [allTags, setAllTags] = useState<Tag[]>([])
   const [releasing, setReleasing] = useState(false)
+
+  const [showEditModal, setShowEditModal] = useState(false)
 
   // 0 = user hasn't navigated yet → fall back to the hook's default (current week in cycle)
   const effectiveWeek = selectedWeek > 0 ? selectedWeek : defaultWeekNumber
@@ -182,48 +186,67 @@ export default function AdminTurmaDetail() {
   return (
     <div>
       {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
           <button
             onClick={() => navigate('/admin/turmas')}
-            style={{ background: 'none', border: 'none', color: '#E8521A', fontWeight: 600, fontSize: '13px', cursor: 'pointer', padding: 0 }}
+            style={{ background: 'none', border: 'none', color: '#E8521A', fontWeight: 600, fontSize: '13px', cursor: 'pointer', padding: 0, flexShrink: 0 }}
           >
             ← Turmas
           </button>
           {group && (
-            <>
-              <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: 0 }}>{group.name}</h1>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                <span style={{ background: '#E8521A22', color: '#E8521A', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 0 }}>
+              <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {group.name}
+              </h1>
+              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px', scrollbarWidth: 'none' }}>
+                <span style={{ background: '#E8521A22', color: '#E8521A', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap' }}>
                   {goalLabel[group.goal] ?? group.goal}
                 </span>
-                <span style={{ background: '#2a2a2a', color: '#888', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px' }}>
+                <span style={{ background: '#2a2a2a', color: '#888', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap' }}>
                   {frequencyLabel[group.frequency] ?? group.frequency}
                 </span>
-                <span style={{ background: group.is_active ? '#4caf5022' : '#2a2a2a', color: group.is_active ? '#4caf50' : '#555', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px' }}>
+                <span style={{ background: group.is_active ? '#4caf5022' : '#2a2a2a', color: group.is_active ? '#4caf50' : '#555', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap' }}>
                   {group.is_active ? 'Ativa' : 'Inativa'}
                 </span>
               </div>
-            </>
+            </div>
           )}
         </div>
 
-        {/* View toggle */}
-        <div style={{ display: 'flex', background: '#1e1e1e', borderRadius: '8px', padding: '3px', border: '1px solid #2a2a2a' }}>
-          {(['month', 'week'] as const).map(v => (
+        {/* Actions & View toggle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          {group && (
             <button
-              key={v}
-              onClick={() => setView(v)}
+              onClick={() => setShowEditModal(true)}
               style={{
-                padding: '5px 16px', borderRadius: '6px', border: 'none',
-                fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                background: view === v ? '#E8521A' : 'transparent',
-                color: view === v ? '#fff' : '#555',
+                display: 'flex', alignItems: 'center', gap: '6px',
+                background: '#2a2a2a', border: 'none', color: '#ccc',
+                padding: '6px 10px', borderRadius: '8px', fontSize: '12px',
+                fontWeight: 600, cursor: 'pointer'
               }}
             >
-              {v === 'month' ? 'Mês' : 'Semana'}
+              <Edit2 size={14} />
+              <span className="hide-mobile">Editar</span>
             </button>
-          ))}
+          )}
+
+          <div style={{ display: 'flex', background: '#1e1e1e', borderRadius: '8px', padding: '3px', border: '1px solid #2a2a2a' }}>
+            {(['month', 'week'] as const).map(v => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                style={{
+                  padding: '5px 12px', borderRadius: '6px', border: 'none',
+                  fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                  background: view === v ? '#E8521A' : 'transparent',
+                  color: view === v ? '#fff' : '#555',
+                }}
+              >
+                {v === 'month' ? 'Mês' : 'Semana'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -277,6 +300,17 @@ export default function AdminTurmaDetail() {
             />
           )}
         </div>
+      )}
+
+      {showEditModal && group && (
+        <EditGroupModal
+          group={group}
+          onClose={() => setShowEditModal(false)}
+          onSuccess={() => {
+            setShowEditModal(false)
+            refresh()
+          }}
+        />
       )}
     </div>
   )

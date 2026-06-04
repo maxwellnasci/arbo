@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'icon-192x192.png', 'icon-512x512.png'],
+      includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
         name: 'Arbo',
         short_name: 'Arbo',
@@ -21,12 +21,12 @@ export default defineConfig({
         start_url: '/',
         icons: [
           {
-            src: '/icon-192x192.png',
+            src: '/icons/icon-192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/icon-512x512.png',
+            src: '/icons/icon-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'

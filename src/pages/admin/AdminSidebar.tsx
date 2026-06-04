@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useLogout } from '../../hooks/useLogout'
 import { useAuth } from '../../contexts/AuthContext'
+import { LogOut } from 'lucide-react'
 import styles from './AdminLayout.module.css'
 
 export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
@@ -59,8 +60,28 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
       </div>
 
       <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid #333' }}>
-        <p style={{ fontSize: '12px', color: '#888', marginBottom: '12px' }}>{user?.email}</p>
-        <button onClick={logout} style={{ background: 'transparent', border: 'none', color: '#ff6b6b', cursor: 'pointer', padding: 0 }}>
+        <p style={{ fontSize: '12px', color: '#888', marginBottom: '12px', padding: '0 8px' }}>{user?.email}</p>
+        <button 
+          onClick={logout} 
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px', 
+            background: 'transparent', 
+            border: 'none', 
+            color: '#ff6b6b', 
+            cursor: 'pointer', 
+            padding: '12px 10px', 
+            width: '100%',
+            borderRadius: '8px',
+            transition: 'background 0.2s',
+            fontSize: '15px',
+            fontWeight: 500
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = '#ff3b301a'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+        >
+          <LogOut size={18} />
           Sair
         </button>
       </div>

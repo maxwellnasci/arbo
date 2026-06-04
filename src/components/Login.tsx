@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { Mail, Lock } from 'lucide-react'
 import arboLogo from '../assets/arbo-logo.png'
 import './Login.css'
 
@@ -22,7 +23,6 @@ export default function Login() {
       setError('Email ou senha incorretos.')
       setLoading(false)
     }
-    // Se sucesso, o AuthContext detecta a nova sessão e LoginPage redireciona
   }
 
   const handleForgotPassword = async () => {
@@ -44,45 +44,56 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-logo">
+        <div className="login-logo-container">
+          <div className="login-logo-glow" />
           <img src={arboLogo} alt="Arbo CrossFit" className="login-logo-img" />
+        </div>
+        
+        <div className="login-header-text">
           <h1 className="login-title">ARBO</h1>
-          <span className="login-badge">CROSSFIT RUNNING</span>
+          <p className="login-subtitle">A sua evolução começa aqui.</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="login-field">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
+            <label htmlFor="email">E-mail</label>
+            <div className="login-input-wrapper">
+              <Mail className="login-input-icon" size={20} />
+              <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
           </div>
+          
           <div className="login-field">
             <label htmlFor="password">Senha</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
+            <div className="login-input-wrapper">
+              <Lock className="login-input-icon" size={20} />
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+            </div>
           </div>
 
           {error && <p className="login-error">{error}</p>}
           {info && <p className="login-info">{info}</p>}
 
           <button type="submit" className="login-button" disabled={loading}>
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? 'ENTRANDO...' : 'ENTRAR'}
           </button>
         </form>
 
