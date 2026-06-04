@@ -186,51 +186,15 @@ export default function AdminTurmaDetail() {
   return (
     <div>
       {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '20px', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={() => navigate('/admin/turmas')}
-            style={{ background: 'none', border: 'none', color: '#E8521A', fontWeight: 600, fontSize: '13px', cursor: 'pointer', padding: 0, flexShrink: 0 }}
+            style={{ background: 'none', border: 'none', color: '#E8521A', fontWeight: 600, fontSize: '13px', cursor: 'pointer', padding: 0 }}
           >
             ← Turmas
           </button>
-          {group && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flex: 1, minWidth: 0 }}>
-              <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {group.name}
-              </h1>
-              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px', scrollbarWidth: 'none' }}>
-                <span style={{ background: '#E8521A22', color: '#E8521A', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap' }}>
-                  {goalLabel[group.goal] ?? group.goal}
-                </span>
-                <span style={{ background: '#2a2a2a', color: '#888', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap' }}>
-                  {frequencyLabel[group.frequency] ?? group.frequency}
-                </span>
-                <span style={{ background: group.is_active ? '#4caf5022' : '#2a2a2a', color: group.is_active ? '#4caf50' : '#555', fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap' }}>
-                  {group.is_active ? 'Ativa' : 'Inativa'}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Actions & View toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          {group && (
-            <button
-              onClick={() => setShowEditModal(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                background: '#2a2a2a', border: 'none', color: '#ccc',
-                padding: '6px 10px', borderRadius: '8px', fontSize: '12px',
-                fontWeight: 600, cursor: 'pointer'
-              }}
-            >
-              <Edit2 size={14} />
-              <span className="hide-mobile">Editar</span>
-            </button>
-          )}
-
+          
           <div style={{ display: 'flex', background: '#1e1e1e', borderRadius: '8px', padding: '3px', border: '1px solid #2a2a2a' }}>
             {(['month', 'week'] as const).map(v => (
               <button
@@ -248,6 +212,38 @@ export default function AdminTurmaDetail() {
             ))}
           </div>
         </div>
+
+        {group && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <h1 style={{ fontSize: 'clamp(18px, 5vw, 24px)', fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.2 }}>
+              {group.name}
+            </h1>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
+              <span style={{ background: '#E8521A22', color: '#E8521A', fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '20px' }}>
+                {goalLabel[group.goal] ?? group.goal}
+              </span>
+              <span style={{ background: '#2a2a2a', color: '#888', fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '20px' }}>
+                {frequencyLabel[group.frequency] ?? group.frequency}
+              </span>
+              <span style={{ background: group.is_active ? '#4caf5022' : '#2a2a2a', color: group.is_active ? '#4caf50' : '#555', fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '20px' }}>
+                {group.is_active ? 'Ativa' : 'Inativa'}
+              </span>
+              
+              <button
+                onClick={() => setShowEditModal(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  background: '#2a2a2a', border: '1px solid #333', color: '#ccc',
+                  padding: '4px 12px', borderRadius: '20px', fontSize: '11px',
+                  fontWeight: 600, cursor: 'pointer', marginLeft: 'auto'
+                }}
+              >
+                <Edit2 size={12} />
+                Editar
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {error && <p style={{ color: '#ff6b6b', marginBottom: '16px' }}>{error}</p>}
@@ -255,10 +251,10 @@ export default function AdminTurmaDetail() {
       {isLoading ? (
         <p style={{ color: '#555' }}>Carregando...</p>
       ) : (
-        <div style={{ display: 'flex', gap: '0', background: '#1c1c1e', borderRadius: '12px', border: '1px solid #2a2a2a', overflow: 'hidden', minHeight: '70vh' }}>
+        <div style={{ display: 'flex', gap: '0', background: '#1c1c1e', borderRadius: '12px', border: '1px solid #2a2a2a', overflow: 'hidden' }}>
 
           {/* Main grid area */}
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             {view === 'week' ? (
               <WeekView
                 cycleStart={cycleStart}
@@ -345,9 +341,9 @@ function WeekView({
   const trainingByDay = new Map(weekTrainings.map(t => [t.dayOfWeek, t]))
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+    <div>
       {/* Week navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px' }}>
         <button
           onClick={() => onNavigate(selectedWeek - 1)}
           disabled={selectedWeek <= 1}
@@ -508,13 +504,13 @@ function MonthView({
   onCellClick: (weekNumber: number, dayOfWeek: number) => void
 }) {
   return (
-    <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: '100%' }}>
+    <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {[1, 2, 3, 4].map(wn => (
-        <div key={wn} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        <div key={wn}>
           <div style={{ fontSize: '10px', color: '#444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>
             Semana {wn} · {cycleStart ? weekRange(cycleStart, wn) : ''}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', flex: 1 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px' }}>
             {[1, 2, 3, 4, 5, 6].map(dow => {
               const entry = trainings.find(t => t.weekNumber === wn && t.dayOfWeek === dow)
               return (
@@ -522,10 +518,9 @@ function MonthView({
                   key={dow}
                   onClick={() => onCellClick(wn, dow)}
                   style={{
-                    display: 'flex', flexDirection: 'column',
                     background: entry ? '#1a1a1a' : '#161616',
                     border: `1px solid ${entry ? '#E8521A22' : '#1e1e1e'}`,
-                    borderRadius: '7px', padding: '5px 4px', minHeight: '46px', height: '100%',
+                    borderRadius: '7px', padding: '5px 4px', minHeight: '46px',
                     cursor: 'pointer', textAlign: 'left', width: '100%',
                   }}
                 >
