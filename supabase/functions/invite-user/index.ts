@@ -73,13 +73,21 @@ Deno.serve(async (req) => {
   })
 
   if (inviteError) {
-    console.error('Erro ao convidar:', inviteError.message)
-    return new Response(
-      inviteError.message === 'User already registered'
-        ? 'Este email já possui conta no Arbo.'
-        : 'Erro ao enviar convite. Tente novamente.',
-      { status: 500, headers: corsHeaders }
-    )
+    if (inviteError.message.includes('already been registered') || inviteError.message === 'User already registered') {
+      // Fallback: se já existe, manda um e-mail de "recuperação de senha" que serve como re-convite
+      const { error: resetError } = await adminClient.auth.resetPasswordForEmail(email, {
+        redirectTo,
+      })
+
+      if (resetError) {
+        console.error('Erro no fallback de re-convite (reset password):', resetError.message)
+        return new Response(`Erro ao reenviar convite: ${resetError.message}`, { status: 500, headers: corsHeaders })
+      }
+      // Se deu certo o re-envio, a execução segue normalmente para salvar o log na tabela invites
+    } else {
+      console.error('Erro ao convidar:', inviteError.message)
+      return new Response(`Erro ao enviar convite: ${inviteError.message}`, { status: 500, headers: corsHeaders })
+    }
   }
 
   const { error: insertError } = await adminClient.from('invites').insert({
