@@ -299,6 +299,7 @@ npx supabase login
 - Task 25: Deploy no Vercel — **https://arbo-weld.vercel.app** ✅
 - Task 26: Responsividade Mobile — menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area no aluno ✅
 - Task 27: PWA completo — `vite-plugin-pwa`, ícones custom, service worker Workbox, meta tags iOS/Android ✅
+- Task 28: Correções UX mobile — bounce iOS, zoom bloqueado, `100dvh` com scroll no `#root` ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 
@@ -418,6 +419,14 @@ npx supabase login
 - `CreateGroupModal.tsx` — campos com `flexWrap: wrap` e `flex: 1 1 200px`
 - `AlunoPerfil.module.css` — safe area inset bottom para iPhone com home indicator
 - `AlunoProgresso.module.css` — container recharts com `width: 100%` e `overflow: hidden`
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
+
+### O que foi feito em 2026-06-04 (Parte 3)
+
+**Correções UX Mobile (Gemini):**
+- `index.html` — `maximum-scale=1.0, user-scalable=no` no viewport: bloqueia pinch-to-zoom e double-tap zoom
+- `src/index.css` — `html, body`: `overscroll-behavior: none` (elimina bounce iOS), `overflow: hidden`; `#root`: `height: 100dvh`, `overflow-y: auto`, `-webkit-overflow-scrolling: touch`
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
 

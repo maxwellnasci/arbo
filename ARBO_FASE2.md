@@ -1,6 +1,6 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-06-04 (sessão 9)
+> Gerado em 2026-05-29 | Atualizado em 2026-06-04 (sessão 10)
 
 ---
 
@@ -30,6 +30,7 @@
 | **Deploy** | ✅ **https://arbo-weld.vercel.app** (Vercel, SPA routing) |
 | **Responsividade Mobile** | ✅ Menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area, fix recharts (2026-06-04) |
 | **PWA Completo** | ✅ `vite-plugin-pwa`, ícone custom "A" em laranja, service worker Workbox, meta tags iOS/Android (2026-06-04) |
+| **Correções UX Mobile** | ✅ Bounce iOS eliminado, zoom bloqueado, layout `100dvh` com scroll nativo (2026-06-04) |
 | **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-04) |
 | **Fase 3** | ✅ **100% completa** |
 

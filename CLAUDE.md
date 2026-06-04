@@ -269,6 +269,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 25:** Deploy no Vercel — app publicado em **https://arbo-weld.vercel.app** ✅
 - **Task 26:** Responsividade Mobile — menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area no aluno (Gemini) ✅
 - **Task 27:** PWA completo — `vite-plugin-pwa`, `manifest.webmanifest`, ícones PNG + SVG custom, service worker Workbox, meta tags iOS/Android (Gemini) ✅
+- **Task 28:** Correções UX mobile — prevenção de bounce iOS, bloqueio de zoom indesejado, layout `100dvh` com scroll no `#root` (Gemini) ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 **Fase 3:** 100% completa ✅
@@ -432,6 +433,14 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Fix (Claude Code):** removidos `public/manifest.json` (redundante — plugin gera `manifest.webmanifest`), `public/icons.svg` (arquivo de template não relacionado ao projeto), `vite.config.js` (cópia compilada redundante do `.ts`)
 
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
+
+### O que foi feito em 2026-06-04 (Parte 3)
+
+**Correções UX Mobile (Gemini):**
+- `index.html` — viewport atualizado: `maximum-scale=1.0, user-scalable=no` bloqueia pinch-to-zoom e double-tap zoom indesejados em iPhone/Android
+- `src/index.css` — `html, body` recebem `overscroll-behavior: none` (elimina bounce/rubber-band do iOS) e `overflow: hidden` (contém o scroll no `#root`); `#root` muda de `min-height: 100svh` para `height: 100dvh` + `overflow-y: auto` + `-webkit-overflow-scrolling: touch` para scroll nativo suave no iOS
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
 
 ### O que foi feito em 2026-06-04
 
