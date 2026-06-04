@@ -8,6 +8,7 @@ export default function SetPassword() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [ready, setReady] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -59,13 +60,43 @@ export default function SetPassword() {
         .eq('id', user.id)
     }
 
-    navigate('/dashboard')
+    setIsSuccess(true)
+    setLoading(false)
   }
 
   if (!ready) {
     return (
       <div style={styles.page}>
         <p style={styles.validating}>Validando convite...</p>
+      </div>
+    )
+  }
+
+  if (isSuccess) {
+    return (
+      <div style={styles.page}>
+        <div style={{ ...styles.card, textAlign: 'center', padding: '48px 28px' }}>
+          <div style={{ background: '#E8521A22', color: '#E8521A', width: '64px', height: '64px', borderRadius: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
+          <h2 style={{ ...styles.title, fontSize: '28px', marginBottom: '12px' }}>Acesso Liberado!</h2>
+          <p style={{ ...styles.subtitle, fontSize: '15px', color: '#aaa', lineHeight: 1.5, marginBottom: '32px' }}>
+            Sua senha foi configurada com sucesso. Seja muito bem-vindo(a) ao Arbo.
+          </p>
+          
+          <div style={{ background: '#111', border: '1px solid #333', borderRadius: '12px', padding: '16px', marginBottom: '32px' }}>
+            <p style={{ fontSize: '13px', color: '#888', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Link oficial do App</p>
+            <p style={{ fontSize: '16px', color: '#fff', margin: 0, fontWeight: 700 }}>arbo.mxos.com.br</p>
+            <p style={{ fontSize: '12px', color: '#666', margin: '8px 0 0' }}>Salve este link para seus próximos acessos</p>
+          </div>
+
+          <button 
+            onClick={() => navigate('/dashboard')}
+            style={styles.button}
+          >
+            Acessar meu Painel
+          </button>
+        </div>
       </div>
     )
   }
