@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useLogout } from '../../hooks/useLogout'
 import { useAuth } from '../../contexts/AuthContext'
+import styles from './AdminLayout.module.css'
 
-export function AdminSidebar() {
+export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const { pathname } = useLocation()
   const logout = useLogout()
   const { user } = useAuth()
@@ -17,8 +18,8 @@ export function AdminSidebar() {
   ]
 
   return (
-    <nav style={{ width: '240px', borderRight: '1px solid #333', padding: '24px', display: 'flex', flexDirection: 'column' }}>
-      <h2 style={{ color: '#E8521A', margin: '0 0 24px' }}>ARBO</h2>
+    <nav className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
+      <h2 className={styles.sidebarTitle}>ARBO</h2>
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {links.map(link => {
@@ -41,6 +42,7 @@ export function AdminSidebar() {
               <Link
                 key={link.to}
                 to={link.to}
+                onClick={onClose}
                 style={{
                   padding: '12px',
                   borderRadius: '8px',

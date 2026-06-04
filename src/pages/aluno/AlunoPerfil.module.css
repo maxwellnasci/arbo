@@ -1,5 +1,5 @@
 .container {
-  padding: 24px 24px 96px;
+  padding: 24px 24px calc(96px + env(safe-area-inset-bottom, 24px));
   display: flex;
   flex-direction: column;
   gap: 32px;

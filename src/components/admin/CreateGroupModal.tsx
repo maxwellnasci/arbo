@@ -95,8 +95,8 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
             />
           </div>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 200px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Objetivo</label>
               <select 
                 value={goal}
@@ -120,7 +120,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
               </select>
             </div>
 
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: '1 1 200px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Frequência</label>
               <select 
                 value={frequency}
@@ -142,8 +142,8 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <div style={{ flex: 1 }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ flex: '1 1 200px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Tipo de Plano</label>
               <select 
                 value={planType}
@@ -164,7 +164,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
               </select>
             </div>
 
-            <div style={{ flex: 1 }}>
+            <div style={{ flex: '1 1 200px' }}>
               <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Início (Opcional)</label>
               <input 
                 type="date"

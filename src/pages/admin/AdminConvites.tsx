@@ -89,16 +89,16 @@ export default function AdminConvites() {
               </button>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <input
               type="email"
               value={email}
               onChange={e => { setEmail(e.target.value); setStatus('idle') }}
               placeholder={role === 'admin' ? 'Email do professor' : 'Email do aluno'}
               required
-              style={{ flex: 1, padding: '12px', borderRadius: '8px', background: '#2a2a2a', border: '1px solid #333', color: '#fff' }}
+              style={{ flex: '1 1 200px', padding: '12px', borderRadius: '8px', background: '#2a2a2a', border: '1px solid #333', color: '#fff' }}
             />
-            <button type="submit" disabled={status === 'loading'} style={{ background: '#E8521A', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
+            <button type="submit" disabled={status === 'loading'} style={{ flex: '1 1 auto', background: '#E8521A', color: '#fff', border: 'none', padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}>
               {status === 'loading' ? 'Enviando...' : 'Convidar'}
             </button>
           </div>
@@ -108,8 +108,8 @@ export default function AdminConvites() {
       </div>
 
       <h2 style={{ fontSize: '18px', marginBottom: '16px', color: '#ddd' }}>Convites Enviados</h2>
-      <div style={{ background: '#1c1c1e', borderRadius: '12px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      <div style={{ background: '#1c1c1e', borderRadius: '12px', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        <table style={{ width: '100%', minWidth: '450px', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ background: '#2a2a2a' }}>
               <th style={{ padding: '12px 16px', color: '#999', fontWeight: 500, fontSize: '13px' }}>Email</th>
@@ -136,12 +136,13 @@ export default function AdminConvites() {
                       borderRadius: '4px', 
                       fontSize: '12px', 
                       background: inv.status === 'sent' ? '#2e7d32' : '#555',
-                      color: '#fff'
+                      color: '#fff',
+                      whiteSpace: 'nowrap'
                     }}>
                       {inv.status}
                     </span>
                   </td>
-                  <td style={{ padding: '12px 16px', color: '#888', fontSize: '13px' }}>
+                  <td style={{ padding: '12px 16px', color: '#888', fontSize: '13px', whiteSpace: 'nowrap' }}>
                     {new Date(inv.created_at).toLocaleDateString('pt-BR')}
                   </td>
                 </tr>
