@@ -36,6 +36,7 @@
 | **Modal edição de turma** | ✅ `EditGroupModal.tsx` — editar nome, objetivo, frequência, tipo de plano e status (2026-06-04) |
 | **Header da turma** | ✅ Breadcrumb + pills de metadados (objetivo, frequência, status) + botão Editar (2026-06-04) |
 | **Header mobile da turma + reversão do grid** | ✅ Header em `flexDirection: column`, título `clamp(18px, 5vw, 24px)`, pills com `flexWrap: wrap`, botão Editar integrado como pill; `minHeight: '70vh'` revertido no grid (2026-06-04) |
+| **Convites e UX Premium** | ✅ Reenvio de convites via fallback (reset senha), Error Boundary com auto-reload, Tela de Sucesso no SetPassword (2026-06-04) |
 | **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-04) |
 | **Fase 3** | ✅ **100% completa** |
 
@@ -243,6 +244,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 17. ✅ Filtros em /admin/alunos (nome + turma + nível)
 18. ✅ Ajustes visuais no grid da semana, vista mês e proporção dos ícones PWA
 19. ✅ Correção responsividade mobile do header da turma + reversão da altura do grid
+20. ✅ Reenvio infinito de convites (fallback reset senha), Auto-reload no ErrorBoundary e Tela de Sucesso Premium
 ```
 
 ---

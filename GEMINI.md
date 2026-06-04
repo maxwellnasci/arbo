@@ -426,6 +426,16 @@ npx supabase login
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 
+### O que foi feito em 2026-06-04 (Parte 7)
+
+**Convites e Error Boundary (Antigravity):**
+- `invite-user/index.ts` — Edge function atualizada para aceitar `redirectTo` dinâmico do frontend; implementado fallback para `resetPasswordForEmail` quando o erro é `User already registered`, permitindo o reenvio infinito de convites.
+- `useInvite.ts` — `redirectTo` passa a usar `window.location.origin` (garante o domínio correto no link do email).
+- `ErrorBoundary.tsx` — Adicionado auto-reload (`window.location.reload()`) caso o erro seja `Failed to fetch dynamically imported module`, evitando telas brancas pós-deploy.
+- `SetPassword.tsx` — Nova tela de sucesso comemorativa (UX Premium) após definição de senha, exibindo o link oficial (`arbo.mxos.com.br`) antes de acessar o painel.
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
+
 ### O que foi feito em 2026-06-04 (Parte 2)
 
 **PWA Completo (Gemini + fix Claude Code):**
