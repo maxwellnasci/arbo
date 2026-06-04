@@ -472,6 +472,14 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
 
+### O que foi feito em 2026-06-04 (Parte 5)
+
+**Ajustes visuais no grid da semana, vista mês e ícones PWA (Gemini):**
+- `src/pages/admin/AdminTurmaDetail.tsx` — grid da semana com `minHeight: '70vh'`; colunas e células com `flex: 1` + `flexDirection: column` para a vista mês crescer proporcionalmente; células com `height: '100%'`
+- `public/icons/icon-192.png` e `public/icons/icon-512.png` — proporção da árvore/logo nos ícones PWA melhorada
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
+
 ### Próximo passo
 - Integração Strava (Edge Function via n8n)
 - Domínio customizado (apontar domínio próprio no Vercel)

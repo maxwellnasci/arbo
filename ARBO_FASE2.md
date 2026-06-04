@@ -240,9 +240,10 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 15. ✅ Error Boundary global (ErrorBoundary.tsx)
 16. ✅ Tabela invites + log em /admin/convites
 17. ✅ Filtros em /admin/alunos (nome + turma + nível)
+18. ✅ Ajustes visuais no grid da semana, vista mês e proporção dos ícones PWA
 ```
 
 ---
 
 *Documento gerado com base nas respostas do professor e alinhamento de produto.*
-*Atualizado em 2026-06-03 com deploy no Vercel, Nova Turma, Error Boundary, tabela invites e filtros.*
+*Atualizado em 2026-06-04 com ajustes visuais no grid da semana e ícones PWA.*
