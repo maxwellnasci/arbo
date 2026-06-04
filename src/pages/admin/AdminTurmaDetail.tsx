@@ -255,10 +255,10 @@ export default function AdminTurmaDetail() {
       {isLoading ? (
         <p style={{ color: '#555' }}>Carregando...</p>
       ) : (
-        <div style={{ display: 'flex', gap: '0', background: '#1c1c1e', borderRadius: '12px', border: '1px solid #2a2a2a', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', gap: '0', background: '#1c1c1e', borderRadius: '12px', border: '1px solid #2a2a2a', overflow: 'hidden', minHeight: '70vh' }}>
 
           {/* Main grid area */}
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
             {view === 'week' ? (
               <WeekView
                 cycleStart={cycleStart}
@@ -345,7 +345,7 @@ function WeekView({
   const trainingByDay = new Map(weekTrainings.map(t => [t.dayOfWeek, t]))
 
   return (
-    <div>
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       {/* Week navigation */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px 8px' }}>
         <button
@@ -508,13 +508,13 @@ function MonthView({
   onCellClick: (weekNumber: number, dayOfWeek: number) => void
 }) {
   return (
-    <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, minHeight: '100%' }}>
       {[1, 2, 3, 4].map(wn => (
-        <div key={wn}>
+        <div key={wn} style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <div style={{ fontSize: '10px', color: '#444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>
             Semana {wn} · {cycleStart ? weekRange(cycleStart, wn) : ''}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px', flex: 1 }}>
             {[1, 2, 3, 4, 5, 6].map(dow => {
               const entry = trainings.find(t => t.weekNumber === wn && t.dayOfWeek === dow)
               return (
@@ -522,9 +522,10 @@ function MonthView({
                   key={dow}
                   onClick={() => onCellClick(wn, dow)}
                   style={{
+                    display: 'flex', flexDirection: 'column',
                     background: entry ? '#1a1a1a' : '#161616',
                     border: `1px solid ${entry ? '#E8521A22' : '#1e1e1e'}`,
-                    borderRadius: '7px', padding: '5px 4px', minHeight: '46px',
+                    borderRadius: '7px', padding: '5px 4px', minHeight: '46px', height: '100%',
                     cursor: 'pointer', textAlign: 'left', width: '100%',
                   }}
                 >
