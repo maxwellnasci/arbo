@@ -14,7 +14,11 @@ export function useInvite() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify({ 
+          email, 
+          role, 
+          redirectTo: `${window.location.origin}/set-password` 
+        }),
       }
     )
 
