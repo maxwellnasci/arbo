@@ -1,6 +1,6 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-06-03 (sessão 8)
+> Gerado em 2026-05-29 | Atualizado em 2026-06-04 (sessão 9)
 
 ---
 
@@ -28,7 +28,8 @@
 | Tabela `invites` + log | ✅ Schema no Supabase, RLS, Edge Function atualizada, log visível em `/admin/convites` |
 | Filtros em `/admin/alunos` | ✅ Busca por nome + filtro por Turma (dinâmico) e Nível |
 | **Deploy** | ✅ **https://arbo-weld.vercel.app** (Vercel, SPA routing) |
-| **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-03) |
+| **Responsividade Mobile** | ✅ Menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area, fix recharts (2026-06-04) |
+| **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-04) |
 | **Fase 3** | ✅ **100% completa** |
 
 **Repositório:** https://github.com/maxwellnasci/arbo

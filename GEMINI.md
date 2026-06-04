@@ -271,7 +271,7 @@ npx supabase login
 
 **Project ID:** `jhfkflnixzivuichmkie`
 
-## Estado Atual (2026-06-03)
+## Estado Atual (2026-06-04)
 
 ### Progresso geral
 - Tasks 1–3: Schema, RLS, Auth stack ✅
@@ -297,8 +297,9 @@ npx supabase login
 - Task 23: Tabela `invites` — Supabase + RLS + log em /admin/convites ✅
 - Task 24: Filtros em /admin/alunos — busca por nome + filtro por Turma e Nível ✅
 - Task 25: Deploy no Vercel — **https://arbo-weld.vercel.app** ✅
+- Task 26: Responsividade Mobile — menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area no aluno ✅
 
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-03)
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan`: join N→1 corrigido (`wpt.trainings[0]` → `wpt.trainings`)
@@ -391,6 +392,21 @@ npx supabase login
 - Task 18: Global Error Boundary, Tabela `invites` (schema), refatoração de loading estados ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-03)
+
+### O que foi feito em 2026-06-04
+
+**Responsividade Mobile — Painel Admin e App do Aluno (Gemini):**
+- `AdminLayout.tsx` — refatorado para CSS Modules; menu hamburguer mobile; overlay escuro; `useState` para `sidebarOpen`
+- `AdminLayout.module.css` — criado; layout desktop `flex-row`, breakpoint 768px; sidebar vira drawer `position:fixed` animado
+- `AdminSidebar.tsx` — props `isOpen`/`onClose`; links fecham sidebar ao navegar; `.sidebarOpen` class condicional
+- `AdminTurmaDetail.tsx` — WeekView com `overflowX: auto` e `minWidth: 420px` para scroll horizontal
+- `AdminConvites.tsx` — tabela `overflowX: auto`, `minWidth: 450px`; form com `flexWrap: wrap`
+- `AdminAlunoDetail.module.css` — media 768px: header em coluna, actions full-width, metrics 1 coluna
+- `CreateGroupModal.tsx` — campos com `flexWrap: wrap` e `flex: 1 1 200px`
+- `AlunoPerfil.module.css` — safe area inset bottom para iPhone com home indicator
+- `AlunoProgresso.module.css` — container recharts com `width: 100%` e `overflow: hidden`
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
 
 ### O que foi feito em 2026-06-03
 

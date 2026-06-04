@@ -241,7 +241,7 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-06-03)
+## Estado atual (2026-06-04)
 
 ### Progresso geral
 - **Task 1–3:** Schema, RLS, Auth stack ✅
@@ -267,8 +267,9 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 23:** Tabela `invites` no Supabase — RLS + policies + GRANT; Edge Function `invite-user` registra convite no banco; `/admin/convites` exibe log ✅
 - **Task 24:** Filtros em `/admin/alunos` — busca por nome + filtro por Turma (dinâmico) e Nível via state local ✅
 - **Task 25:** Deploy no Vercel — app publicado em **https://arbo-weld.vercel.app** ✅
+- **Task 26:** Responsividade Mobile — menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area no aluno (Gemini) ✅
 
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-03)
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 **Fase 3:** 100% completa ✅
 
 ### O que foi feito em 2026-05-21
@@ -418,6 +419,21 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-03)
+
+### O que foi feito em 2026-06-04
+
+**Responsividade Mobile — Painel Admin e App do Aluno (Gemini):**
+- `src/pages/admin/AdminLayout.tsx` — refatorado para CSS Modules; menu hamburguer mobile (ícone `Menu` da lucide-react); overlay escuro ao abrir sidebar; `useState` para controlar `sidebarOpen`
+- `src/pages/admin/AdminLayout.module.css` — criado do zero: layout desktop via `flex-row`, breakpoint 768px muda para `flex-column`; `.headerMobile` visível apenas no mobile; sidebar vira drawer com `position:fixed` + `transform: translateX(-100%)` animado; overlay com `opacity` transicionado
+- `src/pages/admin/AdminSidebar.tsx` — aceita props `isOpen` e `onClose`; links chamam `onClose` ao navegar; aplica `.sidebarOpen` class quando aberto
+- `src/pages/admin/AdminTurmaDetail.tsx` — WeekView envolvida em wrapper `overflowX: 'auto'` com `WebkitOverflowScrolling: 'touch'`; grid `minWidth: '420px'` para scroll horizontal no mobile
+- `src/pages/admin/AdminConvites.tsx` — tabela de convites com `overflowX: 'auto'` e `minWidth: '450px'`; form de convite com `flexWrap: 'wrap'` e `flex: '1 1 200px'` nos campos
+- `src/pages/admin/AdminAlunoDetail.module.css` — media query 768px: `.header` em coluna centralizada, `.actions` em coluna full-width, `.btn` full-width, `.metrics` em 1 coluna
+- `src/components/admin/CreateGroupModal.tsx` — form com `flexWrap: 'wrap'` e `flex: '1 1 200px'` nos grupos de campos
+- `src/pages/aluno/AlunoPerfil.module.css` — `padding-bottom: calc(96px + env(safe-area-inset-bottom, 24px))` para iPhone com home indicator
+- `src/pages/aluno/AlunoProgresso.module.css` — container do gráfico recharts recebe `width: 100%`, `max-width: 100%`, `overflow: hidden` para não vazar no mobile
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
 
 ### Próximo passo
 - Integração Strava (Edge Function via n8n)
