@@ -270,6 +270,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 26:** Responsividade Mobile — menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area no aluno (Gemini) ✅
 - **Task 27:** PWA completo — `vite-plugin-pwa`, `manifest.webmanifest`, ícones PNG + SVG custom, service worker Workbox, meta tags iOS/Android (Gemini) ✅
 - **Task 28:** Correções UX mobile — prevenção de bounce iOS, bloqueio de zoom indesejado, layout `100dvh` com scroll no `#root` (Gemini) ✅
+- **Task 29:** Login redesign premium (logo Arbo, glassmorphism, glow laranja, ícones Lucide), novos ícones PWA (`public/icons/`), sidebar hover refinado, header da turma com botão Editar, `EditGroupModal.tsx` (Gemini) ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 **Fase 3:** 100% completa ✅
@@ -454,6 +455,20 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - `src/components/admin/CreateGroupModal.tsx` — form com `flexWrap: 'wrap'` e `flex: '1 1 200px'` nos grupos de campos
 - `src/pages/aluno/AlunoPerfil.module.css` — `padding-bottom: calc(96px + env(safe-area-inset-bottom, 24px))` para iPhone com home indicator
 - `src/pages/aluno/AlunoProgresso.module.css` — container do gráfico recharts recebe `width: 100%`, `max-width: 100%`, `overflow: hidden` para não vazar no mobile
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
+
+### O que foi feito em 2026-06-04 (Parte 4)
+
+**Login redesign premium + ícones PWA + EditGroupModal (Gemini):**
+- `src/components/Login.tsx` — usa `arbo-logo.png` do assets; ícones `Mail` e `Lock` da lucide nos inputs; card glassmorphism com `backdrop-filter: blur`
+- `src/components/Login.css` — reescrito do zero: `radial-gradient` no fundo, glow laranja (`filter: blur(60px)`), inputs com ícone + border focus laranja, botão com gradiente e `transform: translateY(-2px)` no hover, estados disabled/error/info
+- `public/icons/icon-192.png` + `public/icons/icon-512.png` — ícones PWA com arbo-logo (nova pasta `public/icons/`)
+- `vite.config.ts` — caminhos de ícones atualizados para `icons/icon-192.png` e `icons/icon-512.png`
+- `index.html` — `apple-touch-icon` atualizado para `/icons/icon-192.png`
+- `src/pages/admin/AdminTurmaDetail.tsx` — header reformulado: flex layout com breadcrumb, nome da turma + pills de metadados (objetivo, frequência, status), botão "Editar" com ícone `Edit2` da lucide; `showEditModal` state + `<EditGroupModal>` integrado
+- `src/components/admin/EditGroupModal.tsx` — novo componente: form completo para editar nome, objetivo, frequência, tipo de plano e status da turma; dark inline styles; atualiza `groups` via supabase update; toast de sucesso via `onSuccess()`
+- **Fix:** `vite.config.js` (cópia compilada redundante) removido
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
 

@@ -300,6 +300,7 @@ npx supabase login
 - Task 26: Responsividade Mobile — menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area no aluno ✅
 - Task 27: PWA completo — `vite-plugin-pwa`, ícones custom, service worker Workbox, meta tags iOS/Android ✅
 - Task 28: Correções UX mobile — bounce iOS, zoom bloqueado, `100dvh` com scroll no `#root` ✅
+- Task 29: Login redesign premium (logo Arbo, glassmorphism, glow laranja, ícones lucide nos inputs), novos ícones PWA em `public/icons/`, header da turma reformulado com botão Editar, `EditGroupModal.tsx` ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 
@@ -394,6 +395,20 @@ npx supabase login
 - Task 18: Global Error Boundary, Tabela `invites` (schema), refatoração de loading estados ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-03)
+
+### O que foi feito em 2026-06-04 (Parte 4)
+
+**Login redesign premium + ícones PWA + EditGroupModal (Gemini):**
+- `Login.tsx` — usa `arbo-logo.png` do assets; ícones `Mail`/`Lock` da lucide; card glassmorphism
+- `Login.css` — reescrito: `radial-gradient`, glow laranja, inputs com border focus laranja, botão com gradiente e hover animado, estados error/info
+- `public/icons/icon-192.png` + `public/icons/icon-512.png` — ícones PWA com logo Arbo (nova pasta `public/icons/`)
+- `vite.config.ts` + `index.html` — referências atualizadas para `icons/icon-192.png` e `icons/icon-512.png`
+- `AdminTurmaDetail.tsx` — header com breadcrumb, nome + pills de metadados (objetivo, frequência, status), botão "Editar" (`Edit2` lucide)
+- `EditGroupModal.tsx` (novo) — form completo para editar nome, objetivo, frequência, tipo de plano e status; dark inline styles; atualiza `groups` via supabase update
+
+**Fix:** `vite.config.js` (cópia compilada redundante) removido pelo Claude Code
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
 
 ### O que foi feito em 2026-06-04 (Parte 2)
 

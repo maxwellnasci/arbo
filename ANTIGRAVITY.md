@@ -74,6 +74,7 @@ Somos um **time de 3**:
 - **Correções UX Mobile** (Gemini): `overscroll-behavior: none` + `overflow: hidden` em `html/body` (elimina bounce iOS); `maximum-scale=1.0, user-scalable=no` no viewport (bloqueia zoom indesejado); `#root` com `height: 100dvh` + `overflow-y: auto` + `-webkit-overflow-scrolling: touch`. tsc + lint: 0 erros ✅
 - **PWA Completo** (Gemini + fix Claude Code): `vite-plugin-pwa` instalado; manifest com nome, cores e ícones do Arbo; ícone SVG custom "A" em laranja `#E8521A`; PNGs 192×192 e 512×512; service worker Workbox com precache de 29 entradas; meta tags iOS (`apple-touch-icon`, `viewport-fit=cover`); fix Claude Code: removidos `manifest.json` redundante, `icons.svg` de template e `vite.config.js` duplicado. tsc + build + lint: 0 erros ✅
 - **Responsividade Mobile** (Gemini): Menu hamburguer no painel admin com sidebar drawer animado; tabelas scrolláveis horizontalmente; `flexWrap` nos forms; media queries para `AdminAlunoDetail`; safe area inset no perfil do aluno; fix do container recharts no progresso. tsc + lint: 0 erros ✅
+- **Login redesign premium + ícones PWA + EditGroupModal** (Gemini + fix Claude Code): `Login.tsx`/`Login.css` reescritos com glassmorphism, glow laranja, logo Arbo e ícones lucide; novos ícones PWA com arbo-logo em `public/icons/`; header da turma reformulado com breadcrumb + pills de metadados + botão "Editar"; `EditGroupModal.tsx` (novo) para editar dados da turma; `vite.config.js` redundante removido (Claude Code). tsc + lint: 0 erros ✅
 
 ### O que foi feito em 2026-06-03
 - **Deploy no Vercel:** App publicado em **https://arbo-weld.vercel.app** com SPA routing via `vercel.json`
@@ -87,8 +88,6 @@ Somos um **time de 3**:
 
 ### Próximo passo
 - Integração Strava (Edge Function via n8n)
-- Ícone do app / favicon personalizado
-- PWA completo (manifest, service worker, instalável)
 - Domínio customizado no Vercel
 
 ---
@@ -162,17 +161,17 @@ Utilize os comandos abaixo para acionar a revisão e melhoria visual pelo AntiGr
 |---|---|---|---|
 | 1 | ~~**Code Splitting (lazy loading)**~~ ✅ | ~~Build gera chunk >500KB.~~ Implementado: `React.lazy()` + `Suspense` em todas as rotas. Chunks isolados por rota. | ✅ Concluído 2026-06-02 |
 | 2 | ~~**Error Boundary**~~ ✅ | ~~Se um componente quebra, o app inteiro morre (tela branca).~~ `ErrorBoundary.tsx` global implementado com fallback elegante e retry. | ✅ Concluído 2026-06-03 |
-| 3 | **Git config no WSL** | `user.name` e `user.email` não configurados — commits ficam sem autor identificado. Rodar `git config --global user.name "Maxwell"` e `git config --global user.email "email"`. | Antes do próximo push |
+| 3 | ~~**Git config no WSL**~~ ✅ | ~~`user.name` e `user.email` não configurados.~~ Resolvido — commits com `Max <maxwellngg@gmail.com>`. | ✅ Resolvido |
 
 ### 🟡 Prioridade Média (quando houver tempo)
 
 | # | Melhoria | Por quê | Quando |
 |---|---|---|---|
 | 4 | **README.md real** | Ainda é o template padrão do Vite ("React + Vite"). Deveria ter descrição do Arbo, como rodar, stack, screenshots. Importante para o GitHub ficar profissional. | Quando publicar |
-| 5 | **PWA (Progressive Web App)** | O Arbo é focado em corrida/mobile. Com PWA, o aluno instala no celular como se fosse app nativo — ícone na home, abre fullscreen, pode funcionar offline. Sem precisar de app store. App já publicado (arbo-weld.vercel.app) — próximo passo natural. | Próxima sessão |
+| 5 | ~~**PWA (Progressive Web App)**~~ ✅ | ~~O Arbo é focado em corrida/mobile.~~ Implementado: `vite-plugin-pwa`, manifest, service worker Workbox, ícones custom. | ✅ Concluído 2026-06-04 |
 | 6 | **SMTP externo** | Supabase gratuito limita 3-4 emails/hora (convites, recuperação de senha). Antes de produção, configurar Resend ou AWS SES para não travar convites. | Antes de lançar |
 | 7 | **CSS unificado** | Mix de abordagens (global CSS em `index.css`, CSS Modules em `AlunoDashboard.module.css`, CSS em `Login.css`). Padronizar para CSS Modules em todos os componentes — mais organizado e sem conflito de nomes. | Refatoração geral |
-| 8 | **Ícone do app / Favicon** | Ainda usa o SVG padrão do Vite. Criar ícone do Arbo (árvore/corrida) para aba do navegador, PWA home screen e splash screen. Pré-requisito para o PWA ficar profissional. | Próxima sessão |
+| 8 | ~~**Ícone do app / Favicon**~~ ✅ | ~~Ainda usa o SVG padrão do Vite.~~ Ícone Arbo custom com logo, PNGs 192×192 e 512×512 em `public/icons/`. | ✅ Concluído 2026-06-04 |
 | 9 | **Domínio customizado** | App no ar em arbo-weld.vercel.app. Apontar domínio próprio no Vercel para URL profissional ao compartilhar com alunos. | Antes de lançar |
 
 ### 🟢 Prioridade Baixa (futuro)

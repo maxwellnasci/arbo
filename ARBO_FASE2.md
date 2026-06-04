@@ -31,6 +31,10 @@
 | **Responsividade Mobile** | ✅ Menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area, fix recharts (2026-06-04) |
 | **PWA Completo** | ✅ `vite-plugin-pwa`, ícone custom "A" em laranja, service worker Workbox, meta tags iOS/Android (2026-06-04) |
 | **Correções UX Mobile** | ✅ Bounce iOS eliminado, zoom bloqueado, layout `100dvh` com scroll nativo (2026-06-04) |
+| **Login redesign premium** | ✅ Glassmorphism, logo Arbo, glow laranja, ícones lucide, botão com gradiente (2026-06-04) |
+| **Ícones PWA com logo Arbo** | ✅ `public/icons/icon-192.png` e `icon-512.png`, `vite.config.ts` atualizado (2026-06-04) |
+| **Modal edição de turma** | ✅ `EditGroupModal.tsx` — editar nome, objetivo, frequência, tipo de plano e status (2026-06-04) |
+| **Header da turma** | ✅ Breadcrumb + pills de metadados (objetivo, frequência, status) + botão Editar (2026-06-04) |
 | **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-04) |
 | **Fase 3** | ✅ **100% completa** |
 
@@ -185,8 +189,10 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 
 | Prioridade | Item | Descrição |
 |-----------|------|-----------|
-| ~~🔴 Alta~~ | ~~**Ícone do app / favicon**~~ | ✅ Concluído — ícone "A" laranja custom, PNGs 192×192 e 512×512 |
+| ~~🔴 Alta~~ | ~~**Ícone do app / favicon**~~ | ✅ Concluído — ícones com logo Arbo, PNGs 192×192 e 512×512 em `public/icons/` |
 | ~~🔴 Alta~~ | ~~**PWA completo**~~ | ✅ Concluído — `vite-plugin-pwa`, service worker Workbox, instalável |
+| ~~🔴 Alta~~ | ~~**Login redesign premium**~~ | ✅ Concluído — glassmorphism, logo, glow, lucide icons, gradiente |
+| ~~🔴 Alta~~ | ~~**Modal edição de turma**~~ | ✅ Concluído — `EditGroupModal.tsx`, header da turma reformulado |
 | 🟡 Média | **Domínio customizado** | Apontar domínio próprio no Vercel em vez de arbo-weld.vercel.app |
 | 🟡 Média | **Integração Strava** | Edge Function via n8n para OAuth + importação de atividades |
 | 🟢 Baixa | **SMTP externo** | Resend ou AWS SES para não travar com limite de 3-4 emails/hora do Supabase gratuito |
