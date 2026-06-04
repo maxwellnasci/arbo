@@ -271,6 +271,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 27:** PWA completo — `vite-plugin-pwa`, `manifest.webmanifest`, ícones PNG + SVG custom, service worker Workbox, meta tags iOS/Android (Gemini) ✅
 - **Task 28:** Correções UX mobile — prevenção de bounce iOS, bloqueio de zoom indesejado, layout `100dvh` com scroll no `#root` (Gemini) ✅
 - **Task 29:** Login redesign premium (logo Arbo, glassmorphism, glow laranja, ícones Lucide), novos ícones PWA (`public/icons/`), sidebar hover refinado, header da turma com botão Editar, `EditGroupModal.tsx` (Gemini) ✅
+- **Task 30:** Correção de responsividade mobile no header da turma — layout em coluna, `clamp()` no título, `flexWrap` nas pills, botão Editar integrado; reversão do `minHeight: '70vh'` no grid (Gemini) ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 **Fase 3:** 100% completa ✅
@@ -477,6 +478,19 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 **Ajustes visuais no grid da semana, vista mês e ícones PWA (Gemini):**
 - `src/pages/admin/AdminTurmaDetail.tsx` — grid da semana com `minHeight: '70vh'`; colunas e células com `flex: 1` + `flexDirection: column` para a vista mês crescer proporcionalmente; células com `height: '100%'`
 - `public/icons/icon-192.png` e `public/icons/icon-512.png` — proporção da árvore/logo nos ícones PWA melhorada
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
+
+### O que foi feito em 2026-06-04 (Parte 6)
+
+**Correção do header mobile e reversão da altura do grid (Gemini):**
+- `src/pages/admin/AdminTurmaDetail.tsx`:
+  - Header reestruturado em `flexDirection: 'column'` para separar a linha de navegação/toggle do bloco de informações da turma
+  - Título da turma usa `fontSize: 'clamp(18px, 5vw, 24px)'` para adaptar ao tamanho de tela
+  - Pills de metadados (objetivo, frequência, status) com `flexWrap: 'wrap'` — quebram linha no mobile
+  - Botão "Editar" integrado à linha de pills (estilo pill, `marginLeft: 'auto'`), eliminando o `hide-mobile` anterior
+  - `minHeight: '70vh'` removido do container principal do grid — revertido por causar altura excessiva na vista de treinos
+  - `display: 'flex', flexDirection: 'column'` removido do flex wrapper da área do grid (simplificação)
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 

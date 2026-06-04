@@ -301,6 +301,7 @@ npx supabase login
 - Task 27: PWA completo — `vite-plugin-pwa`, ícones custom, service worker Workbox, meta tags iOS/Android ✅
 - Task 28: Correções UX mobile — bounce iOS, zoom bloqueado, `100dvh` com scroll no `#root` ✅
 - Task 29: Login redesign premium (logo Arbo, glassmorphism, glow laranja, ícones lucide nos inputs), novos ícones PWA em `public/icons/`, header da turma reformulado com botão Editar, `EditGroupModal.tsx` ✅
+- Task 30: Correção de responsividade mobile no header da turma — layout em coluna, `clamp()` no título, `flexWrap` nas pills, botão Editar integrado; reversão do `minHeight: '70vh'` no grid (Gemini) ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 
@@ -415,6 +416,13 @@ npx supabase login
 **Ajustes visuais no grid da semana, vista mês e ícones PWA (Gemini):**
 - `AdminTurmaDetail.tsx` — grid da semana com `minHeight: '70vh'`; colunas e células com `flex: 1` + `flexDirection: column` para a vista mês crescer proporcionalmente; células com `height: '100%'`
 - `public/icons/icon-192.png` e `public/icons/icon-512.png` — proporção da árvore/logo nos ícones PWA melhorada
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
+
+### O que foi feito em 2026-06-04 (Parte 6)
+
+**Correção do header mobile e reversão da altura do grid (Gemini):**
+- `AdminTurmaDetail.tsx` — header reestruturado em `flexDirection: 'column'`: linha de navegação (← Turmas + toggle) separada do bloco de informações da turma; título com `clamp(18px, 5vw, 24px)` para responsividade; pills de metadados com `flexWrap: 'wrap'`; botão "Editar" integrado como pill com `marginLeft: 'auto'`; `minHeight: '70vh'` removido do container do grid (altura excessiva na vista de treinos); `flexDirection: 'column'` removido do wrapper da área do grid
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 
