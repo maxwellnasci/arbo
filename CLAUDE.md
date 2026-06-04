@@ -268,6 +268,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 24:** Filtros em `/admin/alunos` — busca por nome + filtro por Turma (dinâmico) e Nível via state local ✅
 - **Task 25:** Deploy no Vercel — app publicado em **https://arbo-weld.vercel.app** ✅
 - **Task 26:** Responsividade Mobile — menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area no aluno (Gemini) ✅
+- **Task 27:** PWA completo — `vite-plugin-pwa`, `manifest.webmanifest`, ícones PNG + SVG custom, service worker Workbox, meta tags iOS/Android (Gemini) ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 **Fase 3:** 100% completa ✅
@@ -420,6 +421,18 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-03)
 
+### O que foi feito em 2026-06-04 (Parte 2)
+
+**PWA Completo (Gemini + fix Claude Code):**
+- `vite.config.ts` — `vite-plugin-pwa` adicionado com `registerType: 'autoUpdate'`; manifest inline com `name`, `short_name`, `theme_color: #111111`, `background_color: #111111`, `display: standalone`, `orientation: portrait`, ícones 192×192 e 512×512
+- `public/icon.svg` — ícone custom do Arbo: fundo `#111111`, letra "A" estilizada em `#E8521A` (corrida)
+- `public/icon-192x192.png` e `public/icon-512x512.png` — ícones PNG derivados do SVG
+- `index.html` — `<meta name="theme-color">`, `<link rel="apple-touch-icon">`, `viewport-fit=cover` para safe area iOS
+- Build gera `dist/sw.js` + `dist/workbox-*.js` (Workbox precache de 29 entradas, ~1.18MB)
+- **Fix (Claude Code):** removidos `public/manifest.json` (redundante — plugin gera `manifest.webmanifest`), `public/icons.svg` (arquivo de template não relacionado ao projeto), `vite.config.js` (cópia compilada redundante do `.ts`)
+
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-04)
+
 ### O que foi feito em 2026-06-04
 
 **Responsividade Mobile — Painel Admin e App do Aluno (Gemini):**
@@ -437,9 +450,8 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 ### Próximo passo
 - Integração Strava (Edge Function via n8n)
-- Ícone do app / favicon personalizado (árvore/corrida — aparece na aba, PWA e home screen)
-- PWA completo (manifest, service worker, offline, instalável no celular)
 - Domínio customizado (apontar domínio próprio no Vercel)
+- SMTP externo (Resend ou AWS SES) antes de produção
 
 ## Roadmap de telas
 
@@ -487,9 +499,8 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 ### Próximos passos sugeridos
 - ~~Error Boundary global~~ ✅
 - ~~Tabela `invites` (schema pendente)~~ ✅
+- ~~Ícone do app + PWA completo~~ ✅
 - Integração Strava (Edge Function via n8n)
-- **Ícone do app** — favicon personalizado (árvore/corrida) para aba do navegador, PWA e home screen
-- **PWA completo** — manifest.json, service worker, instalável no celular (foco mobile do Arbo)
 - **Domínio customizado** — apontar domínio próprio ao Vercel (arbo-weld.vercel.app é o atual)
 
 ### Ordem de desenvolvimento

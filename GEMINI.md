@@ -298,6 +298,7 @@ npx supabase login
 - Task 24: Filtros em /admin/alunos — busca por nome + filtro por Turma e Nível ✅
 - Task 25: Deploy no Vercel — **https://arbo-weld.vercel.app** ✅
 - Task 26: Responsividade Mobile — menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area no aluno ✅
+- Task 27: PWA completo — `vite-plugin-pwa`, ícones custom, service worker Workbox, meta tags iOS/Android ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 
@@ -392,6 +393,18 @@ npx supabase login
 - Task 18: Global Error Boundary, Tabela `invites` (schema), refatoração de loading estados ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-03)
+
+### O que foi feito em 2026-06-04 (Parte 2)
+
+**PWA Completo (Gemini + fix Claude Code):**
+- `vite.config.ts` — `vite-plugin-pwa` com `registerType: autoUpdate`, manifest inline (nome, cores, ícones, orientação portrait)
+- `public/icon.svg` — ícone "A" estilizado em `#E8521A` sobre fundo `#111111`
+- `public/icon-192x192.png` e `public/icon-512x512.png` — ícones PWA
+- `index.html` — meta `theme-color`, `apple-touch-icon`, `viewport-fit=cover`
+- Build: `dist/sw.js` + Workbox com precache de 29 entradas
+- Fix (Claude Code): removidos `public/manifest.json` (redundante), `public/icons.svg` (template não relacionado), `vite.config.js` (cópia compilada)
+
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · PWA ✅ (2026-06-04)
 
 ### O que foi feito em 2026-06-04
 

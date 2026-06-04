@@ -71,6 +71,7 @@ Somos um **time de 3**:
 - **Notificações de PR no admin** (Gemini + revisão Claude Code): `useAdminPRs.ts` + `AdminPRFeed.tsx` — feed dos 5 recordes mais recentes no `AdminHome`, clicável para `/admin/alunos/:id`. `AdminHome.tsx` — `fetchStats` refatorada com `cancelled` flag e `try/finally`. tsc + lint: 0 erros.
 
 ### O que foi feito em 2026-06-04
+- **PWA Completo** (Gemini + fix Claude Code): `vite-plugin-pwa` instalado; manifest com nome, cores e ícones do Arbo; ícone SVG custom "A" em laranja `#E8521A`; PNGs 192×192 e 512×512; service worker Workbox com precache de 29 entradas; meta tags iOS (`apple-touch-icon`, `viewport-fit=cover`); fix Claude Code: removidos `manifest.json` redundante, `icons.svg` de template e `vite.config.js` duplicado. tsc + build + lint: 0 erros ✅
 - **Responsividade Mobile** (Gemini): Menu hamburguer no painel admin com sidebar drawer animado; tabelas scrolláveis horizontalmente; `flexWrap` nos forms; media queries para `AdminAlunoDetail`; safe area inset no perfil do aluno; fix do container recharts no progresso. tsc + lint: 0 erros ✅
 
 ### O que foi feito em 2026-06-03

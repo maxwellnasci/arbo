@@ -29,6 +29,7 @@
 | Filtros em `/admin/alunos` | ✅ Busca por nome + filtro por Turma (dinâmico) e Nível |
 | **Deploy** | ✅ **https://arbo-weld.vercel.app** (Vercel, SPA routing) |
 | **Responsividade Mobile** | ✅ Menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area, fix recharts (2026-06-04) |
+| **PWA Completo** | ✅ `vite-plugin-pwa`, ícone custom "A" em laranja, service worker Workbox, meta tags iOS/Android (2026-06-04) |
 | **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-04) |
 | **Fase 3** | ✅ **100% completa** |
 
@@ -183,8 +184,8 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 
 | Prioridade | Item | Descrição |
 |-----------|------|-----------|
-| 🔴 Alta | **Ícone do app / favicon** | Substituir SVG padrão do Vite por ícone do Arbo (árvore/corrida); aparece na aba, PWA e home screen |
-| 🔴 Alta | **PWA completo** | `manifest.json`, service worker, instalável no celular; App já está no ar em arbo-weld.vercel.app |
+| ~~🔴 Alta~~ | ~~**Ícone do app / favicon**~~ | ✅ Concluído — ícone "A" laranja custom, PNGs 192×192 e 512×512 |
+| ~~🔴 Alta~~ | ~~**PWA completo**~~ | ✅ Concluído — `vite-plugin-pwa`, service worker Workbox, instalável |
 | 🟡 Média | **Domínio customizado** | Apontar domínio próprio no Vercel em vez de arbo-weld.vercel.app |
 | 🟡 Média | **Integração Strava** | Edge Function via n8n para OAuth + importação de atividades |
 | 🟢 Baixa | **SMTP externo** | Resend ou AWS SES para não travar com limite de 3-4 emails/hora do Supabase gratuito |
