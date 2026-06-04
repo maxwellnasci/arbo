@@ -50,16 +50,20 @@
   }
 }
 
-body {
+html, body {
   margin: 0;
+  overscroll-behavior: none;
+  overflow: hidden;
 }
 
 #root {
   width: 100%;
-  min-height: 100svh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 h1,
