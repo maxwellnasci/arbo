@@ -22,7 +22,7 @@ export default function SetPassword() {
     // Verifica se já há sessão ativa (ex: usuário recarregou a página)
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setReady(true)
-    })
+    }).catch(() => { /* link pode estar expirado — aguarda evento do onAuthStateChange */ })
 
     return () => subscription.unsubscribe()
   }, [])

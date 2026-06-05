@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { Group } from '../../lib/types'
 
@@ -17,7 +17,7 @@ export function EditGroupModal({ group, onClose, onSuccess }: EditGroupModalProp
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!name.trim()) {
       setError('Preencha o nome da turma.')

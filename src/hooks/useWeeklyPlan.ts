@@ -309,7 +309,7 @@ export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
       })
       .catch(err => {
         if (sig.cancelled) return
-        dispatch({ type: 'ERROR', message: (err as Error)?.message ?? 'Erro ao carregar dados.' })
+        dispatch({ type: 'ERROR', message: err instanceof Error ? err.message : 'Erro ao carregar dados.' })
       })
       .finally(() => {
         if (!sig.cancelled) dispatch({ type: 'DONE' })

@@ -92,12 +92,20 @@ export default function AdminTurmaDetail() {
   const effectiveWeek = selectedWeek > 0 ? selectedWeek : defaultWeekNumber
 
   useEffect(() => {
-    supabase.from('trainings').select('*').order('title').then(({ data }) => {
-      if (data) setAllTrainings(data)
-    })
-    supabase.from('tags').select('*').order('name').then(({ data }) => {
-      if (data) setAllTags(data)
-    })
+    let cancelled = false
+
+    async function load() {
+      const [trainingsRes, tagsRes] = await Promise.all([
+        supabase.from('trainings').select('*').order('title'),
+        supabase.from('tags').select('*').order('name'),
+      ])
+      if (cancelled) return
+      if (trainingsRes.data) setAllTrainings(trainingsRes.data)
+      if (tagsRes.data) setAllTags(tagsRes.data)
+    }
+
+    load()
+    return () => { cancelled = true }
   }, [])
 
   function openSlot(weekNumber: number, dayOfWeek: number) {
@@ -118,8 +126,8 @@ export default function AdminTurmaDetail() {
       await addTraining(panel.weekNumber, panel.dayOfWeek, trainingId)
       refresh()
       setPanel(null)
-    } catch (e) {
-      setMutationError((e as Error)?.message ?? 'Erro ao adicionar treino')
+    } catch (e: unknown) {
+      setMutationError(e instanceof Error ? e.message : 'Erro ao adicionar treino')
     } finally {
       setMutating(false)
     }
@@ -133,8 +141,8 @@ export default function AdminTurmaDetail() {
       await removeTraining(panel.existing.id)
       refresh()
       setPanel(null)
-    } catch (e) {
-      setMutationError((e as Error)?.message ?? 'Erro ao remover treino')
+    } catch (e: unknown) {
+      setMutationError(e instanceof Error ? e.message : 'Erro ao remover treino')
     } finally {
       setMutating(false)
     }
@@ -148,8 +156,8 @@ export default function AdminTurmaDetail() {
       await createAndAddTraining(panel.weekNumber, panel.dayOfWeek, input)
       refresh()
       setPanel(null)
-    } catch (e) {
-      setMutationError((e as Error)?.message ?? 'Erro ao criar treino')
+    } catch (e: unknown) {
+      setMutationError(e instanceof Error ? e.message : 'Erro ao criar treino')
     } finally {
       setMutating(false)
     }
@@ -165,8 +173,8 @@ export default function AdminTurmaDetail() {
         ? 'Todas as semanas liberadas para os alunos'
         : `Semana ${weekNumber} liberada para os alunos`
       toast.success(msg)
-    } catch (e) {
-      toast.error((e as Error)?.message ?? 'Erro ao liberar semana')
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao liberar semana')
     } finally {
       setReleasing(false)
     }

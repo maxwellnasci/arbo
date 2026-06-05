@@ -29,12 +29,12 @@ export default function AdminHome() {
         const [
           { count: totalAlunos },
           { count: feedbacksThisWeek },
-          { data: prs },
+          { count: prsThisWeek },
           { count: turmasAtivas },
         ] = await Promise.all([
           supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'aluno'),
           supabase.from('checkins').select('id', { count: 'exact', head: true }).gte('created_at', weekAgoIso),
-          supabase.from('records').select('*, profiles(*)').gte('created_at', weekAgoIso).order('created_at', { ascending: false }).limit(5),
+          supabase.from('records').select('id', { count: 'exact', head: true }).gte('created_at', weekAgoIso),
           supabase.from('groups').select('id', { count: 'exact', head: true }).eq('is_active', true),
         ])
 
@@ -42,7 +42,7 @@ export default function AdminHome() {
         setStats({
           totalAlunos: totalAlunos ?? 0,
           feedbacksThisWeek: feedbacksThisWeek ?? 0,
-          prsThisWeek: prs?.length ?? 0,
+          prsThisWeek: prsThisWeek ?? 0,
           turmasAtivas: turmasAtivas ?? 0,
         })
       } finally {

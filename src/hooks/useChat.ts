@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Database } from '../lib/database.types'
 
@@ -9,34 +9,33 @@ export function useChat(studentId?: string | null) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchMessages = useCallback(async () => {
-    if (!studentId) {
-      // Ignorar a regra de lint se ainda for chamada via callback e não no root do effect, 
-      // ou simplesmente resetar o state silenciosamente (mas como é dentro de uma useCallback acionada pelo effect, o lint ainda pode chiar se chamarmos de lá).
-      // Melhor ainda:
-      setMessages([])
-      setIsLoading(false)
-      return
-    }
-    setIsLoading(true)
-    setError(null)
-    const { data, error: fetchError } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('student_id', studentId)
-      .order('created_at', { ascending: true })
-
-    if (fetchError) {
-      setError(fetchError.message)
-    } else if (data) {
-      setMessages(data)
-    }
-    setIsLoading(false)
-  }, [studentId])
-
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchMessages()
+    let cancelled = false
+
+    async function load() {
+      if (!studentId) {
+        setMessages([])
+        setIsLoading(false)
+        return
+      }
+      setIsLoading(true)
+      setError(null)
+      const { data, error: fetchError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('student_id', studentId)
+        .order('created_at', { ascending: true })
+      if (cancelled) return
+      if (fetchError) {
+        setError(fetchError.message)
+      } else if (data) {
+        setMessages(data)
+      }
+      setIsLoading(false)
+    }
+
+    load()
+
     if (!studentId) return
 
     const channel = supabase
@@ -52,7 +51,7 @@ export function useChat(studentId?: string | null) {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             setMessages((prev) => {
-              // Previne duplicação caso o select retorne antes
+              // Previne duplicação caso o select retorne antes do evento Realtime
               if (prev.find(m => m.id === payload.new.id)) return prev
               return [...prev, payload.new as Message]
             })
@@ -68,9 +67,10 @@ export function useChat(studentId?: string | null) {
       .subscribe()
 
     return () => {
+      cancelled = true
       supabase.removeChannel(channel)
     }
-  }, [studentId, fetchMessages])
+  }, [studentId])
 
   const sendMessage = async (content: string, senderId: string, isAdmin: boolean) => {
     if (!studentId || !content.trim()) return

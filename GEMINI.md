@@ -436,6 +436,28 @@ npx supabase login
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 
+### O que foi feito em 2026-06-04 (Parte 8)
+
+**Análise dupla (DeepSeek V4 Pro + Claude Code) + correções de qualidade e segurança:**
+
+- `useChat.ts` — Padrão `async load()` + `cancelled`; subscription Realtime e cleanup no mesmo `useEffect`
+- `AdminTurmaDetail.tsx` — `useEffect` de trainings/tags refatorado; `catch (e)` → `catch (e: unknown)` (4 blocos)
+- `Login.tsx` — `handleForgotPassword` agora exibe erro de `resetPasswordForEmail` ao usuário
+- `DashboardRedirect.tsx` — `async function load()` com try/catch/finally; fix TS: `.then().catch()` em `PromiseLike`
+- `SetPassword.tsx` — `.catch()` adicionado em promise silenciosa
+- `AdminAlunoDetail.tsx` — `catch (e: unknown)` com `instanceof Error`
+- `AdminHome.tsx` — `count: 'exact', head: true` substitui `profiles(*)` em todas as 4 queries de stats
+- `useAlunoPerfil.ts` + `useAdminPRs.ts` — eslint-disable e `as any` removidos; `as unknown as` correto
+- `AlunoChat.tsx` + `AdminChatPanel.tsx` — `actionError` state + `catch (e: unknown)` + erro visível na UI
+- `useWeeklyPlan.ts` — cast seguro no `.catch()` com `instanceof Error`
+- `CreateGroupModal.tsx` + `EditGroupModal.tsx` — `import React` desnecessário removido
+- `useTreinoMutations.ts` — blocos `catch { throw }` mortos removidos
+- `AdminSidebar.tsx` — ternário `disabled` e campo de tipo removidos
+- `invite-user/index.ts` — **Segurança:** Open Redirect corrigido (`new URL()` + hostname exato + pathname); CORS com `getCorsHeaders(origin)` (allowlist, nunca `*`)
+- **Domínio:** `arbo-weld.vercel.app` → `arbo.mxos.com.br` em toda documentação e configs
+
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
+
 ### O que foi feito em 2026-06-04 (Parte 2)
 
 **PWA Completo (Gemini + fix Claude Code):**
@@ -474,7 +496,7 @@ npx supabase login
 ### O que foi feito em 2026-06-03
 
 **Deploy no Vercel:**
-- App publicado em **https://arbo-weld.vercel.app** com SPA routing via `vercel.json`
+- App publicado em **https://arbo.mxos.com.br** com SPA routing via `vercel.json`
 
 **Implementação em Paralelo (Antigravity + Subagentes):**
 - **Nova Turma:** `CreateGroupModal.tsx` — modal com form completo (nome, objetivo, frequência, tipo de plano, data de início); cria registro na tabela `groups`; ativado pelo botão `+ Nova Turma` em `AdminTurmas.tsx`
@@ -492,9 +514,9 @@ npx supabase login
 
 ### Próximos passos sugeridos
 - Integração Strava (Edge Function via n8n)
-- **Ícone do app** — favicon personalizado (árvore/corrida) para aba do navegador, PWA e home screen
-- **PWA completo** — manifest.json, service worker, instalável no celular
-- **Domínio customizado** — apontar domínio próprio no Vercel (arbo-weld.vercel.app é o atual)
+- ~~**Ícone do app**~~ ✅
+- ~~**PWA completo**~~ ✅
+- ~~**Domínio customizado**~~ ✅ arbo.mxos.com.br
 
 ## Roadmap de Telas
 

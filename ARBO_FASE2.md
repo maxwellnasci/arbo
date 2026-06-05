@@ -27,7 +27,7 @@
 | Error Boundary global | ✅ `ErrorBoundary.tsx` com fallback elegante e retry, envolvendo todas as rotas |
 | Tabela `invites` + log | ✅ Schema no Supabase, RLS, Edge Function atualizada, log visível em `/admin/convites` |
 | Filtros em `/admin/alunos` | ✅ Busca por nome + filtro por Turma (dinâmico) e Nível |
-| **Deploy** | ✅ **https://arbo-weld.vercel.app** (Vercel, SPA routing) |
+| **Deploy** | ✅ **https://arbo.mxos.com.br** (Vercel, SPA routing) |
 | **Responsividade Mobile** | ✅ Menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area, fix recharts (2026-06-04) |
 | **PWA Completo** | ✅ `vite-plugin-pwa`, ícone custom "A" em laranja, service worker Workbox, meta tags iOS/Android (2026-06-04) |
 | **Correções UX Mobile** | ✅ Bounce iOS eliminado, zoom bloqueado, layout `100dvh` com scroll nativo (2026-06-04) |
@@ -37,6 +37,8 @@
 | **Header da turma** | ✅ Breadcrumb + pills de metadados (objetivo, frequência, status) + botão Editar (2026-06-04) |
 | **Header mobile da turma + reversão do grid** | ✅ Header em `flexDirection: column`, título `clamp(18px, 5vw, 24px)`, pills com `flexWrap: wrap`, botão Editar integrado como pill; `minHeight: '70vh'` revertido no grid (2026-06-04) |
 | **Convites e UX Premium** | ✅ Reenvio de convites via fallback (reset senha), Error Boundary com auto-reload, Tela de Sucesso no SetPassword (2026-06-04) |
+| **Correções qualidade + segurança** | ✅ 16 fixes (padrões async/catch, `as any`, código morto) + Open Redirect em `invite-user` corrigido com `new URL()` (2026-06-04) |
+| **Domínio customizado** | ✅ **https://arbo.mxos.com.br** (2026-06-04) |
 | **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-04) |
 | **Fase 3** | ✅ **100% completa** |
 
@@ -195,7 +197,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 | ~~🔴 Alta~~ | ~~**PWA completo**~~ | ✅ Concluído — `vite-plugin-pwa`, service worker Workbox, instalável |
 | ~~🔴 Alta~~ | ~~**Login redesign premium**~~ | ✅ Concluído — glassmorphism, logo, glow, lucide icons, gradiente |
 | ~~🔴 Alta~~ | ~~**Modal edição de turma**~~ | ✅ Concluído — `EditGroupModal.tsx`, header da turma reformulado |
-| 🟡 Média | **Domínio customizado** | Apontar domínio próprio no Vercel em vez de arbo-weld.vercel.app |
+| ~~🟡 Média~~ | ~~**Domínio customizado**~~ | ✅ arbo.mxos.com.br (2026-06-04) |
 | 🟡 Média | **Integração Strava** | Edge Function via n8n para OAuth + importação de atividades |
 | 🟢 Baixa | **SMTP externo** | Resend ou AWS SES para não travar com limite de 3-4 emails/hora do Supabase gratuito |
 
@@ -237,7 +239,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 10. ✅ /aluno/perfil — Aba Perfil (dados pessoais, Strava placeholder, logout)
 11. ✅ Notificações de PR no painel (AdminPRFeed, feed de recordes recentes)
 12. ✅ Code Splitting (React.lazy + Suspense em todas as rotas)
-13. ✅ Deploy no Vercel (arbo-weld.vercel.app)
+13. ✅ Deploy no Vercel (arbo.mxos.com.br)
 14. ✅ Botão Nova Turma (CreateGroupModal)
 15. ✅ Error Boundary global (ErrorBoundary.tsx)
 16. ✅ Tabela invites + log em /admin/convites
@@ -245,9 +247,10 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 18. ✅ Ajustes visuais no grid da semana, vista mês e proporção dos ícones PWA
 19. ✅ Correção responsividade mobile do header da turma + reversão da altura do grid
 20. ✅ Reenvio infinito de convites (fallback reset senha), Auto-reload no ErrorBoundary e Tela de Sucesso Premium
+21. ✅ Correções de qualidade e segurança pós-análise dupla (DeepSeek + Claude Code): 16 fixes de padrões async/catch/tipos + Open Redirect em invite-user + domínio arbo.mxos.com.br
 ```
 
 ---
 
 *Documento gerado com base nas respostas do professor e alinhamento de produto.*
-*Atualizado em 2026-06-04 com ajustes visuais no grid da semana e ícones PWA.*
+*Atualizado em 2026-06-04 com correções de qualidade e segurança pós-análise dupla.*

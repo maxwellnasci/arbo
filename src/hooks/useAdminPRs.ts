@@ -36,8 +36,7 @@ export function useAdminPRs(limit = 10) {
         if (cancelled) return;
         if (error) throw error;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setPrs(data as any[]);
+        setPrs(data as unknown as AdminPRData[]);
       } catch (e: unknown) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Erro ao buscar PRs');

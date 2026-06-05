@@ -19,6 +19,7 @@ export default function AdminChatPanel({ isOpen, onClose, studentId, studentName
   const { messages, isLoading, sendMessage, deleteMessage } = useChat(isOpen ? studentId : null)
   const [content, setContent] = useState('')
   const [sending, setSending] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Scroll to bottom whenever messages change
@@ -33,21 +34,23 @@ export default function AdminChatPanel({ isOpen, onClose, studentId, studentName
     if (!content.trim() || !user) return
 
     setSending(true)
+    setActionError(null)
     try {
       await sendMessage(content, user.id, true)
       setContent('')
-    } catch (err) {
-      console.error('Erro ao enviar mensagem', err)
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Erro ao enviar mensagem')
     } finally {
       setSending(false)
     }
   }
 
   const handleDelete = async (msgId: string) => {
+    setActionError(null)
     try {
       await deleteMessage(msgId, true)
-    } catch (err) {
-      console.error('Erro ao apagar', err)
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : 'Erro ao apagar mensagem')
     }
   }
 
@@ -123,6 +126,11 @@ export default function AdminChatPanel({ isOpen, onClose, studentId, studentName
 
             {/* Input Area */}
             <div className={styles.inputArea}>
+              {actionError && (
+                <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#ff6b6b', textAlign: 'center' }}>
+                  {actionError}
+                </p>
+              )}
               <form onSubmit={handleSend} className={styles.form}>
                 <input
                   type="text"

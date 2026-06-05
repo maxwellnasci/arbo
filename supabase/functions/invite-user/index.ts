@@ -1,12 +1,25 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+const ALLOWED_ORIGINS = [
+  'https://arbo.mxos.com.br',
+  'https://arbo-weld.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:4173',
+]
+
+function getCorsHeaders(origin: string | null): Record<string, string> {
+  const allowed = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Headers': 'authorization, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  }
 }
 
 Deno.serve(async (req) => {
+  const origin = req.headers.get('Origin')
+  const corsHeaders = getCorsHeaders(origin)
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -47,6 +60,13 @@ Deno.serve(async (req) => {
   let email: string
   let role: 'aluno' | 'admin' = 'aluno'
   let redirectTo = `${siteUrl}/set-password`
+
+  const allowedRedirectHosts = new Set([
+    'arbo.mxos.com.br',
+    'arbo-weld.vercel.app',
+    new URL(siteUrl).hostname,
+  ])
+
   try {
     const body = await req.json()
     email = body?.email?.trim()
@@ -54,7 +74,16 @@ Deno.serve(async (req) => {
       role = body.role
     }
     if (body?.redirectTo) {
-      redirectTo = body.redirectTo
+      try {
+        const u = new URL(body.redirectTo)
+        if (
+          (u.protocol === 'https:' || u.protocol === 'http:') &&
+          allowedRedirectHosts.has(u.hostname) &&
+          u.pathname === '/set-password'
+        ) {
+          redirectTo = u.toString()
+        }
+      } catch { /* URL inválida — mantém o redirectTo padrão */ }
     }
   } catch {
     return new Response('Corpo da requisição inválido.', { status: 400, headers: corsHeaders })

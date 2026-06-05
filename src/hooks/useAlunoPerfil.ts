@@ -34,8 +34,7 @@ export function useAlunoPerfil(studentId: string) {
         if (cancelled) return;
         if (profileRes.error) throw profileRes.error;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const data = profileRes.data as any;
+        const data = profileRes.data as unknown as AlunoPerfilData;
         setPerfil({
           id: data.id,
           full_name: data.full_name,

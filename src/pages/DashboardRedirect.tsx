@@ -11,15 +11,26 @@ export default function DashboardRedirect() {
   useEffect(() => {
     if (!user || isAdmin) return
 
-    supabase
-      .from('anamnesis')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-      .then(({ data }) => {
+    let cancelled = false
+
+    async function load() {
+      try {
+        const { data } = await supabase
+          .from('anamnesis')
+          .select('id')
+          .eq('user_id', user!.id)
+          .maybeSingle()
+        if (cancelled) return
         setHasAnamnesis(!!data)
-        setAnamnesisChecked(true)
-      })
+      } catch {
+        // query falhou — tratar como sem anamnese
+      } finally {
+        if (!cancelled) setAnamnesisChecked(true)
+      }
+    }
+
+    load()
+    return () => { cancelled = true }
   }, [user, isAdmin])
 
   if (!user) return null

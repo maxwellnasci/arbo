@@ -266,7 +266,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 22:** Error Boundary global — `ErrorBoundary.tsx` com design premium, envolvendo rotas em `App.tsx` ✅
 - **Task 23:** Tabela `invites` no Supabase — RLS + policies + GRANT; Edge Function `invite-user` registra convite no banco; `/admin/convites` exibe log ✅
 - **Task 24:** Filtros em `/admin/alunos` — busca por nome + filtro por Turma (dinâmico) e Nível via state local ✅
-- **Task 25:** Deploy no Vercel — app publicado em **https://arbo-weld.vercel.app** ✅
+- **Task 25:** Deploy no Vercel — app publicado em **https://arbo.mxos.com.br** ✅
 - **Task 26:** Responsividade Mobile — menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area no aluno (Gemini) ✅
 - **Task 27:** PWA completo — `vite-plugin-pwa`, `manifest.webmanifest`, ícones PNG + SVG custom, service worker Workbox, meta tags iOS/Android (Gemini) ✅
 - **Task 28:** Correções UX mobile — prevenção de bounce iOS, bloqueio de zoom indesejado, layout `100dvh` com scroll no `#root` (Gemini) ✅
@@ -504,9 +504,32 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
 
+### O que foi feito em 2026-06-04 (Parte 8)
+
+**Análise dupla (DeepSeek V4 Pro + Claude Code) + correções de qualidade e segurança:**
+
+- `useChat.ts` — Refatorado para padrão `async load()` + `cancelled` flag; subscription Realtime no mesmo `useEffect`; cleanup combinado (`cancelled = true` + `supabase.removeChannel(channel)`)
+- `AdminTurmaDetail.tsx` — `useEffect` de busca de trainings/tags refatorado para `async load()` com `cancelled`; 4 blocos `catch (e)` → `catch (e: unknown)` com `instanceof Error`
+- `Login.tsx` — `handleForgotPassword` captura e exibe `resetError` ao usuário (era silenciado)
+- `DashboardRedirect.tsx` — refatorado para `async function load()` com try/catch/finally; fix TS: `.then().catch()` em `PromiseLike` não é válido
+- `SetPassword.tsx` — `.catch()` adicionado em promise silenciosa (`getSession`)
+- `AdminAlunoDetail.tsx` — `catch (e)` → `catch (e: unknown)` com `instanceof Error` na mutação de turma
+- `AdminHome.tsx` — `profiles(*)` substituído por `count: 'exact', head: true`; 4 queries paralelas contam sem baixar dados
+- `useAlunoPerfil.ts` — eslint-disable + `as any` removidos; `as unknown as AlunoPerfilData`
+- `useAdminPRs.ts` — eslint-disable + `as any[]` removidos; `as unknown as AdminPRData[]`
+- `AlunoChat.tsx` + `AdminChatPanel.tsx` — `actionError` state adicionado; handlers usam `catch (e: unknown)` + `instanceof Error`; erro exibido na UI
+- `useWeeklyPlan.ts` — cast inseguro em `.catch()` → `err instanceof Error ? err.message : 'Erro...'`
+- `CreateGroupModal.tsx` + `EditGroupModal.tsx` — `import React` removido; `React.FormEvent` → `FormEvent`
+- `useTreinoMutations.ts` — blocos `catch (err) { throw err }` mortos removidos; apenas `try/finally`
+- `AdminSidebar.tsx` — ternário `disabled` e campo `disabled?: boolean` no tipo dos links removidos
+- `invite-user/index.ts` — **Fix de segurança (Open Redirect):** `startsWith()` substituído por `new URL()` + `allowedRedirectHosts.has(u.hostname)` + `u.pathname === '/set-password'`; CORS dinâmico via `getCorsHeaders(origin)` com allowlist explícita (nunca `*`)
+- **Domínio:** `arbo-weld.vercel.app` → `arbo.mxos.com.br` em toda a documentação e configs
+
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
+
 ### Próximo passo
 - Integração Strava (Edge Function via n8n)
-- Domínio customizado (apontar domínio próprio no Vercel)
+- ~~Domínio customizado~~ ✅ arbo.mxos.com.br
 - SMTP externo (Resend ou AWS SES) antes de produção
 
 ## Roadmap de telas
@@ -557,7 +580,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - ~~Tabela `invites` (schema pendente)~~ ✅
 - ~~Ícone do app + PWA completo~~ ✅
 - Integração Strava (Edge Function via n8n)
-- **Domínio customizado** — apontar domínio próprio ao Vercel (arbo-weld.vercel.app é o atual)
+- ~~**Domínio customizado**~~ ✅ arbo.mxos.com.br
 
 ### Ordem de desenvolvimento
 1. ~~Testar visualmente Fase 1 do admin~~ ✅

@@ -34,11 +34,15 @@ export default function Login() {
       return
     }
 
-    await supabase.auth.resetPasswordForEmail(email, {
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/set-password`,
     })
 
-    setInfo('Email de recuperação enviado. Verifique sua caixa de entrada.')
+    if (resetError) {
+      setError('Erro ao enviar email de recuperação. Tente novamente.')
+    } else {
+      setInfo('Email de recuperação enviado. Verifique sua caixa de entrada.')
+    }
   }
 
   return (

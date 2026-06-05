@@ -47,7 +47,7 @@ Somos um **time de 3**:
 - **date-fns** — Formatação de datas em PT-BR
 
 ### Estado atual (2026-06-03)
-- **App publicado:** **https://arbo-weld.vercel.app** (Vercel, SPA routing)
+- **App publicado:** **https://arbo.mxos.com.br** (Vercel, SPA routing)
 - **23+ telas/features implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
 - Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação + Nova Turma + Filtros + Invites): ✅ 100%
@@ -78,9 +78,10 @@ Somos um **time de 3**:
 - **Ajustes visuais no grid da semana, vista mês e ícones PWA** (Gemini): `AdminTurmaDetail.tsx` — `minHeight: '70vh'` no grid, `flex: 1` + `flexDirection: column` em colunas e células para crescimento proporcional na vista mês. Ícones `icon-192.png` e `icon-512.png` com proporção da árvore melhorada. tsc + lint: 0 erros ✅
 - **Correção do header mobile e reversão da altura do grid** (Gemini): `AdminTurmaDetail.tsx` — header refatorado para `flexDirection: 'column'` (linha de navegação+toggle separada do bloco da turma); título com `clamp(18px, 5vw, 24px)`; pills de metadados com `flexWrap: 'wrap'`; botão "Editar" integrado como pill (`marginLeft: 'auto'`); `minHeight: '70vh'` revertido (causava altura excessiva na vista de treinos). tsc + lint: 0 erros ✅
 - **Convites e Error Boundary** (Antigravity): `invite-user` com fallback para reset de senha (re-convite infinito); `useInvite` usando `window.location.origin`; ErrorBoundary com auto-reload para `Failed to fetch dynamically imported module`; Tela de Sucesso premium em `SetPassword.tsx`. tsc + lint: 0 erros ✅
+- **Correções de qualidade e segurança (Parte 8 — análise dupla DeepSeek + Claude Code):** `useChat` refatorado (padrão `async load()` + Realtime no mesmo effect); `AdminTurmaDetail` catch blocks corrigidos; `DashboardRedirect` fix TS; `AdminHome` queries otimizadas com `count: 'exact', head: true`; eslint-disable + `as any` eliminados em 4 arquivos; `actionError` UI em chats; `useTreinoMutations` sem catch morto; `AdminSidebar` ternário disabled removido; `invite-user` **Open Redirect corrigido** (`new URL()` + hostname exato, nunca `startsWith()`); CORS dinâmico com allowlist. tsc + build + lint: 0 erros ✅
 
 ### O que foi feito em 2026-06-03
-- **Deploy no Vercel:** App publicado em **https://arbo-weld.vercel.app** com SPA routing via `vercel.json`
+- **Deploy no Vercel:** App publicado em **https://arbo.mxos.com.br** com SPA routing via `vercel.json`
 - **Implementação em Paralelo** (Antigravity + Subagentes):
   - **Nova Turma:** `CreateGroupModal.tsx` — modal com form (nome, objetivo, frequência, tipo de plano, data de início); cria registro na tabela `groups`; botão `+ Nova Turma` em `AdminTurmas.tsx`
   - **Error Boundary:** `ErrorBoundary.tsx` — class component global com fallback elegante e botão "Tentar novamente"; integrado em `App.tsx` envolvendo todas as rotas
@@ -91,7 +92,8 @@ Somos um **time de 3**:
 
 ### Próximo passo
 - Integração Strava (Edge Function via n8n)
-- Domínio customizado no Vercel
+- ~~Domínio customizado no Vercel~~ ✅ arbo.mxos.com.br
+- SMTP externo (Resend ou AWS SES) antes de produção
 
 ---
 

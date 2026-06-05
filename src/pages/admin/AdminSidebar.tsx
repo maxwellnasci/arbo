@@ -9,7 +9,7 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
   const logout = useLogout()
   const { user } = useAuth()
 
-  const links: { to: string; label: string; exact: boolean; disabled?: boolean }[] = [
+  const links: { to: string; label: string; exact: boolean }[] = [
     { to: '/admin', label: 'Início', exact: true },
     { to: '/admin/alunos', label: 'Alunos', exact: false },
     { to: '/admin/turmas', label: 'Turmas', exact: false },
@@ -21,40 +21,26 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
   return (
     <nav className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
       <h2 className={styles.sidebarTitle}>ARBO</h2>
-      
+
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {links.map(link => {
           const isActive = link.exact ? pathname === link.to : pathname.startsWith(link.to)
-          return link.disabled ? (
-              <span
-                key={link.to}
-                style={{
-                  padding: '12px',
-                  borderRadius: '8px',
-                  color: '#555',
-                  display: 'block',
-                  cursor: 'default',
-                  userSelect: 'none',
-                }}
-              >
-                {link.label}
-              </span>
-            ) : (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={onClose}
-                style={{
-                  padding: '12px',
-                  borderRadius: '8px',
-                  color: isActive ? '#fff' : '#aaa',
-                  backgroundColor: isActive ? '#2a2a2a' : 'transparent',
-                  textDecoration: 'none',
-                  display: 'block',
-                }}
-              >
-                {link.label}
-              </Link>
+          return (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={onClose}
+              style={{
+                padding: '12px',
+                borderRadius: '8px',
+                color: isActive ? '#fff' : '#aaa',
+                backgroundColor: isActive ? '#2a2a2a' : 'transparent',
+                textDecoration: 'none',
+                display: 'block',
+              }}
+            >
+              {link.label}
+            </Link>
           )
         })}
       </div>

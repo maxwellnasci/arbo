@@ -93,8 +93,8 @@ export default function AdminAlunoDetail() {
     try {
       await changeGroup(val === 'null' ? null : val)
       toast.success('Turma atualizada!')
-    } catch {
-      toast.error('Erro ao atualizar turma.')
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao atualizar turma.')
     } finally {
       setIsChangingGroup(false)
     }

@@ -29,8 +29,6 @@ export function useTreinoMutations(): UseTreinoMutationsReturn {
       if (!data) throw new Error('Nenhum dado retornado após criação');
 
       return data as Training;
-    } catch (err) {
-      throw err;
     } finally {
       setIsMutating(false);
     }
@@ -51,8 +49,6 @@ export function useTreinoMutations(): UseTreinoMutationsReturn {
       if (!data) throw new Error('Nenhum dado retornado após atualização');
 
       return data as Training;
-    } catch (err) {
-      throw err;
     } finally {
       setIsMutating(false);
     }
@@ -67,8 +63,6 @@ export function useTreinoMutations(): UseTreinoMutationsReturn {
         .eq('id', id);
 
       if (error) throw error;
-    } catch (err) {
-      throw err;
     } finally {
       setIsMutating(false);
     }
