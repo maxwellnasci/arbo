@@ -359,6 +359,38 @@
   cursor: pointer;
 }
 
+/* ── Error State ─────────────────────────────────────────────────────────────── */
+
+.stateCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  padding: 32px 24px;
+  margin: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.errorText {
+  font-size: 14px;
+  color: #f87171;
+  margin: 0;
+}
+
+.retryBtn {
+  background: var(--orange);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 /* ── Empty State ─────────────────────────────────────────────────────────────── */
 
 .emptyState {

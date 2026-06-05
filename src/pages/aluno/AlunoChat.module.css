@@ -163,7 +163,7 @@
 }
 
 .inputArea {
-  padding: 16px 24px calc(16px + env(safe-area-inset-bottom, 16px));
+  padding: 16px 24px calc(70px + env(safe-area-inset-bottom, 16px));
   background: var(--bg-primary);
   border-top: 1px solid var(--border-subtle);
 }

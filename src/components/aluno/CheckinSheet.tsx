@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import type { Checkin } from '../../lib/types'
@@ -34,6 +34,11 @@ export default function CheckinSheet({ dayTraining, planId, userId, existingChec
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [])
 
   function adjustDistance(delta: number) {
     const v = parseFloat(distance.replace(',', '.') || '0')
@@ -78,7 +83,7 @@ export default function CheckinSheet({ dayTraining, planId, userId, existingChec
     if (err) { setError(err.message); return }
 
     setShowSuccess(true)
-    setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       onSuccess()
       onClose()
     }, 1500)

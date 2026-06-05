@@ -130,3 +130,11 @@
 .cycleLabelCurrent {
   color: var(--orange);
 }
+
+.cycleBarFuture {
+  background: var(--bg-surface);
+}
+
+.cycleLabelFuture {
+  color: var(--text-tertiary);
+}

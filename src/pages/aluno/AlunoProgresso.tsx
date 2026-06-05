@@ -172,7 +172,7 @@ export default function AlunoProgresso({ studentId }: { studentId: string }) {
                   </div>
                   
                   <div className={styles.historyTitle}>
-                    {checkin.trainings?.title || checkin.trainings?.type.toUpperCase()}
+                    {checkin.trainings?.title || (checkin.trainings?.type?.toUpperCase() ?? '')}
                   </div>
 
                   <div className={styles.historyStats}>

@@ -153,6 +153,9 @@
   border-radius: 16px;
   padding: 24px 24px 16px 12px;
   height: 240px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .tooltip {

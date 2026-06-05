@@ -100,6 +100,8 @@ export default function AdminTurmaDetail() {
         supabase.from('tags').select('*').order('name'),
       ])
       if (cancelled) return
+      if (trainingsRes.error) { setMutationError('Erro ao carregar treinos: ' + trainingsRes.error.message); return }
+      if (tagsRes.error)      { setMutationError('Erro ao carregar etiquetas: ' + tagsRes.error.message); return }
       if (trainingsRes.data) setAllTrainings(trainingsRes.data)
       if (tagsRes.data) setAllTags(tagsRes.data)
     }
@@ -803,10 +805,10 @@ function CreateTrainingForm({ mutating, allTags, onBack, onSubmit, onTagCreated 
 
   const inputStyle: React.CSSProperties = {
     width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border-default)',
-    borderRadius: '7px', padding: '6px 8px', fontSize: '11px', color: '#ccc', outline: 'none',
+    borderRadius: '7px', padding: '6px 8px', fontSize: '11px', color: 'var(--text-primary)', outline: 'none',
   }
   const labelStyle: React.CSSProperties = {
-    fontSize: '9px', color: '#555', fontWeight: 700, textTransform: 'uppercase',
+    fontSize: '9px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase',
     letterSpacing: '0.4px', marginBottom: '3px', display: 'block',
   }
 

@@ -27,6 +27,9 @@
   /* Cards especiais */
   --bg-card-orange:    #110a07;
   --bg-card-green:     #071108;
+
+  /* Headings */
+  --text-h:            #ffffff;
 }
 
 [data-theme="light"] {
@@ -56,6 +59,10 @@
   /* Cards especiais */
   --bg-card-orange:    #fff7ed;
   --bg-card-green:     #f0fdf4;
+
+  /* Headings */
+  --text-h:            #18181b;
+
   color-scheme: light;
 }
 

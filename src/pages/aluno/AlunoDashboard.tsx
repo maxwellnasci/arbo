@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
 import { useWeeklyPlan, type DayTraining } from '../../hooks/useWeeklyPlan'
 import { useProgresso } from '../../hooks/useProgresso'
@@ -167,8 +168,12 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
   async function handleDelete() {
     if (!checkin) return
     setDeleting(true)
-    await supabase.from('checkins').delete().eq('id', checkin.id)
+    const { error } = await supabase.from('checkins').delete().eq('id', checkin.id)
     setDeleting(false)
+    if (error) {
+      toast.error('Erro ao remover check-in: ' + error.message)
+      return
+    }
     setDeleteConfirm(false)
     onCheckinSuccess()
   }
