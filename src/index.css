@@ -27,6 +27,39 @@
   /* Cards especiais */
   --bg-card-orange:    #110a07;
   --bg-card-green:     #071108;
+}
+
+[data-theme="light"] {
+  /* Fundos */
+  --bg-primary:        #f4f4f5;
+  --bg-hero:           #e2e8f0;
+  --bg-surface:        #ffffff;
+  --bg-surface-hover:  #fafafa;
+  --bg-input:          #f4f4f5;
+
+  /* Bordas */
+  --border-default:    #e4e4e7;
+  --border-subtle:     #f4f4f5;
+  --border-orange:     rgba(232, 82, 26, 0.2);
+  --border-green:      rgba(74, 222, 128, 0.4);
+
+  /* Cores de marca */
+  --orange:            #E8521A;
+  --green-accent:      #16a34a;
+
+  /* Texto */
+  --text-primary:      #18181b;
+  --text-secondary:    #52525b;
+  --text-tertiary:     #71717a;
+  --text-disabled:     #a1a1aa;
+
+  /* Cards especiais */
+  --bg-card-orange:    #fff7ed;
+  --bg-card-green:     #f0fdf4;
+  color-scheme: light;
+}
+
+:root {
 
   --sans: 'Inter', system-ui, sans-serif;
   --heading: 'Playfair Display', serif;

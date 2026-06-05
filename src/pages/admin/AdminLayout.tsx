@@ -1,39 +1,79 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Outlet } from 'react-router-dom'
 import { AdminSidebar } from './AdminSidebar'
 import AdminBottomNav from '../../components/AdminBottomNav'
 import styles from './AdminLayout.module.css'
 import { useAuth } from '../../contexts/AuthContext'
+import { useLogout } from '../../hooks/useLogout'
+import { LogOut, Sun, Moon, Settings } from 'lucide-react'
+import arboLogo from '../../assets/arbo-logo.png'
 
 export function AdminLayout() {
   const { user } = useAuth()
+  const logout = useLogout()
   const name = user?.user_metadata?.full_name || user?.email || 'A'
   const initials = name.substring(0, 2).toUpperCase()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.logoContainer}>
-          <svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="36" height="36" rx="10" fill="#0d2818"/>
-            <rect x="16.5" y="22" width="3" height="8" rx="1.5" fill="#E8521A"/>
-            <rect x="16.5" y="10" width="3" height="13" rx="1.5" fill="#E8521A"/>
-            <line x1="18" y1="20" x2="10" y2="16" stroke="#E8521A" strokeWidth="2.5" strokeLinecap="round"/>
-            <line x1="18" y1="20" x2="26" y2="16" stroke="#E8521A" strokeWidth="2.5" strokeLinecap="round"/>
-            <line x1="18" y1="14" x2="12" y2="9" stroke="#E8521A" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="18" y1="14" x2="24" y2="9" stroke="#E8521A" strokeWidth="2" strokeLinecap="round"/>
-            <line x1="12" y1="9" x2="9" y2="6" stroke="#E8521A" strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1="12" y1="9" x2="13" y2="6" stroke="#E8521A" strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1="24" y1="9" x2="23" y2="6" stroke="#E8521A" strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1="24" y1="9" x2="27" y2="6" stroke="#E8521A" strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1="18" y1="10" x2="18" y2="7" stroke="#E8521A" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
+          <img src={arboLogo} alt="Arbo" style={{ width: 32, height: 32, objectFit: 'contain' }} />
           <span className={styles.headerTitle}>ARBO</span>
         </div>
         
-        <div className={styles.avatar}>
-          {initials}
+        <div className={styles.avatarContainer} ref={menuRef}>
+          <button 
+            className={styles.avatar} 
+            onClick={() => setMenuOpen(!menuOpen)}
+            style={{ border: menuOpen ? '2px solid var(--orange)' : 'none', cursor: 'pointer' }}
+          >
+            {initials}
+          </button>
+          
+          {menuOpen && (
+            <div className={styles.dropdownMenu}>
+              <div className={styles.dropdownHeader}>
+                <p className={styles.dropdownName}>{name}</p>
+                <p className={styles.dropdownEmail}>{user?.email}</p>
+              </div>
+              <div className={styles.dropdownDivider} />
+              <button 
+                className={styles.dropdownItem} 
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              >
+                {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
+              </button>
+              <button className={styles.dropdownItem} onClick={() => alert('Configurações em breve!')}>
+                <Settings size={16} /> Configurações
+              </button>
+              <div className={styles.dropdownDivider} />
+              <button className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={logout}>
+                <LogOut size={16} /> Sair
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
