@@ -512,7 +512,18 @@ npx supabase login
 **Repositório:** https://github.com/maxwellnasci/arbo  
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros ✅ (2026-06-03)
 
+### O que foi feito em 2026-06-05
+
+**Refinamento Visual Global + Modo Claro/Escuro (Fase 5):**
+- Migração de todas as cores globais (`src/index.css`) para variáveis CSS (`--bg-surface`, `--text-primary`, `--bg-card-green`, etc.).
+- Implementação de `[data-theme="light"]` criando uma paleta de contraste sem usar fundo branco puro (`#fff`).
+- Redesign do Header (`AdminLayout.tsx`): inclusão do logo minimalista árvore + texto Arbo e menu interativo via Avatar com Toggle de Tema persistente via `localStorage`.
+- Remoção de cores hardcoded no grid do `AdminTurmaDetail` (agora usa o "verdinho" `--bg-card-green`) e no `AdminPRFeed`.
+
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
+
 ### Próximos passos sugeridos
+- Painel do Aluno Redesign Premium
 - Integração Strava (Edge Function via n8n)
 - ~~**Ícone do app**~~ ✅
 - ~~**PWA completo**~~ ✅
