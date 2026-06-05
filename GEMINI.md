@@ -522,8 +522,28 @@ npx supabase login
 
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
 
+### O que foi feito em 2026-06-05 (Parte 2)
+
+**Análise dupla de qualidade pós-redesign (Claude Code — 7 ângulos):**
+- 7 ângulos paralelos de review sobre o redesign da Fase 5: diff scan, removed-behavior auditor, cross-file tracer, CSS variables/dark mode, regressões de segurança, reuse/simplification, altitude
+- 27 candidates identificados → 10 bugs confirmados/plausíveis após verificação independente
+
+**10 bugs pós-redesign corrigidos (commit `ab8e4d9`):**
+- `src/index.css` — `var(--text-h)` definida: `#ffffff` (dark) / `#18181b` (light) — h1/h2/code eram invisíveis em dark mode
+- `AlunoDashboard.module.css` — `.stateCard`, `.errorText`, `.retryBtn` recriadas (deletadas no redesign)
+- `LockedScreen.module.css` — `.cycleBarFuture` e `.cycleLabelFuture` adicionadas (semanas futuras sem estilo)
+- `AlunoChat.module.css` — `.inputArea` com `padding-bottom: calc(70px + env(safe-area-inset-bottom, 16px))`
+- `AlunoDashboard.tsx` — `handleDelete` verifica erro Supabase; `toast.error()` se falhar
+- `CheckinSheet.tsx` — `setTimeout` em `useRef`, limpo no `useEffect` cleanup no unmount
+- `AdminTurmaDetail.tsx` — verifica `.error` nas queries de treinos/tags; `color:'#ccc'`/`'#555'` → CSS vars
+- `AlunoProgresso.module.css` — `width:100%; max-width:100%; overflow:hidden` restaurados no `.chartContainer`
+- `AlunoProgresso.tsx` — `type?.toUpperCase()` com optional chaining — evita `TypeError` quando `type` é `null`
+
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
+
 ### Próximos passos sugeridos
 - ~~Painel do Aluno Redesign Premium~~ ✅
+- Validação visual no celular (screenshots mobile)
 - Integração Strava (Edge Function via n8n)
 - ~~**Ícone do app**~~ ✅
 - ~~**PWA completo**~~ ✅

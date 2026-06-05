@@ -537,8 +537,28 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
 
+### O que foi feito em 2026-06-05 (Parte 2)
+
+**Análise dupla de qualidade pós-redesign (Claude Code — 7 ângulos simultâneos):**
+- Code review em 7 ângulos paralelos sobre o redesign da Fase 5: diff scan, removed-behavior auditor, cross-file tracer, CSS variables/dark mode, regressões de segurança, reuse/simplification, altitude
+- 27 candidates identificados → 10 bugs confirmados/plausíveis após verificação independente
+
+**10 bugs pós-redesign corrigidos (commit `ab8e4d9`):**
+- `src/index.css` — `var(--text-h)` definida: `#ffffff` (dark) e `#18181b` (light) — h1/h2/code invisíveis em dark mode
+- `AlunoDashboard.module.css` — `.stateCard`, `.errorText`, `.retryBtn` recriadas (deletadas no redesign)
+- `LockedScreen.module.css` — `.cycleBarFuture` e `.cycleLabelFuture` adicionadas (bg: `var(--bg-surface)`, cor: `var(--text-tertiary)`)
+- `AlunoChat.module.css` — `.inputArea` com `padding-bottom: calc(70px + env(safe-area-inset-bottom, 16px))` — chat não ficava mais atrás do BottomNav
+- `AlunoDashboard.tsx` — `handleDelete` verifica erro do Supabase; `toast.error()` se falhar; `onCheckinSuccess()` só em sucesso
+- `CheckinSheet.tsx` — `setTimeout` armazenado em `useRef`, limpo no `useEffect` cleanup no unmount (stale callback)
+- `AdminTurmaDetail.tsx` — `useEffect` de treinos/tags verifica `.error` e seta `mutationError` se falhar; `color:'#ccc'`/`'#555'` → `var(--text-primary)`/`var(--text-secondary)` nos inputs/labels
+- `AlunoProgresso.module.css` — `width:100%; max-width:100%; overflow:hidden` restaurados no `.chartContainer` (regressão Task 26)
+- `AlunoProgresso.tsx` — `type?.toUpperCase()` com optional chaining — evita `TypeError` quando `type` é `null`
+
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
+
 ### Próximo passo
 - ~~Painel do Aluno Redesign Premium~~ ✅
+- Validação visual no celular (screenshots mobile)
 - Integração Strava (Edge Function via n8n)
 - ~~Domínio customizado~~ ✅ arbo.mxos.com.br
 - SMTP externo (Resend ou AWS SES) antes de produção

@@ -1,6 +1,6 @@
 # 🌳 Arbo — Briefing do Time de IA
 
-> Última atualização: 2026-06-04
+> Última atualização: 2026-06-05
 > Autor: Maxwell + Antigravity
 
 ---
@@ -46,12 +46,13 @@ Somos um **time de 3**:
 - **sonner** — Toasts/notificações estilo Apple
 - **date-fns** — Formatação de datas em PT-BR
 
-### Estado atual (2026-06-03)
+### Estado atual (2026-06-05)
 - **App publicado:** **https://arbo.mxos.com.br** (Vercel, SPA routing)
 - **23+ telas/features implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
 - Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação + Nova Turma + Filtros + Invites): ✅ 100%
 - Fase 3 (Treinos + Chat + Progresso + Perfil + PRs + Error Boundary + Code Splitting): ✅ **100%**
+- Fase 5 (Redesign Premium Admin + Aluno + Dark/Light Mode + 10 bugs pós-redesign corrigidos): ✅ **100%**
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
@@ -69,6 +70,10 @@ Somos um **time de 3**:
 - **Fix recharts × Vite** (Claude Code): downgrade 3.8.1 → 2.15.4 — versão 3.x usa `victory-vendor` (CJS) que causa `require_isUnsafeProperty` com Vite; 2.x é ESM nativa sem workarounds. `vite.config.ts` limpo.
 - **Aba Perfil `/aluno/perfil`** (Gemini + revisão Claude Code): `useAlunoPerfil.ts` — queries paralelas profile/groups + strava_connections (placeholder RLS); padrão `async load()`, `cancelled` flag. `AlunoPerfil.tsx` — avatar com fallback, dados pessoais (nível, turma), card Strava placeholder, logout. `AlunoDashboard.tsx` — substitui `ProfileMenu` inline por `<AlunoPerfil>`. Revisão Claude Code: `padding-bottom: 96px` no CSS para BottomNav.
 - **Notificações de PR no admin** (Gemini + revisão Claude Code): `useAdminPRs.ts` + `AdminPRFeed.tsx` — feed dos 5 recordes mais recentes no `AdminHome`, clicável para `/admin/alunos/:id`. `AdminHome.tsx` — `fetchStats` refatorada com `cancelled` flag e `try/finally`. tsc + lint: 0 erros.
+
+### O que foi feito em 2026-06-05 (Parte 2)
+- **Análise dupla de qualidade pós-redesign** (Claude Code — 7 ângulos paralelos): diff scan, removed-behavior auditor, cross-file tracer, CSS variables/dark mode, regressões de segurança, reuse/simplification, altitude. 27 candidates → 10 bugs confirmados.
+- **10 bugs pós-redesign corrigidos** (Claude Code): `var(--text-h)` indefinida (h1/h2/code invisíveis em dark mode); `.stateCard`/`.errorText`/`.retryBtn` deletadas no redesign; `.cycleBarFuture`/`.cycleLabelFuture` ausentes no `LockedScreen`; input do chat atrás do BottomNav; `handleDelete` sem error handling; `setTimeout` sem cleanup; queries de treinos/tags sem verificação de `.error`; hardcoded `#ccc`/`#555` nos inputs do admin; overflow do chart removido; `type?.toUpperCase()` null safety. tsc + build + lint: 0 erros ✅
 
 ### O que foi feito em 2026-06-04
 - **Correções UX Mobile** (Gemini): `overscroll-behavior: none` + `overflow: hidden` em `html/body` (elimina bounce iOS); `maximum-scale=1.0, user-scalable=no` no viewport (bloqueia zoom indesejado); `#root` com `height: 100dvh` + `overflow-y: auto` + `-webkit-overflow-scrolling: touch`. tsc + lint: 0 erros ✅
@@ -91,6 +96,7 @@ Somos um **time de 3**:
 - **Fix de lint (Claude Code):** `AdminConvites.tsx` — `useEffect` refatorado para `async function load()` com `cancelled` flag
 
 ### Próximo passo
+- Validação visual no celular (screenshots mobile do redesign Fase 5)
 - Integração Strava (Edge Function via n8n)
 - ~~Domínio customizado no Vercel~~ ✅ arbo.mxos.com.br
 - SMTP externo (Resend ou AWS SES) antes de produção

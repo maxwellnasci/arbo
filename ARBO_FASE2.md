@@ -1,6 +1,6 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-06-04 (sessão 10)
+> Gerado em 2026-05-29 | Atualizado em 2026-06-05 (sessão 11)
 
 ---
 
@@ -41,6 +41,11 @@
 | **Domínio customizado** | ✅ **https://arbo.mxos.com.br** (2026-06-04) |
 | **Lint** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-04) |
 | **Fase 3** | ✅ **100% completa** |
+| **Redesign Premium Admin (Fase 5)** | ✅ AdminLayout com avatar+tema, todas as telas admin com CSS vars semânticas, dark/light mode (2026-06-05) |
+| **Redesign Premium Aluno (Fase 5)** | ✅ AlunoDashboard, AlunoProgresso, AlunoPerfil, AlunoChat, CheckinSheet e LockedScreen extraídos (2026-06-05) |
+| **DESING.md** | ✅ Design system completo na raiz: paleta, tipografia, variáveis CSS, animações (2026-06-05) |
+| **10 bugs pós-redesign** | ✅ var(--text-h), classes CSS deletadas, cycleBarFuture, chat offset, handleDelete, setTimeout, overflow, null safety (2026-06-05) |
+| **Lint pós-redesign** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-05) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 
@@ -249,6 +254,9 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 20. ✅ Reenvio infinito de convites (fallback reset senha), Auto-reload no ErrorBoundary e Tela de Sucesso Premium
 21. ✅ Correções de qualidade e segurança pós-análise dupla (DeepSeek + Claude Code): 16 fixes de padrões async/catch/tipos + Open Redirect em invite-user + domínio arbo.mxos.com.br
 22. ✅ Refinamento Visual Global + Modo Claro/Escuro (Fase 5): Migração para variáveis CSS, criação de paleta Light Mode sem branco puro, header com Avatar Menu e Tema Persistente em localStorage.
+23. ✅ Redesign Premium completo do Painel Admin (Fase 5): AdminLayout com avatar menu + toggle tema, CSS vars em todas as telas admin. DESING.md criado com design system completo.
+24. ✅ Redesign Premium completo do App do Aluno (Fase 5): AlunoDashboard, AlunoProgresso, AlunoPerfil, AlunoChat + CheckinSheet e LockedScreen extraídos como componentes. CSS vars semânticas dark/light.
+25. ✅ 10 bugs pós-redesign corrigidos: var(--text-h) indefinida, classes CSS deletadas, cycleBarFuture ausente, chat offset, handleDelete sem error handling, setTimeout sem cleanup, error handling em queries admin, hardcoded colors, overflow do chart, null safety no toUpperCase().
 
 ---
 
