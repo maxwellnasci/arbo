@@ -1,188 +1,223 @@
 .container {
-  padding: 24px 24px calc(96px + env(safe-area-inset-bottom, 24px));
   display: flex;
   flex-direction: column;
   gap: 32px;
-  animation: fadeIn 0.4s ease-out;
+  padding-bottom: 24px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+/* ── Hero ────────────────────────────────────────────────────────────────── */
 
-.header {
+.hero {
+  padding: 40px 24px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  text-align: center;
+  gap: 12px;
 }
 
 .avatarWrapper {
-  width: 96px;
-  height: 96px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  padding: 4px;
-  background: linear-gradient(135deg, #E8521A, #a8360d);
-  box-shadow: 0 0 20px rgba(232, 82, 26, 0.4);
-  animation: pulseGlow 2s infinite alternate;
-}
-
-@keyframes pulseGlow {
-  0% { box-shadow: 0 0 15px rgba(232, 82, 26, 0.3); }
-  100% { box-shadow: 0 0 25px rgba(232, 82, 26, 0.6); }
+  border: 3px solid var(--border-orange);
+  background: var(--orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
 }
 
 .avatarImg {
   width: 100%;
   height: 100%;
-  border-radius: 50%;
   object-fit: cover;
-  border: 4px solid #09090b;
 }
 
 .avatarFallback {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: #111;
-  border: 4px solid #09090b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-family: var(--sans);
+  font-size: 32px;
+  font-weight: 700;
   color: #fff;
-  font-size: 36px;
-  font-weight: 800;
 }
 
 .name {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 32px;
-  letter-spacing: 1px;
-  color: #fff;
+  font-family: var(--heading);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
   margin: 0;
 }
+
+.pills {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.levelPill, .groupPill {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.levelPill {
+  background: var(--bg-card-orange);
+  color: var(--orange);
+  border: 1px solid var(--border-orange);
+}
+
+.groupPill {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-default);
+}
+
+/* ── Seções Genéricas ──────────────────────────────────────────────────────── */
 
 .section {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 0 24px;
 }
 
 .sectionTitle {
-  font-size: 14px;
+  font-family: var(--sans);
+  font-size: 13px;
   font-weight: 600;
-  color: #71717a;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  color: var(--text-secondary);
   margin: 0;
 }
 
+/* ── Informações ───────────────────────────────────────────────────────────── */
+
 .infoCard {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 16px;
-  backdrop-filter: blur(10px);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  overflow: hidden;
 }
 
 .infoRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 16px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .infoRow:last-child {
-  padding-bottom: 0;
   border-bottom: none;
 }
 
 .infoLabel {
-  color: #a1a1aa;
-  font-size: 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .infoValue {
-  color: #fff;
-  font-weight: 600;
   font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 600;
 }
+
+/* ── Strava Placeholder ─────────────────────────────────────────────────────── */
 
 .stravaCard {
-  background: linear-gradient(135deg, rgba(252, 76, 2, 0.1), rgba(252, 76, 2, 0.02));
-  border: 1px solid rgba(252, 76, 2, 0.2);
-  border-radius: 12px;
-  padding: 20px;
+  background: var(--bg-card-orange);
+  border: 1px solid var(--border-orange);
+  border-radius: 16px;
+  padding: 16px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
-.stravaInfo {
+.stravaIconWrapper {
+  width: 48px;
+  height: 48px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-orange);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--orange);
+}
+
+.stravaContent {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .stravaTitle {
-  color: #fc4c02;
-  font-weight: 700;
-  font-size: 16px;
-}
-
-.stravaStatus {
-  color: #a1a1aa;
-  font-size: 13px;
-}
-
-.stravaButton {
-  background: #fc4c02;
-  color: #fff;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
+  font-size: 15px;
   font-weight: 600;
-  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.stravaSubtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.stravaBtn {
+  background: transparent;
+  border: 1px solid var(--orange);
+  color: var(--orange);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 8px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.stravaButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(252, 76, 2, 0.3);
-}
-
-.stravaButton:disabled {
-  background: rgba(252, 76, 2, 0.3);
+.stravaBtn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.logoutButton {
-  width: 100%;
-  background: rgba(239, 68, 68, 0.1);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  padding: 16px;
+/* ── Logout ────────────────────────────────────────────────────────────────── */
+
+.logoutBtn {
+  margin-top: 16px;
+  background: transparent;
+  border: 1px solid var(--border-orange);
+  color: var(--orange);
   border-radius: 12px;
+  padding: 16px;
+  font-size: 15px;
   font-weight: 600;
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s;
 }
 
-.logoutButton:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.4);
+.logoutBtn:hover {
+  background: var(--border-orange);
 }
+
+/* ── Loaders ───────────────────────────────────────────────────────────────── */
 
 .loading, .error {
-  padding: 48px 24px;
-  text-align: center;
-  color: #71717a;
-  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
 }

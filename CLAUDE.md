@@ -533,11 +533,12 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - `src/index.css` — refatorado para CSS Variables semânticas (`--bg-surface`, `--text-primary`, `--bg-card-green`, etc.) em `:root` (dark default) e `[data-theme="light"]`.
 - `AdminLayout.tsx` — Remoção do ícone hamburger clássico no desktop. Adicionado logo Árvore minimalista + Menu interativo de Avatar (iniciais) com dropdown animado para Toggle de Tema e Logout. Persistência de tema via `localStorage`.
 - `AdminTurmaDetail.tsx` e `AdminPRFeed` — Limpeza de hardcoded colors (`#1c1c1c`, `#fff`, `#000`) e substituição pelas novas CSS Variables. Assegurada a legibilidade no Modo Claro.
+- **Painel do Aluno Redesign Premium (Fase 5)** — reescrito `AlunoDashboard`, `AlunoProgresso`, `AlunoPerfil` e `AlunoChat` seguindo as variáveis do CSS global, removido hardcoded colors brancas e otimizado para os modos claro/escuro usando var(--orange), var(--green-accent) e variações semânticas. Extraídos componentes base `CheckinSheet` e `LockedScreen`.
 
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
 
 ### Próximo passo
-- Painel do Aluno Redesign Premium
+- ~~Painel do Aluno Redesign Premium~~ ✅
 - Integração Strava (Edge Function via n8n)
 - ~~Domínio customizado~~ ✅ arbo.mxos.com.br
 - SMTP externo (Resend ou AWS SES) antes de produção

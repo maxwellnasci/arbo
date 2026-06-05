@@ -1,0 +1,132 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 16px;
+  background: var(--bg-primary);
+  border-radius: 24px 24px 0 0;
+}
+
+.lastWeek {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lastWeekTitle {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.metrics {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.metricValue {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+
+.metricLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+}
+
+.lockedHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  padding: 48px 24px;
+  gap: 12px;
+}
+
+.lockIcon {
+  color: var(--orange);
+  margin-bottom: 8px;
+}
+
+.lockedTitle {
+  font-family: var(--heading);
+  font-size: 24px;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.lockedTitle em {
+  font-style: italic;
+}
+
+.lockedSubtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  max-width: 250px;
+  line-height: 1.4;
+}
+
+.cycle {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cycleItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.cycleBar {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-surface);
+}
+
+.cycleBarDone {
+  background: var(--green-accent);
+}
+
+.cycleBarCurrent {
+  background: var(--orange);
+}
+
+.cycleLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-disabled);
+}
+
+.cycleLabelDone {
+  color: var(--green-accent);
+}
+
+.cycleLabelCurrent {
+  color: var(--orange);
+}

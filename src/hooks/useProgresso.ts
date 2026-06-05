@@ -11,8 +11,12 @@ interface CheckinData {
   id: string;
   actual_duration_seconds: number | null;
   actual_distance_m: number | null;
+  actual_pace_seconds_per_km: number | null;
+  perceived_effort: number | null;
+  notes: string | null;
   created_at: string;
   trainings: {
+    title: string;
     distance_m: number | null;
     type: string;
   } | null;
@@ -37,7 +41,7 @@ export function useProgresso(studentId: string) {
         const [recordsResponse, checkinsResponse] = await Promise.all([
           supabase.from('records').select('*').eq('student_id', studentId),
           supabase.from('checkins')
-            .select('*, trainings(distance_m, type)')
+            .select('*, trainings(title, distance_m, type)')
             .eq('student_id', studentId)
             .order('created_at', { ascending: false }),
         ]);

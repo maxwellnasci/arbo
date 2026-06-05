@@ -50,10 +50,9 @@ export default function AlunoChat({ studentId }: AlunoChatProps) {
 
   return (
     <div className={styles.container}>
-      {/* Header Glassmorphism */}
       <div className={styles.header}>
         <div className={styles.avatar}>
-          <span>P</span>
+          P
         </div>
         <div>
           <h2 className={styles.title}>Professor</h2>
@@ -61,19 +60,18 @@ export default function AlunoChat({ studentId }: AlunoChatProps) {
         </div>
       </div>
 
-      {/* Messages Area */}
       <div className={styles.messagesContainer}>
         {isLoading ? (
           <div className={styles.loading}>Carregando mensagens...</div>
         ) : messages.length === 0 ? (
           <div className={styles.empty}>
             <span className={styles.emptyIcon}>💬</span>
-            <p>Nenhuma mensagem ainda.</p>
+            <p className={styles.emptyTitle}>Nenhuma mensagem ainda.</p>
             <p className={styles.emptySub}>Mande uma dúvida ou feedback sobre seu treino!</p>
           </div>
         ) : (
           <AnimatePresence>
-            {messages.map(msg => {
+            {messages.map((msg, i) => {
               if (msg.deleted_by_student) return null
               const isStudent = msg.sender_id === studentId
               return (
@@ -82,6 +80,7 @@ export default function AlunoChat({ studentId }: AlunoChatProps) {
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ delay: i * 0.05, duration: 0.2 }}
                   key={msg.id}
                   className={`${styles.messageWrapper} ${isStudent ? styles.wrapperStudent : styles.wrapperAdmin}`}
                 >
@@ -104,10 +103,9 @@ export default function AlunoChat({ studentId }: AlunoChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
       <div className={styles.inputArea}>
         {actionError && (
-          <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#ff6b6b', textAlign: 'center' }}>
+          <p className={styles.errorText}>
             {actionError}
           </p>
         )}

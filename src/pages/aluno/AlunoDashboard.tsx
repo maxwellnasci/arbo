@@ -1,12 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
-
-import { useWeeklyPlan, type DayTraining, type LastWeekSummary } from '../../hooks/useWeeklyPlan'
+import { useWeeklyPlan, type DayTraining } from '../../hooks/useWeeklyPlan'
+import { useProgresso } from '../../hooks/useProgresso'
 import { supabase } from '../../lib/supabase'
-import type { Checkin, TrainingType, UserLevel } from '../../lib/types'
+import type { TrainingType } from '../../lib/types'
+import { Home, TrendingUp, MessageSquare, User, Calendar, CheckCircle2, Medal, Flame } from 'lucide-react'
+
 import AlunoChat from './AlunoChat'
 import AlunoProgresso from './AlunoProgresso'
 import AlunoPerfil from './AlunoPerfil'
+import CheckinSheet from '../../components/aluno/CheckinSheet'
+import LockedScreen from '../../components/aluno/LockedScreen'
 import styles from './AlunoDashboard.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -24,21 +29,7 @@ const TYPE_CLASS: Record<TrainingType, string> = {
   mobilidade: styles.typeMobilidade,
 }
 
-const LEVEL_LABEL: Record<UserLevel, string> = {
-  iniciante:     'Iniciante',
-  intermediario: 'Intermediário',
-  avancado:      'Avançado',
-}
 
-const LEVEL_CLASS: Record<UserLevel, string> = {
-  iniciante:     styles.levelIniciante,
-  intermediario: styles.levelIntermediario,
-  avancado:      styles.levelAvancado,
-}
-
-const EFFORT_EMOJIS: Record<number, string> = {
-  1: '😴', 2: '🙂', 3: '💪', 4: '🔥', 5: '💀',
-}
 
 // ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -47,24 +38,11 @@ function formatDistance(meters: number | null): string | null {
   return `${(meters / 1000).toFixed(1).replace('.', ',')} km`
 }
 
-function formatPace(secondsPerKm: number | null): string | null {
-  if (secondsPerKm == null) return null
-  const min = Math.floor(secondsPerKm / 60)
-  const sec = String(secondsPerKm % 60).padStart(2, '0')
-  return `${min}:${sec}/km`
-}
+
 
 function formatDuration(seconds: number | null): string | null {
   if (seconds == null) return null
   return `${Math.floor(seconds / 60)} min`
-}
-
-function getGreeting(name: string | null | undefined, email: string | undefined) {
-  const hour = new Date().getHours()
-  const period = hour >= 5 && hour < 12 ? 'Bom dia'
-    : hour >= 12 && hour < 18 ? 'Boa tarde'
-    : 'Boa noite'
-  return { period, name: name ?? email?.split('@')[0] ?? 'atleta' }
 }
 
 // ── SVG Icons ─────────────────────────────────────────────────────────────────
@@ -78,15 +56,7 @@ function IconRoad() {
   )
 }
 
-function IconTimer() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" />
-      <polyline points="12 6 12 12 16 14" />
-    </svg>
-  )
-}
+
 
 function IconClock() {
   return (
@@ -125,19 +95,8 @@ function SkeletonLoader() {
   return (
     <div className={styles.page}>
       <div className={styles.container}>
-        <div className={styles.skeletonHeader}>
-          <div>
-            <div className={styles.skeletonTitle} />
-            <div className={styles.skeletonBadge} />
-          </div>
-        </div>
-        <div className={styles.skeletonProgressArea}>
-          <div className={styles.skeletonProgressLabel} />
-          <div className={styles.skeletonProgressBar} />
-        </div>
-        <div className={styles.skeletonCardLarge} />
-        <div className={styles.skeletonCardSmall} />
-        <div className={styles.skeletonCardSmall} />
+        <div className={styles.skeletonHero} />
+        <div className={styles.skeletonGrid} />
       </div>
       <BottomNav activeTab="inicio" onTabChange={() => {}} />
     </div>
@@ -149,310 +108,42 @@ function SkeletonLoader() {
 function EmptyState() {
   return (
     <div className={styles.emptyState}>
-      <svg className={styles.emptyIcon} viewBox="0 0 96 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M10 52C10 52 16 36 26 34L50 34L68 39C74 40.5 80 44 83 49L86 52C86 52 88 55 88 58L14 58C11.5 58 10 56 10 52Z" fill="#ffffff"/>
-        <path d="M26 34L28 20C28 18 31 15 34 15L44 15C47 15 49 18 49 20L50 34Z" fill="#d0d0d0"/>
-        <path d="M30 22L48 22M31 28L46 28" stroke="#aaaaaa" strokeWidth="2" strokeLinecap="round"/>
-        <rect x="8" y="56" width="80" height="8" rx="4" fill="#cccccc"/>
-      </svg>
+      <Calendar size={32} className={styles.emptyIcon} />
       <p className={styles.emptyTitle}>Nenhum treino programado</p>
       <p className={styles.emptySubtext}>Fale com seu professor para montar sua semana</p>
     </div>
   )
 }
 
-// ── Locked Screen ─────────────────────────────────────────────────────────────
-
-function LockedScreen({ lockedWeekNumber, lastWeekSummary }: {
-  lockedWeekNumber: number
-  lastWeekSummary: LastWeekSummary | null
-}) {
-  return (
-    <div className={styles.trainingList}>
-      {/* Semana 2+: resumo da semana anterior (só se tiver check-ins) */}
-      {lastWeekSummary !== null && lastWeekSummary.checkinCount > 0 && (
-        <div className={styles.lockedLastWeek}>
-          <div className={styles.lockedLastWeekTitle}>
-            Semana {lockedWeekNumber - 1} concluída ✓
-          </div>
-          <div className={styles.lockedMetrics}>
-            <div className={styles.lockedMetric}>
-              <span className={styles.lockedMetricValue}>{lastWeekSummary.checkinCount}</span>
-              <span className={styles.lockedMetricLabel}>treinos</span>
-            </div>
-            <div className={styles.lockedMetric}>
-              <span className={styles.lockedMetricValue}>{(lastWeekSummary.totalDistanceM / 1000).toFixed(0)}</span>
-              <span className={styles.lockedMetricLabel}>km</span>
-            </div>
-            {lastWeekSummary.avgPaceSecondsPerKm !== null && (
-              <div className={styles.lockedMetric}>
-                <span className={styles.lockedMetricValue}>{formatPace(lastWeekSummary.avgPaceSecondsPerKm)}</span>
-                <span className={styles.lockedMetricLabel}>pace médio</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Semana 1 bloqueada — boas-vindas */}
-      {lastWeekSummary === null && (
-        <div className={styles.lockedWelcome}>
-          <div className={styles.lockedWelcomeIcon}>🏃</div>
-          <p className={styles.lockedWelcomeTitle}>Pronto para correr?</p>
-          <p className={styles.lockedWelcomeText}>
-            Seu professor está preparando o plano da primeira semana.
-          </p>
-        </div>
-      )}
-
-      {/* Card "a caminho" */}
-      <div className={styles.lockedComing}>
-        <span className={styles.lockedComingIcon}>⏳</span>
-        <div>
-          <p className={styles.lockedComingTitle}>Semana {lockedWeekNumber} a caminho</p>
-          <p className={styles.lockedComingText}>Seu professor está preparando os treinos. Em breve! 💪</p>
-        </div>
-      </div>
-
-      {/* Barra de progresso do ciclo S1–S4 */}
-      <div className={styles.lockedCycle}>
-        {[1, 2, 3, 4].map(n => (
-          <div key={n} className={styles.lockedCycleItem}>
-            <div className={`${styles.lockedCycleBar} ${
-              n < lockedWeekNumber ? styles.lockedCycleBarDone :
-              n === lockedWeekNumber ? styles.lockedCycleBarCurrent :
-              styles.lockedCycleBarFuture
-            }`} />
-            <span className={`${styles.lockedCycleLabel} ${
-              n < lockedWeekNumber ? styles.lockedCycleLabelDone :
-              n === lockedWeekNumber ? styles.lockedCycleLabelCurrent :
-              styles.lockedCycleLabelFuture
-            }`}>S{n}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 // ── Bottom Navigation ─────────────────────────────────────────────────────────
 
-type NavTab = 'inicio' | 'progresso' | 'chat' | 'perfil'
+type NavTab = 'inicio' | 'progresso' | 'chat' | 'perfil' | 'calendario'
 
 function BottomNav({ activeTab, onTabChange }: { activeTab: NavTab; onTabChange: (tab: NavTab) => void }) {
-  const tabs: { id: NavTab; icon: string; label: string }[] = [
-    { id: 'inicio',    icon: '🏠', label: 'Início' },
-    { id: 'progresso', icon: '📊', label: 'Progresso' },
-    { id: 'chat',      icon: '💬', label: 'Chat' },
-    { id: 'perfil',    icon: '👤', label: 'Perfil' },
+  const tabs = [
+    { id: 'inicio' as NavTab,    icon: Home,          label: 'Início' },
+    { id: 'progresso' as NavTab, icon: TrendingUp,    label: 'Progresso' },
+    { id: 'chat' as NavTab,      icon: MessageSquare, label: 'Chat' },
+    { id: 'perfil' as NavTab,    icon: User,          label: 'Perfil' },
+    { id: 'calendario' as NavTab,icon: Calendar,      label: 'Calendário' },
   ]
   return (
     <nav className={styles.bottomNav}>
-      {tabs.map(tab => (
-        <button
-          key={tab.id}
-          className={`${styles.navItem}${activeTab === tab.id ? ` ${styles.navItemActive}` : ''}`}
-          onClick={() => onTabChange(tab.id)}
-        >
-          <span className={styles.navIcon}>{tab.icon}</span>
-          <span className={styles.navLabel}>{tab.label}</span>
-        </button>
-      ))}
+      {tabs.map(tab => {
+        const Icon = tab.icon
+        const isActive = activeTab === tab.id
+        return (
+          <button
+            key={tab.id}
+            className={`${styles.navItem}${isActive ? ` ${styles.navItemActive}` : ''}`}
+            onClick={() => onTabChange(tab.id)}
+          >
+            <Icon size={22} className={styles.navIcon} />
+            <span className={styles.navDot} />
+          </button>
+        )
+      })}
     </nav>
-  )
-}
-
-// ── Checkin Bottom Sheet ──────────────────────────────────────────────────────
-
-type CheckinSheetProps = {
-  dayTraining: DayTraining
-  planId: string
-  userId: string
-  existingCheckin?: Checkin | null
-  onClose: () => void
-  onSuccess: () => void
-}
-
-function CheckinSheet({ dayTraining, planId, userId, existingCheckin, onClose, onSuccess }: CheckinSheetProps) {
-  const [visible, setVisible] = useState(false)
-  const [distance, setDistance] = useState(() =>
-    existingCheckin?.actual_distance_m != null
-      ? String(existingCheckin.actual_distance_m / 1000).replace('.', ',')
-      : ''
-  )
-  const [minutes, setMinutes] = useState(() =>
-    existingCheckin?.actual_duration_seconds != null
-      ? String(existingCheckin.actual_duration_seconds / 60)
-      : ''
-  )
-  const [notes, setNotes] = useState(() => existingCheckin?.notes ?? '')
-  const [effort, setEffort] = useState<number | null>(() => existingCheckin?.perceived_effort ?? null)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [showSuccess, setShowSuccess] = useState(false)
-
-  useEffect(() => {
-    // two rAFs to ensure the element is in DOM before the CSS transition fires
-    requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)))
-  }, [])
-
-  function handleClose() {
-    setVisible(false)
-    setTimeout(onClose, 420)
-  }
-
-  function adjustDistance(delta: number) {
-    const v = parseFloat(distance.replace(',', '.') || '0')
-    const next = Math.max(0, Math.round((v + delta) * 10) / 10)
-    setDistance(String(next).replace('.', ','))
-  }
-
-  function adjustMinutes(delta: number) {
-    const v = parseFloat(minutes || '0')
-    setMinutes(String(Math.max(0, v + delta)))
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSubmitting(true)
-    setError(null)
-
-    const distM = distance.trim()
-      ? Math.round(parseFloat(distance.trim().replace(',', '.')) * 1000)
-      : null
-    const durSec = minutes ? Math.round(parseFloat(minutes) * 60) : null
-    const pace   = distM && durSec ? Math.round(durSec / (distM / 1000)) : null
-
-    const payload = {
-      actual_distance_m:          distM,
-      actual_duration_seconds:    durSec,
-      actual_pace_seconds_per_km: pace,
-      notes:                      notes.trim() || null,
-      perceived_effort:           effort,
-    }
-
-    const { error: err } = existingCheckin
-      ? await supabase.from('checkins').update(payload).eq('id', existingCheckin.id)
-      : await supabase.from('checkins').insert({
-          student_id:  userId,
-          training_id: dayTraining.training.id,
-          plan_id:     planId,
-          ...payload,
-        })
-
-    setSubmitting(false)
-    if (err) { setError(err.message); return }
-
-    setShowSuccess(true)
-    setTimeout(() => {
-      setVisible(false)
-      setTimeout(() => { onSuccess(); onClose() }, 420)
-    }, 1500)
-  }
-
-  return (
-    <div
-      className={`${styles.sheetOverlay}${visible ? ` ${styles.sheetOverlayVisible}` : ''}`}
-      onClick={handleClose}
-    >
-      <div
-        className={`${styles.sheet}${visible ? ` ${styles.sheetVisible}` : ''}`}
-        onClick={e => e.stopPropagation()}
-      >
-        <div className={styles.sheetHandle} />
-
-        {showSuccess ? (
-          <div className={styles.successState}>
-            <div className={styles.successIcon}>✓</div>
-            <p className={styles.successText}>Treino registrado!</p>
-          </div>
-        ) : (
-          <>
-            <div className={styles.sheetHeader}>
-              <h2 className={styles.sheetTitle}>
-                {existingCheckin ? 'Editar check-in' : 'Check-in'}
-              </h2>
-              <button className={styles.sheetCloseBtn} onClick={handleClose} aria-label="Fechar">
-                ×
-              </button>
-            </div>
-            <p className={styles.sheetSubtitle}>{dayTraining.training.title}</p>
-
-            <form onSubmit={handleSubmit} className={styles.sheetForm}>
-              {/* Distância */}
-              <div className={styles.sheetField}>
-                <label className={styles.sheetLabel}>Distância (km)</label>
-                <div className={styles.numericInput}>
-                  <button type="button" className={styles.numBtn} onClick={() => adjustDistance(-0.5)}>−</button>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className={styles.numericInputField}
-                    value={distance}
-                    onChange={e => setDistance(e.target.value)}
-                    placeholder="0,0"
-                  />
-                  <button type="button" className={styles.numBtn} onClick={() => adjustDistance(0.5)}>+</button>
-                </div>
-              </div>
-
-              {/* Tempo */}
-              <div className={styles.sheetField}>
-                <label className={styles.sheetLabel}>Tempo (min)</label>
-                <div className={styles.numericInput}>
-                  <button type="button" className={styles.numBtn} onClick={() => adjustMinutes(-5)}>−</button>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    className={styles.numericInputField}
-                    value={minutes}
-                    onChange={e => setMinutes(e.target.value)}
-                    placeholder="0"
-                  />
-                  <button type="button" className={styles.numBtn} onClick={() => adjustMinutes(5)}>+</button>
-                </div>
-              </div>
-
-              {/* Percepção de esforço */}
-              <div className={styles.sheetField}>
-                <label className={styles.sheetLabel}>Percepção de esforço — opcional</label>
-                <div className={styles.effortRow}>
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <button
-                      key={n}
-                      type="button"
-                      className={`${styles.effortBtn}${effort === n ? ` ${styles.effortBtnActive}` : ''}`}
-                      onClick={() => setEffort(effort === n ? null : n)}
-                    >
-                      <span className={styles.effortEmoji}>{EFFORT_EMOJIS[n]}</span>
-                      <span className={styles.effortNum}>{n}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Observações */}
-              <div className={styles.sheetField}>
-                <label className={styles.sheetLabel}>Observações — opcional</label>
-                <textarea
-                  className={styles.sheetTextarea}
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
-                  placeholder="Como foi o treino?"
-                  rows={2}
-                />
-              </div>
-
-              {error && <p className={styles.sheetError}>{error}</p>}
-
-              <button type="submit" className={styles.sheetSubmitBtn} disabled={submitting}>
-                {submitting ? 'Salvando...' : existingCheckin ? 'Salvar alterações' : 'Registrar treino'}
-              </button>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
   )
 }
 
@@ -485,46 +176,47 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
   function openNew()  { setEditMode(false); setShowSheet(true) }
   function openEdit() { setEditMode(true);  setShowSheet(true) }
 
-  const titleClass  = `${styles.trainingTitle}${isToday ? ` ${styles.trainingTitleLarge}` : ''}`
-  const valueClass  = `${styles.metricValue}${isToday  ? ` ${styles.metricValueLarge}` : ''}`
+  const isFuture = !isToday && !checkin && dayOfWeek > new Date().getDay()
+
+  const cardStateClass = checkin 
+    ? styles.cardDone 
+    : isToday 
+      ? styles.cardToday 
+      : isFuture 
+        ? styles.cardFuture 
+        : styles.cardPast
 
   return (
-    <>
-      <div className={`${styles.card}${isToday ? ` ${styles.cardToday}` : ''}${checkin ? ` ${styles.cardDone}` : ''}`}>
-        {isToday && <span className={styles.todayBadge}>HOJE</span>}
-
+    <motion.div 
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      whileHover={{ scale: 1.01 }}
+    >
+      <div className={`${styles.card} ${cardStateClass}`}>
         <div className={styles.cardHeader}>
           <span className={styles.dayName}>{DAY_NAMES[dayOfWeek] ?? `Dia ${dayOfWeek}`}</span>
-          <span className={`${styles.typeBadge} ${TYPE_CLASS[training.type] ?? styles.typeDefault}`}>
-            {training.type}
-          </span>
+          {checkin && <CheckCircle2 size={16} className={styles.checkIcon} />}
         </div>
 
-        <h3 className={titleClass}>{training.title}</h3>
+        <h3 className={styles.trainingTitle}>{training.title}</h3>
+        <span className={`${styles.typeBadge} ${TYPE_CLASS[training.type] ?? styles.typeDefault}`}>
+          {training.type}
+        </span>
 
-        {/* Métricas: dados reais se concluído, template caso contrário */}
         <div className={styles.metrics}>
           {checkin ? (
             <>
               {checkin.actual_distance_m != null && (
                 <div className={styles.metric}>
                   <span className={styles.metricIcon}><IconRoad /></span>
-                  <span className={valueClass}>{formatDistance(checkin.actual_distance_m)}</span>
-                  <span className={styles.metricLabel}>percorrido</span>
+                  <span className={styles.metricValue}>{formatDistance(checkin.actual_distance_m)}</span>
                 </div>
               )}
               {checkin.actual_duration_seconds != null && (
                 <div className={styles.metric}>
                   <span className={styles.metricIcon}><IconClock /></span>
-                  <span className={valueClass}>{formatDuration(checkin.actual_duration_seconds)}</span>
-                  <span className={styles.metricLabel}>tempo</span>
-                </div>
-              )}
-              {checkin.actual_pace_seconds_per_km != null && (
-                <div className={styles.metric}>
-                  <span className={styles.metricIcon}><IconTimer /></span>
-                  <span className={valueClass}>{formatPace(checkin.actual_pace_seconds_per_km)}</span>
-                  <span className={styles.metricLabel}>pace real</span>
+                  <span className={styles.metricValue}>{formatDuration(checkin.actual_duration_seconds)}</span>
                 </div>
               )}
             </>
@@ -533,22 +225,13 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
               {training.distance_m != null && (
                 <div className={styles.metric}>
                   <span className={styles.metricIcon}><IconRoad /></span>
-                  <span className={valueClass}>{formatDistance(training.distance_m)}</span>
-                  <span className={styles.metricLabel}>distância</span>
-                </div>
-              )}
-              {training.target_pace_seconds_per_km != null && (
-                <div className={styles.metric}>
-                  <span className={styles.metricIcon}><IconTimer /></span>
-                  <span className={valueClass}>{formatPace(training.target_pace_seconds_per_km)}</span>
-                  <span className={styles.metricLabel}>pace alvo</span>
+                  <span className={styles.metricValue}>{formatDistance(training.distance_m)}</span>
                 </div>
               )}
               {training.duration_minutes != null && (
                 <div className={styles.metric}>
                   <span className={styles.metricIcon}><IconClock /></span>
-                  <span className={valueClass}>{training.duration_minutes} min</span>
-                  <span className={styles.metricLabel}>duração</span>
+                  <span className={styles.metricValue}>{training.duration_minutes} min</span>
                 </div>
               )}
             </>
@@ -557,13 +240,6 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
 
         {checkin ? (
           <div className={styles.doneRow}>
-            <div className={styles.doneBadge}>
-              <span className={styles.doneCheck}>✓</span>
-              Concluído
-              {checkin.perceived_effort != null && (
-                <span className={styles.effortPill}>{EFFORT_EMOJIS[checkin.perceived_effort]}</span>
-              )}
-            </div>
             <div className={styles.doneActions}>
               <button className={styles.actionBtn} onClick={openEdit} aria-label="Editar check-in">
                 <IconEdit />
@@ -604,7 +280,7 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
           onSuccess={onCheckinSuccess}
         />
       )}
-    </>
+    </motion.div>
   )
 }
 
@@ -613,12 +289,15 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
 export default function AlunoDashboard() {
   const { user } = useAuth()
   const { profile, plan, trainings, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh } = useWeeklyPlan(user?.id)
+  
+  // Use progress for extra metrics
+  const { streak, recentCheckins, records } = useProgresso(user?.id ?? '')
+
   const [activeTab, setActiveTab] = useState<NavTab>('inicio')
 
   const todayDow    = new Date().getDay()
   const completed   = trainings.filter(t => t.checkin !== null).length
   const total       = trainings.length
-  const progressPct = total > 0 ? Math.round((completed / total) * 100) : 0
 
   function handleTabChange(tab: NavTab) {
     setActiveTab(tab)
@@ -642,8 +321,10 @@ export default function AlunoDashboard() {
 
   if (!user) return null
 
-  const { period, name } = getGreeting(profile?.full_name, user.email)
+  const name = profile?.full_name || user.email?.split('@')[0] || 'Atleta'
   const sorted = [...trainings].sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+
+  const numRecords = Object.values(records).filter(Boolean).length
 
   return (
     <div className={styles.page}>
@@ -653,65 +334,103 @@ export default function AlunoDashboard() {
         <AlunoProgresso studentId={user.id} />
       ) : activeTab === 'perfil' ? (
         <AlunoPerfil studentId={user.id} />
+      ) : activeTab === 'calendario' ? (
+        <div className={styles.container}>
+          <div className={styles.emptyState}>
+            <Calendar size={32} className={styles.emptyIcon} />
+            <p className={styles.emptyTitle}>Calendário Completo</p>
+            <p className={styles.emptySubtext}>Em breve você poderá ver todos os ciclos aqui.</p>
+          </div>
+        </div>
       ) : (
         <div className={styles.container}>
 
-          {/* Header */}
-        <header className={styles.header}>
-          <p className={styles.greeting}>
-            {period},{' '}
-            <span className={styles.greetingName}>{name}</span>
-          </p>
-          {profile?.level && (
-            <span className={`${styles.levelBadge} ${LEVEL_CLASS[profile.level] ?? styles.levelIniciante}`}>
-              {LEVEL_LABEL[profile.level] ?? profile.level}
-            </span>
-          )}
-        </header>
-
-        {/* Progresso semanal */}
-        {total > 0 && (
-          <section className={styles.progressSection}>
-            <div className={styles.progressHeader}>
-              <p className={styles.progressLabel}>{completed} de {total} treinos esta semana</p>
-              <span className={styles.progressPct}>{progressPct}%</span>
+          <header className={styles.hero}>
+            <div className={styles.heroOrbs}>
+              <div className={styles.orb1} />
+              <div className={styles.orb2} />
             </div>
-            <div className={styles.progressTrack}>
-              <div
-                className={`${styles.progressFill}${progressPct > 0 ? ` ${styles.progressFillActive}` : ''}`}
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-          </section>
-        )}
+            
+            <svg width="140" height="200" viewBox="0 0 140 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.heroSvg}>
+              <ellipse cx="95" cy="22" rx="14" ry="14" fill="var(--orange)"/>
+              <line x1="95" y1="36" x2="88" y2="85" stroke="var(--orange)" strokeWidth="8" strokeLinecap="round"/>
+              <line x1="92" y1="55" x2="60" y2="72" stroke="var(--orange)" strokeWidth="6" strokeLinecap="round"/>
+              <line x1="92" y1="55" x2="115" y2="70" stroke="var(--orange)" strokeWidth="6" strokeLinecap="round"/>
+              <line x1="88" y1="85" x2="65" y2="130" stroke="var(--orange)" strokeWidth="7" strokeLinecap="round"/>
+              <line x1="65" y1="130" x2="45" y2="165" stroke="var(--orange)" strokeWidth="6" strokeLinecap="round"/>
+              <line x1="88" y1="85" x2="108" y2="125" stroke="var(--orange)" strokeWidth="7" strokeLinecap="round"/>
+              <line x1="108" y1="125" x2="120" y2="155" stroke="var(--orange)" strokeWidth="6" strokeLinecap="round"/>
+            </svg>
 
-        {/* Treinos */}
-        {isLocked ? (
-          <LockedScreen
-            lockedWeekNumber={lockedWeekNumber}
-            lastWeekSummary={lastWeekSummary}
-          />
-        ) : !plan ? (
-          <EmptyState />
-        ) : (
-          <div className={styles.trainingList}>
-            {sorted.map(dt => (
-              <TrainingCard
-                key={dt.weeklyPlanTrainingId}
-                dayTraining={dt}
-                planId={plan.id}
-                userId={user.id}
-                isToday={dt.dayOfWeek === todayDow}
-                onCheckinSuccess={refresh}
-              />
-            ))}
+            <div className={styles.heroOverlay} />
+            
+            <div className={styles.heroContent}>
+              <p className={styles.heroEyebrow}>MEU TREINO</p>
+              <h1 className={styles.heroTitle}>
+                Bom treino,<br/>
+                <em>{name}.</em>
+              </h1>
+              <p className={styles.heroSubtitle}>
+                Semana {lockedWeekNumber || 1} de 4 · {total} treinos esta semana
+              </p>
+            </div>
+          </header>
+
+          <div className={styles.metricsGrid}>
+            <motion.div className={styles.metricCardNext} whileHover={{ scale: 1.02 }}>
+              <Calendar size={16} className={styles.mcIconOrange} />
+              <span className={styles.mcNumberOrange}>{total - completed}</span>
+              <span className={styles.mcLabel}>Próximos</span>
+            </motion.div>
+            
+            <motion.div className={styles.metricCardStreak} whileHover={{ scale: 1.02 }}>
+              <Flame size={16} className={styles.mcIconGreen} />
+              <span className={styles.mcNumberGreen}>{streak}</span>
+              <span className={styles.mcLabel}>Streak</span>
+            </motion.div>
+            
+            <motion.div className={styles.metricCardDefault} whileHover={{ scale: 1.02 }}>
+              <Medal size={16} className={styles.mcIconDefault} />
+              <span className={styles.mcNumberDefault}>{numRecords}</span>
+              <span className={styles.mcLabel}>PRs Pessoais</span>
+            </motion.div>
+            
+            <motion.div className={styles.metricCardDefault} whileHover={{ scale: 1.02 }}>
+              <CheckCircle2 size={16} className={styles.mcIconDefault} />
+              <span className={styles.mcNumberDefault}>{recentCheckins.length}</span>
+              <span className={styles.mcLabel}>Check-ins</span>
+            </motion.div>
           </div>
-        )}
 
-      </div>
+          {isLocked ? (
+            <LockedScreen
+              lockedWeekNumber={lockedWeekNumber}
+              lastWeekSummary={lastWeekSummary}
+            />
+          ) : !plan ? (
+            <EmptyState />
+          ) : (
+            <div className={styles.trainingList}>
+              {sorted.map((dt, i) => (
+                <motion.div 
+                  key={dt.weeklyPlanTrainingId}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08, duration: 0.3 }}
+                >
+                  <TrainingCard
+                    dayTraining={dt}
+                    planId={plan.id}
+                    userId={user.id}
+                    isToday={dt.dayOfWeek === todayDow}
+                    onCheckinSuccess={refresh}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
-
-
 
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
     </div>
