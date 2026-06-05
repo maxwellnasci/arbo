@@ -264,7 +264,7 @@ export default function AdminTurmaDetail() {
       {isLoading ? (
         <p style={{ color: '#555' }}>Carregando...</p>
       ) : (
-        <div style={{ display: 'flex', gap: '0', background: '#1c1c1e', borderRadius: '12px', border: '1px solid #2a2a2a', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', gap: '0', background: 'var(--bg-card-green)', borderRadius: '12px', border: '1px solid var(--border-green)', overflow: 'hidden' }}>
 
           {/* Main grid area */}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -360,12 +360,12 @@ function WeekView({
         <button
           onClick={() => onNavigate(selectedWeek - 1)}
           disabled={selectedWeek <= 1}
-          style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e1e1e', border: '1px solid #2a2a2a', borderRadius: '7px', color: selectedWeek <= 1 ? '#333' : '#E8521A', fontSize: '14px', fontWeight: 700, cursor: selectedWeek <= 1 ? 'not-allowed' : 'pointer' }}
+          style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: '7px', color: selectedWeek <= 1 ? 'var(--text-disabled)' : 'var(--orange)', fontSize: '14px', fontWeight: 700, cursor: selectedWeek <= 1 ? 'not-allowed' : 'pointer' }}
         >‹</button>
 
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Semana {selectedWeek} de 4</div>
-          <div style={{ fontSize: '10px', color: '#555', marginTop: '2px' }}>{weekRange(cycleStart, selectedWeek)}</div>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Semana {selectedWeek} de 4</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '2px' }}>{weekRange(cycleStart, selectedWeek)}</div>
           <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', marginTop: '6px' }}>
             {[1, 2, 3, 4].map(w => {
               const isActive = w === selectedWeek
@@ -377,8 +377,8 @@ function WeekView({
                   style={{
                     padding: '2px 7px', borderRadius: '5px', border: 'none', cursor: 'pointer',
                     fontSize: '9px', fontWeight: 700, lineHeight: 1.4,
-                    background: isActive ? '#E8521A' : isReleased ? '#4caf5022' : '#1e1e1e',
-                    color: isActive ? '#fff' : isReleased ? '#4caf50' : '#3a3a3a',
+                    background: isActive ? 'var(--orange)' : isReleased ? 'var(--border-green)' : 'var(--bg-surface)',
+                    color: isActive ? 'white' : isReleased ? 'var(--green-accent)' : 'var(--text-secondary)',
                   }}
                 >
                   S{w} {releasedThroughWeek !== null ? (isReleased ? '✓' : '🔒') : ''}
@@ -391,7 +391,7 @@ function WeekView({
         <button
           onClick={() => onNavigate(selectedWeek + 1)}
           disabled={selectedWeek >= 4}
-          style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e1e1e', border: '1px solid #2a2a2a', borderRadius: '7px', color: selectedWeek >= 4 ? '#333' : '#E8521A', fontSize: '14px', fontWeight: 700, cursor: selectedWeek >= 4 ? 'not-allowed' : 'pointer' }}
+          style={{ width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: '7px', color: selectedWeek >= 4 ? 'var(--text-disabled)' : 'var(--orange)', fontSize: '14px', fontWeight: 700, cursor: selectedWeek >= 4 ? 'not-allowed' : 'pointer' }}
         >›</button>
       </div>
 
@@ -433,8 +433,8 @@ function WeekView({
               onClick={() => onRelease(4)}
               disabled={releasing}
               style={{
-                background: '#1e1e1e', color: '#666',
-                border: '1px solid #2a2a2a', borderRadius: '6px',
+                background: 'var(--bg-surface)', color: 'var(--text-secondary)',
+                border: '1px solid var(--border-default)', borderRadius: '6px',
                 padding: '6px 10px', fontSize: '10px',
                 cursor: releasing ? 'not-allowed' : 'pointer',
                 opacity: releasing ? 0.6 : 1,
@@ -456,17 +456,17 @@ function WeekView({
 
             return (
               <div key={dow} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <div style={{ background: '#1a1a1a', borderRadius: '8px', padding: '6px 4px', textAlign: 'center', border: '1px solid #222' }}>
-                  <div style={{ fontSize: '9px', color: '#555', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{DAY_NAMES[dow]}</div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#ccc', marginTop: '1px' }}>{date?.getDate() ?? ''}</div>
+                <div style={{ background: 'var(--bg-surface)', borderRadius: '8px', padding: '6px 4px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
+                  <div style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{DAY_NAMES[dow]}</div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '1px' }}>{date?.getDate() ?? ''}</div>
                 </div>
 
                 {entry ? (
                   <button
                     onClick={() => onCardClick(entry)}
                     style={{
-                      background: isSelected ? '#1d1311' : '#1a1a1a',
-                      border: `1px solid ${isSelected ? '#E8521A' : '#E8521A33'}`,
+                      background: isSelected ? 'var(--bg-card-orange)' : 'var(--bg-surface)',
+                      border: `1px solid ${isSelected ? 'var(--orange)' : 'var(--border-orange)'}`,
                       borderRadius: '8px', padding: '7px 6px', cursor: 'pointer',
                       textAlign: 'left', width: '100%',
                     }}
@@ -479,7 +479,7 @@ function WeekView({
                     <div style={{ fontSize: '8px', color: '#E8521A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '2px' }}>
                       {typeLabel[entry.training.type] ?? entry.training.type}
                     </div>
-                    <div style={{ fontSize: '10px', color: '#ddd', fontWeight: 600, lineHeight: 1.3 }}>{entry.training.title}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 600, lineHeight: 1.3 }}>{entry.training.title}</div>
                     {entry.training.distance_m && (
                       <div style={{ fontSize: '8px', color: '#555', marginTop: '3px' }}>{(entry.training.distance_m / 1000).toFixed(1)}km</div>
                     )}
@@ -488,9 +488,9 @@ function WeekView({
                   <button
                     onClick={() => onSlotClick(selectedWeek, dow)}
                     style={{
-                      border: `1px dashed ${isSelected ? '#E8521A' : '#252525'}`,
+                      border: `1px dashed ${isSelected ? 'var(--orange)' : 'var(--border-default)'}`,
                       borderRadius: '8px', minHeight: '52px', display: 'flex', alignItems: 'center',
-                      justifyContent: 'center', color: isSelected ? '#E8521A' : '#303030',
+                      justifyContent: 'center', color: isSelected ? 'var(--orange)' : 'var(--text-disabled)',
                       fontSize: '18px', cursor: 'pointer', background: isSelected ? '#E8521A0a' : 'transparent',
                       width: '100%',
                     }}
@@ -531,19 +531,19 @@ function MonthView({
                   key={dow}
                   onClick={() => onCellClick(wn, dow)}
                   style={{
-                    background: entry ? '#1a1a1a' : '#161616',
-                    border: `1px solid ${entry ? '#E8521A22' : '#1e1e1e'}`,
+                    background: entry ? 'var(--bg-surface)' : 'var(--bg-input)',
+                    border: `1px solid ${entry ? 'var(--border-orange)' : 'var(--border-default)'}`,
                     borderRadius: '7px', padding: '5px 4px', minHeight: '46px',
                     cursor: 'pointer', textAlign: 'left', width: '100%',
                   }}
                 >
-                  <div style={{ fontSize: '8px', color: '#444', fontWeight: 700, textTransform: 'uppercase', marginBottom: '3px' }}>{DAY_NAMES[dow]}</div>
+                  <div style={{ fontSize: '8px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '3px' }}>{DAY_NAMES[dow]}</div>
                   {entry ? (
                     <div style={{ fontSize: '8px', color: '#E8521A', fontWeight: 600, lineHeight: 1.3 }}>
                       {entry.training.title.length > 14 ? entry.training.title.slice(0, 13) + '…' : entry.training.title}
                     </div>
                   ) : (
-                    <div style={{ color: '#252525', fontSize: '14px', textAlign: 'center' }}>+</div>
+                    <div style={{ color: 'var(--text-disabled)', fontSize: '14px', textAlign: 'center' }}>+</div>
                   )}
                 </button>
               )
@@ -604,8 +604,8 @@ function SidePanel({
 
   const panelStyle: React.CSSProperties = {
     width: '220px',
-    background: '#161616',
-    borderLeft: '1px solid #1e1e1e',
+    background: 'var(--bg-surface)',
+    borderLeft: '1px solid var(--border-default)',
     display: 'flex',
     flexDirection: 'column',
     flexShrink: 0,
@@ -615,9 +615,9 @@ function SidePanel({
   return (
     <div style={panelStyle}>
       {/* Header */}
-      <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid #1e1e1e', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <div style={{ padding: '12px 14px 8px', borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>
             {existing ? (
               <><span style={{ color: '#E8521A' }}>{typeLabel[existing.training.type] ?? existing.training.type}</span> — {DAY_NAMES[dayOfWeek]}</>
             ) : (
@@ -625,7 +625,7 @@ function SidePanel({
             )}
           </div>
           {existing && (
-            <div style={{ fontSize: '12px', color: '#ccc', marginTop: '3px', fontWeight: 600 }}>{existing.training.title}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '3px', fontWeight: 600 }}>{existing.training.title}</div>
           )}
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#444', fontSize: '14px', cursor: 'pointer', padding: '0', lineHeight: 1 }}>✕</button>
@@ -665,7 +665,7 @@ function SidePanel({
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar treino…"
-              style={{ width: '100%', background: '#1e1e1e', border: '1px solid #2a2a2a', borderRadius: '8px', padding: '7px 10px', fontSize: '11px', color: '#ccc', outline: 'none' }}
+              style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: '8px', padding: '7px 10px', fontSize: '11px', color: 'var(--text-primary)', outline: 'none' }}
             />
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 14px' }}>
@@ -688,7 +688,7 @@ function SidePanel({
               </>
             )}
           </div>
-          <div style={{ padding: '8px 14px 12px', borderTop: '1px solid #1e1e1e' }}>
+          <div style={{ padding: '8px 14px 12px', borderTop: '1px solid var(--border-default)' }}>
             <button
               onClick={() => onModeChange('create')}
               style={{ width: '100%', background: '#E8521A11', border: '1px solid #E8521A33', borderRadius: '8px', padding: '8px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: '#E8521A', cursor: 'pointer' }}
@@ -722,14 +722,14 @@ function TrainingListItem({ training, mutating, onSelect, tagName, tagColor }: {
       disabled={mutating}
       style={{
         display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
-        padding: '7px 8px', borderRadius: '7px', background: '#1a1a1a',
+        padding: '7px 8px', borderRadius: '7px', background: 'var(--bg-surface)',
         border: 'none', cursor: mutating ? 'not-allowed' : 'pointer', marginBottom: '3px', textAlign: 'left',
       }}
     >
       <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#E8521A', flexShrink: 0 }} />
       <div>
-        <div style={{ fontSize: '10px', color: '#ccc', fontWeight: 600 }}>{training.title}</div>
-        <div style={{ fontSize: '8px', color: '#555', marginTop: '1px' }}>
+        <div style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 600 }}>{training.title}</div>
+        <div style={{ fontSize: '8px', color: 'var(--text-secondary)', marginTop: '1px' }}>
           {typeLabel[training.type] ?? training.type}
           {tagName && <> · <span style={{ color: tagColor }}>{tagName}</span></>}
           {training.distance_m ? ` · ${(training.distance_m / 1000).toFixed(1)}km` : ''}
@@ -802,7 +802,7 @@ function CreateTrainingForm({ mutating, allTags, onBack, onSubmit, onTagCreated 
   }
 
   const inputStyle: React.CSSProperties = {
-    width: '100%', background: '#1e1e1e', border: '1px solid #2a2a2a',
+    width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border-default)',
     borderRadius: '7px', padding: '6px 8px', fontSize: '11px', color: '#ccc', outline: 'none',
   }
   const labelStyle: React.CSSProperties = {
@@ -890,14 +890,14 @@ function CreateTrainingForm({ mutating, allTags, onBack, onSubmit, onTagCreated 
               <option value="">Nenhuma</option>
               {allTags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
-            <button type="button" onClick={() => setShowNewTag(true)} style={{ background: '#1e1e1e', border: '1px solid #2a2a2a', borderRadius: '7px', padding: '6px 8px', fontSize: '11px', color: '#E8521A', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Nova</button>
+            <button type="button" onClick={() => setShowNewTag(true)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: '7px', padding: '6px 8px', fontSize: '11px', color: 'var(--orange)', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Nova</button>
           </div>
         )}
       </div>
       <button
         onClick={handleSubmit}
         disabled={mutating || !title.trim()}
-        style={{ background: mutating || !title.trim() ? '#333' : '#E8521A', color: '#fff', borderRadius: '8px', padding: '9px', textAlign: 'center', fontSize: '11px', fontWeight: 700, cursor: mutating || !title.trim() ? 'not-allowed' : 'pointer', border: 'none', marginTop: '4px' }}
+        style={{ background: mutating || !title.trim() ? 'var(--bg-surface)' : 'var(--orange)', color: mutating || !title.trim() ? 'var(--text-secondary)' : '#fff', borderRadius: '8px', padding: '9px', textAlign: 'center', fontSize: '11px', fontWeight: 700, cursor: mutating || !title.trim() ? 'not-allowed' : 'pointer', border: '1px solid var(--border-default)', marginTop: '4px' }}
       >
         {mutating ? 'Salvando…' : 'Salvar e adicionar ao dia'}
       </button>

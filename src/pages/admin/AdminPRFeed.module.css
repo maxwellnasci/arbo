@@ -1,16 +1,15 @@
 .container {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 16px;
-  backdrop-filter: blur(10px);
 }
 
 .title {
   margin: 0 0 16px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -25,7 +24,7 @@
   display: flex;
   gap: 12px;
   padding: 12px;
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-input);
   border-radius: 8px;
   border: 1px solid transparent;
   cursor: pointer;
@@ -33,8 +32,8 @@
 }
 
 .card:hover {
-  background: rgba(232, 82, 26, 0.05);
-  border-color: rgba(232, 82, 26, 0.3);
+  background: var(--bg-card-orange);
+  border-color: var(--border-orange);
   transform: translateY(-1px);
 }
 
@@ -55,7 +54,7 @@
 .avatarFallback {
   width: 100%;
   height: 100%;
-  background: #E8521A;
+  background: var(--orange);
   color: #fff;
   display: flex;
   align-items: center;
@@ -80,7 +79,7 @@
 
 .name {
   font-weight: 600;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 14px;
 }
 
