@@ -81,26 +81,16 @@ Uso:
 </svg>
 ```
 
-### Logo SVG da árvore (usar onde não tiver o PNG)
+### Logo PNG da árvore (usar import de assets)
 
-```svg
-<svg width="32" height="32" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="36" height="36" rx="10" fill="#0d2818"/>
-  <rect x="16.5" y="22" width="3" height="8" rx="1.5" fill="#E8521A"/>
-  <rect x="16.5" y="10" width="3" height="13" rx="1.5" fill="#E8521A"/>
-  <line x1="18" y1="20" x2="10" y2="16" stroke="#E8521A" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="18" y1="20" x2="26" y2="16" stroke="#E8521A" stroke-width="2.5" stroke-linecap="round"/>
-  <line x1="18" y1="14" x2="12" y2="9" stroke="#E8521A" stroke-width="2" stroke-linecap="round"/>
-  <line x1="18" y1="14" x2="24" y2="9" stroke="#E8521A" stroke-width="2" stroke-linecap="round"/>
-  <line x1="12" y1="9" x2="9" y2="6" stroke="#E8521A" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="12" y1="9" x2="13" y2="6" stroke="#E8521A" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="24" y1="9" x2="23" y2="6" stroke="#E8521A" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="24" y1="9" x2="27" y2="6" stroke="#E8521A" stroke-width="1.5" stroke-linecap="round"/>
-  <line x1="18" y1="10" x2="18" y2="7" stroke="#E8521A" stroke-width="1.5" stroke-linecap="round"/>
-</svg>
+Não utilize SVG inline para a logo. Use o arquivo oficial PNG localizado em `src/assets/arbo-logo.png`.
+
+Exemplo de uso:
+```tsx
+import arboLogo from '../../assets/arbo-logo.png'
+
+<img src={arboLogo} alt="Arbo" style={{ width: 32, height: 32, objectFit: 'contain' }} />
 ```
-
-Se o arquivo `public/icons/arbo-logo.png` existir, use-o como `<img>` com width/height 32px no lugar do SVG acima.
 
 ---
 
