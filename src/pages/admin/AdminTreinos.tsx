@@ -8,8 +8,15 @@ import type { Database } from '../../lib/database.types'
 import { supabase } from '../../lib/supabase'
 import type { Tag } from '../../lib/types'
 import { toast } from 'sonner'
+import { motion } from 'framer-motion'
+import { Search } from 'lucide-react'
 
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
+
+const listContainer = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+}
 
 export function AdminTreinos() {
   const { treinos, loading, error, refetch } = useAdminTreinos()
@@ -75,21 +82,23 @@ export function AdminTreinos() {
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1>Treinos</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <h1 style={{ fontFamily: 'var(--heading)', margin: 0 }}>Treinos</h1>
         <button
           onClick={() => { setTreinoToEdit(null); setIsFormOpen(true) }}
           style={{
-            background: '#E8521A',
+            background: 'var(--orange)',
             color: '#fff',
             border: 'none',
             padding: '10px 20px',
-            borderRadius: '8px',
-            fontWeight: 600,
+            borderRadius: '12px',
+            fontWeight: 700,
             cursor: 'pointer',
-            fontSize: '14px',
+            fontSize: '13px',
+            transition: 'opacity 0.2s'
           }}
+          onMouseOver={e => (e.currentTarget.style.opacity = '0.9')}
+          onMouseOut={e => (e.currentTarget.style.opacity = '1')}
         >
           + Novo Treino
         </button>
@@ -97,21 +106,8 @@ export function AdminTreinos() {
 
       {error && <p style={{ color: '#ff6b6b', marginBottom: '16px' }}>{error}</p>}
 
-      {/* Busca */}
-      <div style={{ position: 'relative', marginBottom: '24px' }}>
-        <span
-          style={{
-            position: 'absolute',
-            left: '12px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: '#555',
-            fontSize: '14px',
-            pointerEvents: 'none',
-          }}
-        >
-          🔍
-        </span>
+      <div style={{ position: 'relative', marginBottom: '32px' }}>
+        <Search size={16} color="var(--text-tertiary)" style={{ position: 'absolute', left: '16px', top: '16px' }} />
         <input
           type="text"
           value={searchTerm}
@@ -120,38 +116,43 @@ export function AdminTreinos() {
           style={{
             width: '100%',
             boxSizing: 'border-box',
-            background: '#1c1c1e',
-            border: '1px solid #2a2a2a',
-            borderRadius: '8px',
-            padding: '10px 16px 10px 38px',
-            color: '#fff',
+            background: 'var(--bg-input)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-subtle)',
+            padding: '14px 16px 14px 44px',
+            borderRadius: '12px',
             fontSize: '14px',
             outline: 'none',
+            transition: 'border-color 0.2s'
           }}
+          onFocus={e => e.target.style.borderColor = 'var(--orange)'}
+          onBlur={e => e.target.style.borderColor = 'var(--border-subtle)'}
         />
       </div>
 
-      {/* Conteúdo */}
       {loading ? (
-        <p style={{ color: '#555' }}>Carregando...</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Carregando...</p>
       ) : filteredTreinos.length === 0 ? (
         <div
           style={{
-            background: '#1c1c1e',
-            borderRadius: '12px',
+            background: 'var(--bg-surface)',
+            borderRadius: '16px',
             padding: '48px 32px',
             textAlign: 'center',
-            border: '1px solid #2a2a2a',
+            border: '1px solid var(--border-default)',
           }}
         >
-          <p style={{ color: '#555' }}>
+          <p style={{ color: 'var(--text-secondary)' }}>
             {searchTerm
               ? 'Nenhum treino encontrado para esta busca.'
               : 'Nenhum treino cadastrado ainda. Crie o primeiro!'}
           </p>
         </div>
       ) : (
-        <div
+        <motion.div
+          variants={listContainer}
+          initial="hidden"
+          animate="show"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
@@ -166,7 +167,7 @@ export function AdminTreinos() {
               onClickDelete={() => handleDelete(treino.id)}
             />
           ))}
-        </div>
+        </motion.div>
       )}
 
       <TreinoFormPanel

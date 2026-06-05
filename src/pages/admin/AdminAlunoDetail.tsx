@@ -62,7 +62,7 @@ export default function AdminAlunoDetail() {
   const [isChatOpen, setIsChatOpen] = useState(false)
 
   if (isLoading) {
-    return <p style={{ color: '#555' }}>Carregando dados do aluno...</p>
+    return <p style={{ color: 'var(--text-secondary)' }}>Carregando dados do aluno...</p>
   }
 
   if (error || !profile) {
@@ -103,7 +103,7 @@ export default function AdminAlunoDetail() {
   return (
     <motion.div className={styles.page} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: -8 }}>
-        <button onClick={() => navigate('/admin/alunos')} style={{ background: 'none', border: 'none', color: '#E8521A', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, fontSize: 14 }}>
+        <button onClick={() => navigate('/admin/alunos')} style={{ background: 'none', border: 'none', color: 'var(--orange)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, fontSize: 14 }}>
           <ChevronLeft size={18} /> Alunos
         </button>
       </div>
@@ -154,7 +154,7 @@ export default function AdminAlunoDetail() {
           <div className={styles.metricLabel}>Recordes Pessoais</div>
         </motion.div>
         <motion.div className={styles.metricCard} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-          <div className={styles.metricValue} style={{ color: '#E8521A' }}>{formatPace(metrics.bestPace).replace('/km', '')}</div>
+          <div className={styles.metricValue} style={{ color: 'var(--orange)' }}>{formatPace(metrics.bestPace).replace('/km', '')}</div>
           <div className={styles.metricLabel}>Melhor Pace</div>
         </motion.div>
       </div>
@@ -178,7 +178,7 @@ export default function AdminAlunoDetail() {
         {activeTab === 'checkins' && (
           <div className={styles.checkinList}>
             {checkins.length === 0 ? (
-              <p style={{ color: '#555', textAlign: 'center', padding: 32 }}>Nenhum check-in registrado.</p>
+              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 32 }}>Nenhum check-in registrado.</p>
             ) : (
               checkins.map(c => {
                 const isPR = records.some(r => r.checkin_id === c.id || (r.student_id === c.student_id && r.created_at?.slice(0, 10) === c.created_at?.slice(0, 10)))
@@ -215,7 +215,7 @@ export default function AdminAlunoDetail() {
               return (
                 <div key={cat} className={styles.recordCard}>
                   <div className={styles.recordDist}>{cat}</div>
-                  <div className={styles.recordTime} style={{ color: rec ? '#E8521A' : '#444' }}>
+                  <div className={styles.recordTime} style={{ color: rec ? 'var(--orange)' : 'var(--text-tertiary)' }}>
                     {rec ? formatTimeRecord(rec.time_seconds) : '—'}
                   </div>
                   <div className={styles.recordDate}>
@@ -231,7 +231,7 @@ export default function AdminAlunoDetail() {
         {activeTab === 'anamnesis' && (
           <div className={styles.anamnesisList}>
             {!anamnesis ? (
-              <p style={{ color: '#555', textAlign: 'center', padding: 16 }}>Anamnese não preenchida.</p>
+              <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: 16 }}>Anamnese não preenchida.</p>
             ) : (
               <>
                 <div className={styles.anamnesisRow}>

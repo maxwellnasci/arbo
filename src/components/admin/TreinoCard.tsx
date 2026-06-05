@@ -1,4 +1,5 @@
 import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
+import { motion } from 'framer-motion'
 
 interface TreinoCardProps {
   treino: TrainingWithTag
@@ -22,6 +23,11 @@ const typeColor: Record<string, string> = {
   mobilidade: '#A855F7',
 }
 
+const listItem = {
+  hidden: { opacity: 0, scale: 0.95 },
+  show: { opacity: 1, scale: 1 }
+}
+
 function formatPace(secondsPerKm: number | null): string {
   if (!secondsPerKm) return '—'
   const minutes = Math.floor(secondsPerKm / 60)
@@ -35,33 +41,47 @@ function formatDistance(meters: number | null): string {
 }
 
 export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardProps) {
-  const color = typeColor[treino.type] ?? '#888'
+  const color = typeColor[treino.type] ?? 'var(--text-secondary)'
   const label = typeLabel[treino.type] ?? treino.type
 
   return (
-    <div
+    <motion.div
+      variants={listItem}
       style={{
-        background: '#1c1c1e',
-        borderRadius: '12px',
-        border: '1px solid #2a2a2a',
-        padding: '16px',
+        background: 'var(--bg-surface)',
+        borderRadius: '16px',
+        border: '1px solid var(--border-default)',
+        padding: '20px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '12px',
+        gap: '16px',
+        transition: 'all 0.2s ease-out',
+        cursor: 'default'
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.background = 'var(--bg-surface-hover)';
+        e.currentTarget.style.transform = 'translateY(-2px)';
+        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = 'var(--bg-surface)';
+        e.currentTarget.style.transform = 'none';
+        e.currentTarget.style.boxShadow = 'none';
       }}
     >
       {/* Pills: tipo + etiqueta */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
         <span
           style={{
-            background: color + '22',
+            background: color + '1a',
             color,
-            borderRadius: '6px',
-            padding: '3px 10px',
+            borderRadius: '20px',
+            padding: '4px 10px',
             fontSize: '11px',
             fontWeight: 700,
             letterSpacing: '0.5px',
             textTransform: 'uppercase',
+            border: `1px solid ${color}33`
           }}
         >
           {label}
@@ -69,12 +89,13 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
         {treino.tag && (
           <span
             style={{
-              background: treino.tag.color + '33',
+              background: treino.tag.color + '1a',
               color: treino.tag.color,
-              borderRadius: '6px',
-              padding: '3px 10px',
+              borderRadius: '20px',
+              padding: '4px 10px',
               fontSize: '11px',
-              fontWeight: 600,
+              fontWeight: 700,
+              border: `1px solid ${treino.tag.color}33`
             }}
           >
             {treino.tag.name}
@@ -84,15 +105,15 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
 
       {/* Título e descrição */}
       <div>
-        <p style={{ color: '#fff', fontSize: '15px', fontWeight: 700, margin: 0, lineHeight: 1.3 }}>
+        <p style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 700, margin: '0 0 4px', lineHeight: 1.3 }}>
           {treino.title}
         </p>
         {treino.description && (
           <p
             style={{
-              color: '#888',
+              color: 'var(--text-secondary)',
               fontSize: '12px',
-              margin: '4px 0 0',
+              margin: 0,
               lineHeight: 1.5,
               overflow: 'hidden',
               display: '-webkit-box',
@@ -119,8 +140,9 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
           display: 'flex',
           justifyContent: 'flex-end',
           gap: '16px',
-          borderTop: '1px solid #2a2a2a',
-          paddingTop: '12px',
+          borderTop: '1px solid var(--border-subtle)',
+          paddingTop: '16px',
+          marginTop: 'auto'
         }}
       >
         {onClickEdit && (
@@ -129,12 +151,15 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
             style={{
               background: 'none',
               border: 'none',
-              color: '#aaa',
+              color: 'var(--text-secondary)',
               fontSize: '13px',
-              fontWeight: 500,
+              fontWeight: 600,
               cursor: 'pointer',
               padding: 0,
+              transition: 'color 0.2s'
             }}
+            onMouseOver={e => e.currentTarget.style.color = 'var(--text-primary)'}
+            onMouseOut={e => e.currentTarget.style.color = 'var(--text-secondary)'}
           >
             Editar
           </button>
@@ -147,26 +172,29 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
               border: 'none',
               color: '#ff6b6b',
               fontSize: '13px',
-              fontWeight: 500,
+              fontWeight: 600,
               cursor: 'pointer',
               padding: 0,
+              transition: 'opacity 0.2s'
             }}
+            onMouseOver={e => e.currentTarget.style.opacity = '0.7'}
+            onMouseOut={e => e.currentTarget.style.opacity = '1'}
           >
             Excluir
           </button>
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
 
 function StatCell({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ background: '#111', borderRadius: '8px', padding: '10px 12px' }}>
-      <p style={{ color: '#555', fontSize: '11px', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+    <div style={{ background: 'var(--bg-input)', borderRadius: '10px', padding: '10px 12px', border: '1px solid var(--border-default)' }}>
+      <p style={{ color: 'var(--text-tertiary)', fontSize: '10px', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 700 }}>
         {label}
       </p>
-      <p style={{ color: '#fff', fontSize: '13px', fontWeight: 600, margin: 0 }}>{value}</p>
+      <p style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: 700, margin: 0 }}>{value}</p>
     </div>
   )
 }

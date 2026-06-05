@@ -2,6 +2,18 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminAlunos } from '../../hooks/useAdminAlunos'
 import type { Profile } from '../../lib/types'
+import { motion } from 'framer-motion'
+import { ChevronRight, Search, Filter } from 'lucide-react'
+
+const listContainer = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+}
+
+const listItem = {
+  hidden: { opacity: 0, x: -10 },
+  show: { opacity: 1, x: 0 }
+}
 
 export default function AdminAlunos() {
   const { alunos, isLoading, error } = useAdminAlunos()
@@ -37,81 +49,94 @@ export default function AdminAlunos() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1>Alunos</h1>
+        <h1 style={{ fontFamily: 'var(--heading)', margin: 0 }}>Alunos</h1>
         <button
           onClick={() => navigate('/admin/convites')}
-          style={{ background: '#E8521A', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', fontWeight: 600 }}
+          style={{ background: 'var(--orange)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}
         >
           + Convidar
         </button>
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <input
-          type="text"
-          placeholder="Buscar por nome..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            background: '#1e1e1e',
-            color: '#fff',
-            border: '1px solid #2a2a2a',
-            padding: '12px 16px',
-            borderRadius: '10px',
-            outline: 'none',
-            flex: '1 1 200px',
-            fontSize: '14px'
-          }}
-        />
-        <select
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
-          style={{
-            background: '#1e1e1e',
-            color: '#fff',
-            border: '1px solid #2a2a2a',
-            padding: '12px 16px',
-            borderRadius: '10px',
-            outline: 'none',
-            flex: '1 1 150px',
-            fontSize: '14px',
-            cursor: 'pointer'
-          }}
-        >
-          <option value="all">Todos os alunos</option>
-          <optgroup label="Por Nível">
-            <option value="level:iniciante">Nível: Iniciante</option>
-            <option value="level:intermediario">Nível: Intermediário</option>
-            <option value="level:avancado">Nível: Avançado</option>
-          </optgroup>
-          {uniqueGroups.length > 0 && (
-            <optgroup label="Por Turma">
-              {uniqueGroups.map(gId => (
-                <option key={gId} value={`group:${gId}`}>Turma: {gId}</option>
-              ))}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '32px', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: '1 1 200px' }}>
+          <Search size={16} color="var(--text-tertiary)" style={{ position: 'absolute', left: '16px', top: '16px' }} />
+          <input
+            type="text"
+            placeholder="Buscar por nome..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              background: 'var(--bg-input)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-subtle)',
+              padding: '14px 16px 14px 44px',
+              borderRadius: '12px',
+              outline: 'none',
+              width: '100%',
+              fontSize: '14px',
+              boxSizing: 'border-box'
+            }}
+            onFocus={e => e.target.style.borderColor = 'var(--orange)'}
+            onBlur={e => e.target.style.borderColor = 'var(--border-subtle)'}
+          />
+        </div>
+        <div style={{ position: 'relative', flex: '1 1 150px' }}>
+          <Filter size={16} color="var(--text-tertiary)" style={{ position: 'absolute', left: '16px', top: '16px' }} />
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            style={{
+              background: 'var(--bg-input)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-subtle)',
+              padding: '14px 16px 14px 44px',
+              borderRadius: '12px',
+              outline: 'none',
+              width: '100%',
+              fontSize: '14px',
+              cursor: 'pointer',
+              appearance: 'none',
+              boxSizing: 'border-box'
+            }}
+            onFocus={e => e.target.style.borderColor = 'var(--orange)'}
+            onBlur={e => e.target.style.borderColor = 'var(--border-subtle)'}
+          >
+            <option value="all">Todos os alunos</option>
+            <optgroup label="Por Nível">
+              <option value="level:iniciante">Nível: Iniciante</option>
+              <option value="level:intermediario">Nível: Intermediário</option>
+              <option value="level:avancado">Nível: Avançado</option>
             </optgroup>
-          )}
-        </select>
+            {uniqueGroups.length > 0 && (
+              <optgroup label="Por Turma">
+                {uniqueGroups.map(gId => (
+                  <option key={gId} value={`group:${gId}`}>Turma: {gId}</option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </div>
       </div>
 
       {error && <p style={{ color: '#ff6b6b', marginBottom: '16px' }}>{error}</p>}
 
       {isLoading ? (
-        <p style={{ color: '#555' }}>Carregando...</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Carregando...</p>
       ) : alunos.length === 0 ? (
-        <div style={{ background: '#1c1c1e', borderRadius: '12px', padding: '32px', textAlign: 'center' }}>
-          <p style={{ color: '#555' }}>Nenhum aluno ainda. Convide o primeiro!</p>
+        <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '40px 24px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
+          <p style={{ color: 'var(--text-secondary)' }}>Nenhum aluno ainda. Convide o primeiro!</p>
         </div>
       ) : filteredAlunos.length === 0 ? (
-        <div style={{ background: '#1c1c1e', borderRadius: '12px', padding: '32px', textAlign: 'center' }}>
-          <p style={{ color: '#555' }}>Nenhum aluno encontrado para os filtros selecionados.</p>
+        <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '40px 24px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
+          <p style={{ color: 'var(--text-secondary)' }}>Nenhum aluno encontrado para os filtros selecionados.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <motion.div variants={listContainer} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {filteredAlunos.map((aluno: Profile) => (
             <AlunoRow key={aluno.id} aluno={aluno} levelLabel={levelLabel} />
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   )
@@ -127,22 +152,43 @@ function AlunoRow({ aluno, levelLabel }: { aluno: Profile; levelLabel: Record<st
     .toUpperCase()
 
   return (
-    <button 
+    <motion.button 
+      variants={listItem}
       onClick={() => navigate(`/admin/alunos/${aluno.id}`)}
-      style={{ width: '100%', textAlign: 'left', background: '#1c1c1e', borderRadius: '10px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid #2a2a2a', cursor: 'pointer' }}
+      style={{ 
+        width: '100%', 
+        textAlign: 'left', 
+        background: 'var(--bg-surface)', 
+        borderRadius: '16px', 
+        padding: '16px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '16px', 
+        border: '1px solid var(--border-default)', 
+        cursor: 'pointer',
+        transition: 'all 0.2s ease-out'
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.background = 'var(--bg-surface-hover)';
+        e.currentTarget.style.transform = 'scale(0.995)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = 'var(--bg-surface)';
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
     >
-      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>
+      <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: 'var(--border-default)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>
         {initials}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ color: '#fff', fontSize: '14px', fontWeight: 600, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: 700, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {aluno.full_name ?? '(sem nome)'}
         </p>
-        <p style={{ color: '#555', fontSize: '12px', margin: 0 }}>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: '12px', margin: 0, fontWeight: 500 }}>
           {aluno.level ? levelLabel[aluno.level] ?? aluno.level : 'Nível não definido'}
         </p>
       </div>
-      <div style={{ color: '#555', fontSize: '16px' }}>›</div>
-    </button>
+      <ChevronRight size={18} color="var(--text-tertiary)" />
+    </motion.button>
   )
 }

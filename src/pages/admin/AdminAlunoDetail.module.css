@@ -3,31 +3,32 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
 .header {
   display: flex;
   align-items: flex-start;
-  gap: 20px;
-  background: var(--arbo-card, #1a1a1a);
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid var(--arbo-card-border, #242424);
+  gap: 24px;
+  background: var(--bg-surface);
+  padding: 32px;
+  border-radius: 20px;
+  border: 1px solid var(--border-default);
 }
 
 .avatar {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: #333;
+  background: var(--bg-input);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--arbo-secondary, #a1a1aa);
+  color: var(--text-secondary);
   font-size: 24px;
   font-weight: 700;
   flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
 }
 
 .info {
@@ -35,27 +36,31 @@
 }
 
 .name {
-  color: var(--arbo-text, #ffffff);
-  font-size: 24px;
+  color: var(--text-primary);
+  font-family: var(--heading);
+  font-size: 28px;
   font-weight: 700;
-  margin: 0 0 4px;
+  margin: 0 0 8px;
 }
 
 .subtitle {
-  color: var(--arbo-secondary, #a1a1aa);
+  color: var(--text-secondary);
   font-size: 14px;
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   display: flex;
   align-items: center;
   gap: 8px;
+  font-weight: 500;
 }
 
 .badge {
-  background: #2a2a2a;
-  padding: 4px 10px;
+  background: rgba(232, 82, 26, 0.1);
+  color: var(--orange);
+  padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
+  border: 1px solid rgba(232, 82, 26, 0.2);
 }
 
 .actions {
@@ -64,13 +69,13 @@
 }
 
 .btn {
-  background: #2a2a2a;
-  color: var(--arbo-text, #ffffff);
-  border: 1px solid #3a3a3a;
-  padding: 8px 16px;
-  border-radius: 8px;
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  padding: 10px 16px;
+  border-radius: 12px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -79,8 +84,9 @@
 }
 
 .btn:hover:not(:disabled) {
-  background: #333;
-  border-color: #444;
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-default);
 }
 
 .btn:disabled {
@@ -95,66 +101,66 @@
 }
 
 .metricCard {
-  background: var(--arbo-card, #1a1a1a);
-  border: 1px solid var(--arbo-card-border, #242424);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
   border-radius: 16px;
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
 .metricValue {
-  font-family: var(--font-display, 'Bebas Neue', sans-serif);
+  font-family: var(--heading);
   font-size: 36px;
-  color: var(--arbo-text, #ffffff);
+  color: var(--text-primary);
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .metricLabel {
-  color: var(--arbo-secondary, #a1a1aa);
-  font-size: 13px;
+  color: var(--text-secondary);
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .tabs {
   display: flex;
-  gap: 24px;
-  border-bottom: 1px solid #333;
+  gap: 8px;
   margin-bottom: 24px;
+  background: var(--bg-input);
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--border-subtle);
+  width: fit-content;
 }
 
 .tabBtn {
-  background: none;
-  border: none;
-  padding: 0 0 12px;
-  color: var(--arbo-secondary, #a1a1aa);
-  font-size: 15px;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 8px 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  position: relative;
-  transition: color 0.2s;
+  border-radius: 8px;
+  transition: all 0.2s;
 }
 
 .tabBtn:hover {
-  color: var(--arbo-text, #ffffff);
+  color: var(--text-primary);
 }
 
 .tabBtnActive {
-  color: var(--arbo-orange, #E8521A);
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: var(--border-default);
 }
 
 .tabIndicator {
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--arbo-orange, #E8521A);
-  border-radius: 2px 2px 0 0;
+  display: none;
 }
 
 .checkinList {
@@ -164,55 +170,63 @@
 }
 
 .checkinCard {
-  background: var(--arbo-card, #1a1a1a);
-  border: 1px solid var(--arbo-card-border, #242424);
-  border-radius: 12px;
-  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  padding: 20px;
   position: relative;
+  transition: all 0.2s;
+}
+
+.checkinCard:hover {
+  background: var(--bg-surface-hover);
+  transform: translateX(4px);
 }
 
 .checkinHeader {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .checkinTitle {
-  color: var(--arbo-text, #ffffff);
-  font-size: 15px;
-  font-weight: 600;
-  margin: 0 0 4px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .checkinMeta {
-  color: var(--arbo-secondary, #a1a1aa);
+  color: var(--text-secondary);
   font-size: 13px;
   display: flex;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
+  font-weight: 500;
 }
 
 .prBadge {
-  background: rgba(34, 197, 94, 0.1);
-  color: var(--arbo-green, #22c55e);
-  padding: 2px 8px;
-  border-radius: 8px;
+  background: rgba(74, 222, 128, 0.1);
+  color: var(--green-accent);
+  padding: 4px 10px;
+  border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(74, 222, 128, 0.2);
 }
 
 .checkinNotes {
-  color: var(--arbo-secondary, #a1a1aa);
+  color: var(--text-secondary);
   font-size: 14px;
   line-height: 1.5;
-  margin: 12px 0 0;
-  padding-top: 12px;
-  border-top: 1px solid #2a2a2a;
+  margin: 16px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-subtle);
+  font-style: italic;
 }
 
 .recordGrid {
@@ -222,52 +236,60 @@
 }
 
 .recordCard {
-  background: var(--arbo-card, #1a1a1a);
-  border: 1px solid var(--arbo-card-border, #242424);
-  border-radius: 12px;
-  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  transition: all 0.2s;
+}
+
+.recordCard:hover {
+  background: var(--bg-surface-hover);
+  transform: translateY(-2px);
 }
 
 .recordDist {
-  color: var(--arbo-secondary, #a1a1aa);
+  color: var(--text-secondary);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 8px;
   text-transform: uppercase;
 }
 
 .recordTime {
-  color: var(--arbo-orange, #E8521A);
-  font-size: 28px;
-  font-family: var(--font-display, 'Bebas Neue', sans-serif);
+  color: var(--orange);
+  font-size: 32px;
+  font-family: var(--heading);
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  font-weight: 700;
 }
 
 .recordDate {
-  color: var(--arbo-muted, #52525b);
+  color: var(--text-tertiary);
   font-size: 12px;
+  font-weight: 500;
 }
 
 .anamnesisList {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--arbo-card, #1a1a1a);
-  border: 1px solid var(--arbo-card-border, #242424);
-  border-radius: 12px;
-  padding: 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  padding: 24px;
 }
 
 .anamnesisRow {
   display: flex;
   justify-content: space-between;
   padding-bottom: 12px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .anamnesisRow:last-child {
@@ -276,12 +298,13 @@
 }
 
 .anamnesisLabel {
-  color: var(--arbo-secondary, #a1a1aa);
+  color: var(--text-secondary);
   font-size: 14px;
+  font-weight: 500;
 }
 
 .anamnesisValue {
-  color: var(--arbo-text, #ffffff);
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
   text-align: right;
@@ -293,7 +316,7 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 16px;
+    padding: 20px;
   }
   .actions {
     flex-direction: column;

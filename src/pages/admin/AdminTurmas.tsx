@@ -2,6 +2,18 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminTurmas, type GroupWithCount } from '../../hooks/useAdminTurmas'
 import { CreateGroupModal } from '../../components/admin/CreateGroupModal'
+import { motion } from 'framer-motion'
+import { ChevronRight } from 'lucide-react'
+
+const listContainer = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+}
+
+const listItem = {
+  hidden: { opacity: 0, x: -10 },
+  show: { opacity: 1, x: 0 }
+}
 
 const goalLabel: Record<string, string> = {
   '5k': '5K',
@@ -27,17 +39,18 @@ export default function AdminTurmas() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h1>Turmas</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <h1 style={{ fontFamily: 'var(--heading)', margin: 0 }}>Turmas</h1>
         <button
           onClick={() => setIsModalOpen(true)}
           style={{
-            background: '#E8521A',
+            background: 'var(--orange)',
             color: '#fff',
             border: 'none',
             padding: '10px 20px',
-            borderRadius: '8px',
-            fontWeight: 600,
+            borderRadius: '12px',
+            fontWeight: 700,
+            fontSize: '13px',
             cursor: 'pointer',
             transition: 'opacity 0.2s'
           }}
@@ -51,17 +64,17 @@ export default function AdminTurmas() {
       {error && <p style={{ color: '#ff6b6b', marginBottom: '16px' }}>{error}</p>}
 
       {isLoading ? (
-        <p style={{ color: '#555' }}>Carregando...</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Carregando...</p>
       ) : turmas.length === 0 ? (
-        <div style={{ background: '#1c1c1e', borderRadius: '12px', padding: '32px', textAlign: 'center' }}>
-          <p style={{ color: '#555' }}>Nenhuma turma cadastrada ainda.</p>
+        <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '40px 24px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
+          <p style={{ color: 'var(--text-secondary)' }}>Nenhuma turma cadastrada ainda.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <motion.div variants={listContainer} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {turmas.map((turma: GroupWithCount) => (
             <TurmaRow key={turma.id} turma={turma} />
           ))}
-        </div>
+        </motion.div>
       )}
 
       {isModalOpen && (
@@ -81,29 +94,39 @@ function TurmaRow({ turma }: { turma: GroupWithCount }) {
   const navigate = useNavigate()
 
   return (
-    <div
+    <motion.div
+      variants={listItem}
       onClick={() => navigate(`/admin/turmas/${turma.id}`)}
       role="button"
       tabIndex={0}
       onKeyDown={e => e.key === 'Enter' && navigate(`/admin/turmas/${turma.id}`)}
       style={{
-        background: '#1c1c1e',
-        borderRadius: '10px',
-        padding: '14px 16px',
+        background: 'var(--bg-surface)',
+        borderRadius: '16px',
+        padding: '16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        border: '1px solid #2a2a2a',
+        border: '1px solid var(--border-default)',
         gap: '12px',
         cursor: 'pointer',
+        transition: 'all 0.2s ease-out'
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.background = 'var(--bg-surface-hover)';
+        e.currentTarget.style.transform = 'scale(0.995)';
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = 'var(--bg-surface)';
+        e.currentTarget.style.transform = 'scale(1)';
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <p
           style={{
-            color: '#fff',
-            fontSize: '14px',
-            fontWeight: 600,
+            color: 'var(--text-primary)',
+            fontSize: '15px',
+            fontWeight: 700,
             margin: '0 0 4px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -112,7 +135,7 @@ function TurmaRow({ turma }: { turma: GroupWithCount }) {
         >
           {turma.name}
         </p>
-        <p style={{ color: '#888', fontSize: '12px', margin: 0 }}>
+        <p style={{ color: 'var(--text-tertiary)', fontSize: '12px', margin: 0, fontWeight: 500 }}>
           {goalLabel[turma.goal] ?? turma.goal}
           {' · '}
           {frequencyLabel[turma.frequency] ?? turma.frequency}
@@ -122,20 +145,27 @@ function TurmaRow({ turma }: { turma: GroupWithCount }) {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
-        <span style={{ color: '#aaa', fontSize: '12px' }}>
+        <span style={{ color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 600 }}>
           {turma.studentCount} {turma.studentCount === 1 ? 'aluno' : 'alunos'}
         </span>
         <span
           style={{
-            color: turma.is_active ? '#4caf50' : '#555',
-            fontSize: '12px',
-            fontWeight: 500,
+            color: turma.is_active ? 'var(--green-accent)' : 'var(--text-secondary)',
+            background: turma.is_active ? 'rgba(74, 222, 128, 0.1)' : '#2e2e2e',
+            border: turma.is_active ? '1px solid rgba(74, 222, 128, 0.2)' : '1px solid #444',
+            fontSize: '11px',
+            fontWeight: 700,
+            padding: '4px 8px',
+            borderRadius: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
           }}
         >
-          <span aria-hidden="true">●</span>{' '}{turma.is_active ? 'Ativa' : 'Inativa'}
+          {turma.is_active ? 'Ativa' : 'Inativa'}
         </span>
-        <span style={{ color: '#444', fontSize: '14px' }}>›</span>
+        <ChevronRight size={18} color="var(--text-tertiary)" />
       </div>
-    </div>
+    </motion.div>
   )
 }

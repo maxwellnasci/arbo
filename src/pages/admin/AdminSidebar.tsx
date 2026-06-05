@@ -20,8 +20,6 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
 
   return (
     <nav className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ''}`}>
-      <h2 className={styles.sidebarTitle}>ARBO</h2>
-
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {links.map(link => {
           const isActive = link.exact ? pathname === link.to : pathname.startsWith(link.to)
@@ -33,8 +31,8 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
               style={{
                 padding: '12px',
                 borderRadius: '8px',
-                color: isActive ? '#fff' : '#aaa',
-                backgroundColor: isActive ? '#2a2a2a' : 'transparent',
+                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                backgroundColor: isActive ? 'var(--bg-surface-hover)' : 'transparent',
                 textDecoration: 'none',
                 display: 'block',
               }}
@@ -45,8 +43,8 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
         })}
       </div>
 
-      <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid #333' }}>
-        <p style={{ fontSize: '12px', color: '#888', marginBottom: '12px', padding: '0 8px' }}>{user?.email}</p>
+      <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid var(--border-subtle)' }}>
+        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '12px', padding: '0 8px' }}>{user?.email}</p>
         <button 
           onClick={logout} 
           style={{ 

@@ -194,25 +194,27 @@ export default function AdminTurmaDetail() {
   return (
     <div>
       {/* Page header */}
-      <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '20px', gap: '16px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', marginBottom: '32px', gap: '16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <button
             onClick={() => navigate('/admin/turmas')}
-            style={{ background: 'none', border: 'none', color: '#E8521A', fontWeight: 600, fontSize: '13px', cursor: 'pointer', padding: 0 }}
+            style={{ background: 'none', border: 'none', color: 'var(--orange)', fontWeight: 700, fontSize: '13px', cursor: 'pointer', padding: 0 }}
           >
             ← Turmas
           </button>
           
-          <div style={{ display: 'flex', background: '#1e1e1e', borderRadius: '8px', padding: '3px', border: '1px solid #2a2a2a' }}>
+          <div style={{ display: 'flex', background: 'var(--bg-input)', borderRadius: '8px', padding: '4px', border: '1px solid var(--border-subtle)', gap: '4px' }}>
             {(['month', 'week'] as const).map(v => (
               <button
                 key={v}
                 onClick={() => setView(v)}
                 style={{
-                  padding: '5px 12px', borderRadius: '6px', border: 'none',
+                  padding: '6px 14px', borderRadius: '6px',
+                  border: view === v ? '1px solid var(--border-default)' : '1px solid transparent',
                   fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                  background: view === v ? '#E8521A' : 'transparent',
-                  color: view === v ? '#fff' : '#555',
+                  background: view === v ? 'var(--bg-surface-hover)' : 'transparent',
+                  color: view === v ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  transition: 'all 0.2s'
                 }}
               >
                 {v === 'month' ? 'Mês' : 'Semana'}
@@ -223,17 +225,17 @@ export default function AdminTurmaDetail() {
 
         {group && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <h1 style={{ fontSize: 'clamp(18px, 5vw, 24px)', fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.2 }}>
+            <h1 style={{ fontFamily: 'var(--heading)', fontSize: 'clamp(24px, 5vw, 32px)', fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
               {group.name}
             </h1>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
-              <span style={{ background: '#E8521A22', color: '#E8521A', fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '20px' }}>
+              <span style={{ background: 'rgba(232, 82, 26, 0.1)', color: 'var(--orange)', fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', border: '1px solid rgba(232, 82, 26, 0.2)' }}>
                 {goalLabel[group.goal] ?? group.goal}
               </span>
-              <span style={{ background: '#2a2a2a', color: '#888', fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '20px' }}>
+              <span style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '11px', fontWeight: 600, padding: '4px 12px', borderRadius: '20px', border: '1px solid var(--border-subtle)' }}>
                 {frequencyLabel[group.frequency] ?? group.frequency}
               </span>
-              <span style={{ background: group.is_active ? '#4caf5022' : '#2a2a2a', color: group.is_active ? '#4caf50' : '#555', fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '20px' }}>
+              <span style={{ background: group.is_active ? 'rgba(74, 222, 128, 0.1)' : 'var(--bg-input)', color: group.is_active ? 'var(--green-accent)' : 'var(--text-secondary)', fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', border: group.is_active ? '1px solid rgba(74, 222, 128, 0.2)' : '1px solid var(--border-subtle)' }}>
                 {group.is_active ? 'Ativa' : 'Inativa'}
               </span>
               
@@ -241,10 +243,13 @@ export default function AdminTurmaDetail() {
                 onClick={() => setShowEditModal(true)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  background: '#2a2a2a', border: '1px solid #333', color: '#ccc',
+                  background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', color: 'var(--text-secondary)',
                   padding: '4px 12px', borderRadius: '20px', fontSize: '11px',
-                  fontWeight: 600, cursor: 'pointer', marginLeft: 'auto'
+                  fontWeight: 600, cursor: 'pointer', marginLeft: 'auto',
+                  transition: 'all 0.2s'
                 }}
+                onMouseOver={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                onMouseOut={e => e.currentTarget.style.color = 'var(--text-secondary)'}
               >
                 <Edit2 size={12} />
                 Editar
