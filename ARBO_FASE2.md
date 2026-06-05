@@ -248,9 +248,27 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 19. ✅ Correção responsividade mobile do header da turma + reversão da altura do grid
 20. ✅ Reenvio infinito de convites (fallback reset senha), Auto-reload no ErrorBoundary e Tela de Sucesso Premium
 21. ✅ Correções de qualidade e segurança pós-análise dupla (DeepSeek + Claude Code): 16 fixes de padrões async/catch/tipos + Open Redirect em invite-user + domínio arbo.mxos.com.br
-```
+22. ✅ Refinamento Visual Global + Modo Claro/Escuro (Fase 5): Migração para variáveis CSS, criação de paleta Light Mode sem branco puro, header com Avatar Menu e Tema Persistente em localStorage.
+
+---
+
+## Fase 5 — Tema Claro/Escuro & Refinamento Visual (2026-06-05)
+
+| Tarefa | Descrição | Status |
+|--------|-----------|--------|
+| **Variáveis CSS Semânticas** | Refatoração do `index.css` para padronizar tokens (`--bg-surface`, `--text-primary`, etc) e dar suporte a múltiplos temas. | ✅ Concluído |
+| **Paleta Light Mode** | Definição de `[data-theme="light"]` evitando fundo branco puro e utilizando contrastes dinâmicos e tons de laranja/verde sutis nos backgrounds de painéis. | ✅ Concluído |
+| **Header Admin Renovado** | Remoção do hamburger menu legado, inclusão do logo minimalista árvore + texto Arbo e menu interativo via Avatar para Logout/Tema. | ✅ Concluído |
+| **Persistência de Tema** | Estado do tema salvo localmente via `localStorage` para UX contínua. | ✅ Concluído |
+| **Limpeza de Hardcoded Colors** | Adaptação de `AdminTurmaDetail` (Grid Painel da Semana) e `AdminPRFeed` para usar variáveis, corrigindo bugs de contraste no Modo Claro. | ✅ Concluído |
+
+---
+
+## Planejamento Seguinte: Painel do Aluno
+
+O próximo passo é o redesign visual premium completo do Painel do Aluno, alinhando a estética (Glassmorphism, Modo Claro/Escuro, Tema Laranja/Verde) ao que foi implementado no Admin. Aguardando especificações do prompt de negócio.
 
 ---
 
 *Documento gerado com base nas respostas do professor e alinhamento de produto.*
-*Atualizado em 2026-06-04 com correções de qualidade e segurança pós-análise dupla.*
+*Atualizado em 2026-06-05 com documentação da Fase 5 e setup para Painel do Aluno.*
