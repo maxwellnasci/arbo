@@ -277,3 +277,9 @@ Utilize os comandos abaixo para acionar a revisÃ£o e melhoria visual pelo AntiGr
 - useAdminAlunos.ts — limit(200)
 - useChat.ts — limit(100) com ordenação correta
 - AdminConvites.tsx — limit(100)
+
+### Task 44 (Limpeza de hardcoded residuais)
+- AdminConvites.tsx — #ff3b3011, #ff3b3044, #ff6b6b ? CSS vars
+- AdminTurmas.tsx — #ff6b6b, #2e2e2e, #444 ? CSS vars
+- AdminFeedbacks.tsx — #ff6b6b ? var(--red-accent)
+- AdminAlunoDetail.tsx — 5 hardcoded substituídos por CSS vars

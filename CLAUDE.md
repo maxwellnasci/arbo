@@ -317,7 +317,8 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 41:** Refatoração de Qualidade — Remoção de select wildcard em `useAdminTreinos.ts` / `useTreinoMutations.ts`, 25+ hex hardcoded substituídos por CSS variables em `AdminTurmaDetail.tsx`, novas variáveis CSS de suporte no `index.css`, `ConfirmModal.tsx` padronizado, suporte a Light Mode estendido para `ErrorBoundary`, `ProtectedRoute`, `PageLoader`, `RouterErrorElement`, `SetPassword`, e tipos explícitos `DBGroupPlan`/`DBGroupPlanTraining` em `useAdminTurmaDetail.ts` ✅
 - **Task 42:** Micro-residuais de Qualidade — Correção de hex em `ErrorBoundary.tsx` (#d14312 e sombra), `SetPassword.tsx` (#ff6b6b), `ConfirmModal.tsx` (background subtleMap e sombra) e `App.tsx` (sombra de erro); novas variáveis de sombra `--shadow-modal` e `--shadow-card` no `index.css` ✅
 - **Task 43:** Migração CSS Vars e Performance Server-side — Migração de hex hardcoded em 7 arquivos (`Login.css`, `AdminChatPanel.module.css`, `AlunoDashboard.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`); Adição de vars `--purple-accent/subtle` e `--yellow-accent/subtle` no `index.css`; Filtro server-side e remoção do Deep Join no `useAdminTurmaDetail`; `.limit()` adicionado no `useAdminAlunos`, `useChat` e `AdminConvites` ✅
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)  
+- **Task 44:** Limpeza de hardcoded residuais — Limpeza final de hexadecimais em `AdminConvites.tsx`, `AdminTurmas.tsx`, `AdminFeedbacks.tsx` e `AdminAlunoDetail.tsx` (cerca de 15 cores substituídas por variáveis semânticas como `--red-accent`, `--text-disabled`, `--text-tertiary`) ✅
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
 
