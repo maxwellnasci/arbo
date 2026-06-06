@@ -55,6 +55,7 @@
 | **Sistema de Etiquetas/Tipos inline (Task 36)** | ✅ Tabela `training_types` (RLS + UNIQUE), `trainings.type` migrado para `text`, criação inline no formulário de treino, painel de gerenciamento em `/admin/treinos` (2026-06-05) |
 | **10 correções sistema etiquetas/tipos (Task 37)** | ✅ `trainingUtils.ts` extraído, CSS vars, cancelled flag, UNIQUE constraint, `is_custom` filter, branded union `TrainingType`, mutations no pai (2026-06-05) |
 | **Fix "Unexpected Application Error!" (Task 38)** | ✅ `RouterErrorElement` como `errorElement` na rota raiz do `createBrowserRouter` — chunk errors → auto-reload com guard `sessionStorage`; outros erros → tela amigável. Root cause: data router API captava erros antes do `ErrorBoundary` externo (2026-06-06) |
+| **5 Melhorias DeepSeek (Task 39)** | ✅ RLS messages, remoção de select(*), paralelizar turmaDetail com Deep Joins, ConfirmModal premium em AdminTreinos, Workbox runtimeCaching + offline.html (2026-06-06) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 

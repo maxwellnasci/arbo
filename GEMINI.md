@@ -330,6 +330,7 @@ npx supabase login
 - Task 36: Sistema de Etiquetas/Tipos inline — `training_types` no banco, seleção + criação inline nos formulários, painel de gerenciamento em `/admin/treinos` ✅
 - Task 37: 10 correções no sistema de etiquetas/tipos — catch Supabase, cancelled flag, UUID vazio, UNIQUE constraint, CSS vars, is_custom filter, trainingUtils.ts, TrainingType branded union, mutations no pai ✅
 - Task 38: Fix "Unexpected Application Error!" em produção — `RouterErrorElement` com `errorElement` na rota raiz do `createBrowserRouter`; detecta chunk errors e auto-reload com guard sessionStorage ✅
+- Task 39: 5 Melhorias DeepSeek — RLS messages, remoção de wildcard select, paralelização `useAdminTurmaDetail` com join, `ConfirmModal` UX, e caching avançado PWA com `offline.html` ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)
 
@@ -571,7 +572,7 @@ npx supabase login
 
 ### Próximos passos sugeridos
 - ~~Painel do Aluno Redesign Premium~~ ✅
-- Correções de performance no código: N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query desnecessária em `strava_connections`, layout shift na logo
+- ~~Correções de performance no código: N+1, `select('*')`, checkins, query strava_connections~~ ✅
 - Botão de etiquetas e tipos personalizados com seleção inline nos formulários de treino
 - Validação visual no celular (screenshots mobile)
 - Integração Strava (Edge Function via n8n)

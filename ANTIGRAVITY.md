@@ -54,6 +54,7 @@ Somos um **time de 3**:
 - Fase 3 (Treinos + Chat + Progresso + Perfil + PRs + Error Boundary + Code Splitting): ✅ **100%**
 - Fase 5 (Redesign Premium Admin + Aluno + Dark/Light Mode + 10 bugs pós-redesign corrigidos): ✅ **100%**
 - Task 38: Fix "Unexpected Application Error!" em produção (RouterErrorElement + sessionStorage guard) ✅
+- Task 39: 5 Melhorias DeepSeek (RLS messages, sem select(*), paralelizar turmaDetail com joins, ConfirmModal premium, Workbox runtimeCaching + offline.html) ✅
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
@@ -145,9 +146,9 @@ Somos um **time de 3**:
 
 ### O que foi feito em 2026-06-06
 - **Fix "Unexpected Application Error!" em produção (Task 38 — Claude Code):** `RouterErrorElement` adicionado como `errorElement` na rota raiz do `createBrowserRouter` — detecta falhas de chunk PWA (`Failed to fetch dynamically imported module`) e faz auto-reload uma vez com guard `sessionStorage` para evitar loop. Outros erros exibem tela amigável em vez de tela padrão do React Router. Root cause: data router API capturava erros antes do `ErrorBoundary` externo. Commit `7535ce1`.
+- **5 Melhorias DeepSeek (Task 39 — Antigravity):** SQL de RLS para tabela `messages` gerado; Remoção de wildcard select em hooks via mapeamento `database.types.ts`; Paralelização otimizada em `useAdminTurmaDetail` com Deep Joins ao invés de cascata; Modal premium `<ConfirmModal />` em `AdminTreinos` extinguindo `window.confirm`; Estratégias `NetworkFirst`/`CacheFirst` em `vite-plugin-pwa` (Workbox) e fallback `offline.html` para experiência offline sem interrupções. Build + Lint 100% limpo.
 
 ### Próximo passo
-- Correções de performance no código: N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query em `strava_connections`
 - Validação visual no celular (screenshots mobile do redesign Fase 5)
 - Integração Strava (Edge Function via n8n)
 - ~~Domínio customizado no Vercel~~ ✅ arbo.mxos.com.br

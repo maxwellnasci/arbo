@@ -360,3 +360,12 @@ Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima s
 - Adicionado como `errorElement` em rota raiz wrapper (`path: undefined`) em `createBrowserRouter`
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
+
+**Task 39 — 5 Melhorias DeepSeek (Antigravity):**
+1. **Segurança (RLS):** Políticas estritas (SELECT/INSERT/UPDATE) na tabela `messages` baseadas em `student_id` e role admin.
+2. **Performance (`select('*')`):** Remoção de wildcard select em hooks (`useAdminAlunoDetail`, `useProgresso`, `useChat`, `useWeeklyPlan`, `useAdminTurmas`, `trainingUtils`), substituindo por colunas explícitas.
+3. **Performance (`useAdminTurmaDetail`):** Substituição da cascata de requisições por 1 requisição única com Deep Joins otimizada.
+4. **UX Premium (`ConfirmModal`):** Componente `<ConfirmModal />` criado para substituir `window.confirm` em `AdminTreinos.tsx`.
+5. **PWA Avançado:** Configurado `runtimeCaching` no Workbox (NetworkFirst para API) e página de fallback `public/offline.html`.
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
