@@ -61,7 +61,7 @@ export default function AdminTurmas() {
         </button>
       </div>
 
-      {error && <p style={{ color: '#ff6b6b', marginBottom: '16px' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--red-accent)', marginBottom: '16px' }}>{error}</p>}
 
       {isLoading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Carregando...</p>
@@ -151,8 +151,8 @@ function TurmaRow({ turma }: { turma: GroupWithCount }) {
         <span
           style={{
             color: turma.is_active ? 'var(--green-accent)' : 'var(--text-secondary)',
-            background: turma.is_active ? 'rgba(74, 222, 128, 0.1)' : '#2e2e2e',
-            border: turma.is_active ? '1px solid rgba(74, 222, 128, 0.2)' : '1px solid #444',
+            background: turma.is_active ? 'rgba(74, 222, 128, 0.1)' : 'var(--text-disabled)',
+            border: turma.is_active ? '1px solid rgba(74, 222, 128, 0.2)' : '1px solid var(--text-tertiary)',
             fontSize: '11px',
             fontWeight: 700,
             padding: '4px 8px',

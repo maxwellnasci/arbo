@@ -105,7 +105,7 @@ export default function AdminAlunoDetail() {
         <button onClick={() => navigate('/admin/alunos')} className={styles.btn} style={{ marginBottom: 16, border: 'none', background: 'transparent' }}>
           <ChevronLeft size={18} /> Voltar
         </button>
-        <p style={{ color: '#ff6b6b' }}>{error || 'Aluno não encontrado.'}</p>
+        <p style={{ color: 'var(--red-accent)' }}>{error || 'Aluno não encontrado.'}</p>
       </div>
     )
   }
@@ -168,7 +168,7 @@ export default function AdminAlunoDetail() {
                   <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
               </select>
-              <RefreshCw size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#a1a1aa' }} />
+              <RefreshCw size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-disabled)' }} />
             </div>
             <button className={styles.btn} onClick={() => setIsChatOpen(true)}>
               <MessageSquare size={16} /> Mensagem
@@ -320,7 +320,7 @@ export default function AdminAlunoDetail() {
           onClick={() => setShowDeleteModal(true)}
           style={{
             display: 'inline-flex', alignItems: 'center', gap: '8px',
-            background: 'rgba(220, 38, 38, 0.1)', color: '#dc2626',
+            background: 'rgba(220, 38, 38, 0.1)', color: 'var(--red-accent)',
             border: '1px solid rgba(220, 38, 38, 0.3)',
             borderRadius: '12px', padding: '10px 20px',
             fontWeight: 700, fontSize: '14px', cursor: 'pointer',
@@ -362,7 +362,7 @@ export default function AdminAlunoDetail() {
             </p>
             {deleteError && (
               <p style={{
-                color: '#ff6b6b', fontSize: '13px', margin: '0 0 16px',
+                color: 'var(--red-accent)', fontSize: '13px', margin: '0 0 16px',
                 padding: '10px', background: 'rgba(255, 59, 48, 0.07)',
                 borderRadius: '8px', border: '1px solid rgba(255, 59, 48, 0.25)',
               }}>
@@ -386,7 +386,7 @@ export default function AdminAlunoDetail() {
                 onClick={handleDeleteAluno}
                 disabled={isDeleting}
                 style={{
-                  flex: 1, background: '#dc2626', color: '#fff',
+                  flex: 1, background: 'var(--red-accent)', color: '#fff',
                   border: 'none', borderRadius: '12px',
                   padding: '12px', fontWeight: 700, fontSize: '14px',
                   cursor: isDeleting ? 'not-allowed' : 'pointer',

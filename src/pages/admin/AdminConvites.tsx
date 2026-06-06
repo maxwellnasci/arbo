@@ -167,9 +167,9 @@ export default function AdminConvites() {
           </div>
         )}
         {status === 'error' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ff3b3011', border: '1px solid #ff3b3044', padding: '12px 16px', borderRadius: '10px', marginTop: '16px' }}>
-            <AlertCircle size={16} color="#ff6b6b" />
-            <p style={{ color: '#ff6b6b', margin: 0, fontSize: '13px', fontWeight: 600 }}>{errorMsg}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--red-subtle)', border: '1px solid var(--red-border)', padding: '12px 16px', borderRadius: '10px', marginTop: '16px' }}>
+            <AlertCircle size={16} color="var(--red-accent)" />
+            <p style={{ color: 'var(--red-accent)', margin: 0, fontSize: '13px', fontWeight: 600 }}>{errorMsg}</p>
           </div>
         )}
       </div>

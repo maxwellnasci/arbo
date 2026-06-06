@@ -35,7 +35,7 @@ export default function AdminFeedbacks() {
     <div>
       <h1 style={{ fontFamily: 'var(--heading)', marginBottom: '32px', color: 'var(--text-primary)' }}>Feedbacks</h1>
 
-      {error && <p style={{ color: '#ff6b6b', marginBottom: '16px' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--red-accent)', marginBottom: '16px' }}>{error}</p>}
 
       {isLoading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Carregando...</p>
