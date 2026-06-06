@@ -216,7 +216,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 | ~~🟡 Média~~ | ~~**Domínio customizado**~~ | ✅ arbo.mxos.com.br (2026-06-04) |
 | ~~🔴 Alta~~ | ~~**Toggle liberação semanal (bug fix)**~~ | ✅ Chips S1–S4 bidirecionais (2026-06-05) |
 | ~~🔴 Alta~~ | ~~**Exclusão de aluno**~~ | ✅ Edge Function + modal de confirmação (2026-06-05) |
-| 🔴 Alta | **Correções de performance no código** | N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query desnecessária em `strava_connections`, layout shift na logo |
+| ~~🔴 Alta~~ | ~~**Correções de performance no código**~~ | ✅ Concluído nas Tasks 39, 40 e 41 (N+1, limit, select wildcard, layout shift logo) |
 | 🟡 Média | **Etiquetas + tipos inline nos formulários de treino** | Botão de seleção de etiqueta e tipo integrado inline no form de criação/edição de treino |
 | 🟡 Média | **Integração Strava** | Edge Function via n8n para OAuth + importação de atividades |
 | 🟢 Baixa | **SMTP externo** | Resend ou AWS SES para não travar com limite de 3-4 emails/hora do Supabase gratuito |
@@ -276,6 +276,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 27. ✅ Bug fix: toggle bidirecional de liberação semanal — `useGroupPlanMutations` aceita `0|1|2|3|4`; `AdminTurmaDetail` com `handleChipClick` para toggle; chips S1–S4 permitem bloquear semanas já liberadas.
 28. ✅ Feature: Exclusão de aluno — Edge Function `delete-user` (Deno, service_role, CORS allowlist, anti-auto-exclusão); `AdminAlunoDetail` com zona de perigo, botão Trash2, modal de confirmação, toast + redirect.
 29. ✅ Performance: Relatório completo (8 achados) + 7 índices SQL criados no Supabase. Correções no código (N+1, limit, select wildcard) pendentes para próxima sessão.
+30. ✅ Task 41 — Refatoração de Qualidade: select explícito em useAdminTreinos/useTreinoMutations; 25+ hex hardcoded → CSS vars em AdminTurmaDetail; suporte a Light Mode estendido para ErrorBoundary/ProtectedRoute/PageLoader/RouterErrorElement/SetPassword; e tipos explícitos DBGroupPlan/DBGroupPlanTraining em useAdminTurmaDetail.
 
 ---
 

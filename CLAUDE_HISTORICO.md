@@ -377,3 +377,19 @@ Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima s
 4. **Resiliência PWA:** Removido rastros de `screenshots` não existentes do `vite.config.ts`, extirpando falsos `404` no browser.
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
+
+**Task 41 — Refatoração de Qualidade e Suporte Light Mode (Antigravity):**
+1. **Performance (Select Wildcards Remanescentes):**
+   - Substituição de seletor wildcard no [useAdminTreinos.ts](file://wsl.localhost/Ubuntu/home/max/arbo/src/hooks/useAdminTreinos.ts) `.select('*, tag:tags(*)')` por colunas explícitas.
+   - Remoção de `.select()` sem argumentos (wildcard implícito) em insert/update no [useTreinoMutations.ts](file://wsl.localhost/Ubuntu/home/max/arbo/src/hooks/useTreinoMutations.ts).
+2. **CSS Variables & Design System:**
+   - Adicionadas variáveis CSS de suporte no [index.css](file://wsl.localhost/Ubuntu/home/max/arbo/src/index.css): `--orange-subtle`, `--orange-border`, `--red-subtle`, `--red-border`, `--blue-accent`, `--blue-subtle`, `--backdrop-bg` (para os temas Claro e Escuro).
+   - Erradicação de 25+ cores hexadecimais/RGBA hardcoded em [AdminTurmaDetail.tsx](file://wsl.localhost/Ubuntu/home/max/arbo/src/pages/admin/AdminTurmaDetail.tsx).
+   - Ajustes no [ConfirmModal.tsx](file://wsl.localhost/Ubuntu/home/max/arbo/src/components/ui/ConfirmModal.tsx): substituição de `#3b82f6` por `var(--blue-accent)`, hover do cancelar por `var(--bg-surface-hover)`, e backdrop por `var(--backdrop-bg)`.
+3. **Melhorias de Light Mode:**
+   - Varredura de hexadecimais em componentes estruturais e páginas chave ([ErrorBoundary.tsx](file://wsl.localhost/Ubuntu/home/max/arbo/src/components/ErrorBoundary.tsx), [ProtectedRoute.tsx](file://wsl.localhost/Ubuntu/home/max/arbo/src/components/ProtectedRoute.tsx), [App.tsx](file://wsl.localhost/Ubuntu/home/max/arbo/src/App.tsx) - PageLoader/RouterErrorElement, e [SetPassword.tsx](file://wsl.localhost/Ubuntu/home/max/arbo/src/pages/SetPassword.tsx)) para garantir transição suave e coerência com o tema claro.
+4. **TypeScript e Tipagem:**
+   - Otimizados os casts de relações aninhadas no [useAdminTurmaDetail.ts](file://wsl.localhost/Ubuntu/home/max/arbo/src/hooks/useAdminTurmaDetail.ts), introduzindo os tipos explícitos `DBGroupPlan` e `DBGroupPlanTraining` em vez de `as unknown as`.
+   - Adicionada documentação detalhando o motivo do filtro de ciclo permanecer no lado do cliente.
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ · `npm run build` ✅

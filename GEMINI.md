@@ -332,6 +332,7 @@ npx supabase login
 - Task 38: Fix "Unexpected Application Error!" em produção — `RouterErrorElement` com `errorElement` na rota raiz do `createBrowserRouter`; detecta chunk errors e auto-reload com guard sessionStorage ✅
 - Task 39: 5 Melhorias DeepSeek — RLS messages, remoção de wildcard select, paralelização `useAdminTurmaDetail` com join, `ConfirmModal` UX, e caching avançado PWA com `offline.html` ✅
 - Task 40: Qualidade & Perfomance — N+1 eliminado no changeGroup, 10 `select('*')` removidos, CSS vars aplicadas no `ConfirmModal` e manifesto PWA higienizado ✅
+- Task 41: Refatoração de Qualidade — Remoção de select wildcard em `useAdminTreinos.ts` / `useTreinoMutations.ts`, 25+ hex hardcoded substituídos por CSS variables em `AdminTurmaDetail.tsx`, novas variáveis CSS de suporte no `index.css`, `ConfirmModal.tsx` padronizado, suporte a Light Mode estendido para `ErrorBoundary`, `ProtectedRoute`, `PageLoader`, `RouterErrorElement`, `SetPassword`, e tipos explícitos `DBGroupPlan`/`DBGroupPlanTraining` em `useAdminTurmaDetail.ts` ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)
 
