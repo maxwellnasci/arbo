@@ -39,7 +39,7 @@ export function useProgresso(studentId: string) {
         setError(null);
 
         const [recordsResponse, checkinsResponse] = await Promise.all([
-          supabase.from('records').select('distance_category, time_seconds').eq('student_id', studentId),
+          supabase.from('records').select('distance_category, time_seconds').eq('student_id', studentId).limit(50),
           supabase.from('checkins')
             .select('id, actual_duration_seconds, actual_distance_m, actual_pace_seconds_per_km, perceived_effort, notes, created_at, trainings(title, distance_m, type)')
             .eq('student_id', studentId)

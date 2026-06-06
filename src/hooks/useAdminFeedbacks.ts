@@ -30,7 +30,8 @@ export function useAdminFeedbacks() {
         supabase
           .from('records')
           .select('student_id, created_at')
-          .gte('created_at', sinceIso),
+          .gte('created_at', sinceIso)
+          .limit(500),
       ])
 
       if (cancelled) return

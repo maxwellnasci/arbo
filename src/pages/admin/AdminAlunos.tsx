@@ -119,7 +119,7 @@ export default function AdminAlunos() {
         </div>
       </div>
 
-      {error && <p style={{ color: '#ff6b6b', marginBottom: '16px' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--red-accent)', marginBottom: '16px' }}>{error}</p>}
 
       {isLoading ? (
         <p style={{ color: 'var(--text-secondary)' }}>Carregando...</p>

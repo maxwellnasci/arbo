@@ -53,7 +53,7 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
             gap: '10px', 
             background: 'transparent', 
             border: 'none', 
-            color: '#ff6b6b', 
+            color: 'var(--red-accent)', 
             cursor: 'pointer', 
             padding: '12px 10px', 
             width: '100%',
@@ -62,7 +62,7 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
             fontSize: '15px',
             fontWeight: 500
           }}
-          onMouseEnter={e => e.currentTarget.style.background = '#ff3b301a'}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--red-subtle)'}
           onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
         >
           <LogOut size={18} />

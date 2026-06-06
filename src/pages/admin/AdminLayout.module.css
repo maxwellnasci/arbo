@@ -110,12 +110,12 @@
 }
 
 .dropdownItemDanger {
-  color: #ff6b6b;
+  color: var(--red-accent);
 }
 
 .dropdownItemDanger:hover {
-  background: #ff3b301a;
-  color: #ff6b6b;
+  background: var(--red-subtle);
+  color: var(--red-accent);
 }
 
 .contentWrapper {

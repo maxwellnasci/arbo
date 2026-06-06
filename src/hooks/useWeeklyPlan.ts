@@ -244,7 +244,7 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
       lockedWeekNumber: 0,
       lastWeekSummary: null,
     }
-  } catch (err) {
+  } catch (err: unknown) {
     if (attempt < 2 && !signal.cancelled) {
       await sleep(1000 * Math.pow(2, attempt)) // 1s, 2s
       if (signal.cancelled) throw err

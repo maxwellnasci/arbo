@@ -127,7 +127,7 @@ export default function AdminChatPanel({ isOpen, onClose, studentId, studentName
             {/* Input Area */}
             <div className={styles.inputArea}>
               {actionError && (
-                <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#ff6b6b', textAlign: 'center' }}>
+                <p style={{ margin: '0 0 8px', fontSize: '12px', color: 'var(--red-accent)', textAlign: 'center' }}>
                   {actionError}
                 </p>
               )}

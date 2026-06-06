@@ -45,8 +45,8 @@ export default function DashboardRedirect() {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100vh',
-        backgroundColor: '#111111',
-        color: '#E8521A',
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--orange)',
         fontFamily: 'sans-serif',
         fontSize: '1rem',
       }}>

@@ -37,7 +37,8 @@ export function useAdminTreinos(): UseAdminTreinosReturn {
             id, title, type, description, distance_m, duration_minutes, sets, target_pace_seconds_per_km, tag_id, created_at,
             tag:tags(id, name, color)
           `)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(200);
 
         if (cancelled) return;
 
@@ -46,7 +47,7 @@ export function useAdminTreinos(): UseAdminTreinosReturn {
         }
 
         setTreinos((data as TrainingWithTag[]) || []);
-      } catch (err) {
+      } catch (err: unknown) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Erro ao carregar treinos');
         }
