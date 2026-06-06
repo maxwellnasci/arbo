@@ -84,7 +84,7 @@ export function useGroupPlanMutations(
   )
 
   const releaseThrough = useCallback(
-    async (weekNumber: 1 | 2 | 3 | 4) => {
+    async (weekNumber: 0 | 1 | 2 | 3 | 4) => {
       if (!currentPlanId) throw new Error('Plano não encontrado')
       const { error } = await supabase
         .from('group_plans')

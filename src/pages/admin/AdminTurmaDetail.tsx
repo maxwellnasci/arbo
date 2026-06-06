@@ -165,21 +165,29 @@ export default function AdminTurmaDetail() {
     }
   }
 
-  async function handleRelease(weekNumber: 1 | 2 | 3 | 4) {
-    if (!plan || weekNumber <= plan.released_through_week) return
+  async function handleSetRelease(target: 0 | 1 | 2 | 3 | 4) {
+    if (!plan) return
     setReleasing(true)
     try {
-      await releaseThrough(weekNumber)
+      await releaseThrough(target)
       refresh()
-      const msg = weekNumber === 4
-        ? 'Todas as semanas liberadas para os alunos'
-        : `Semana ${weekNumber} liberada para os alunos`
+      const msg =
+        target === 0 ? 'Plano bloqueado para os alunos' :
+        target === 4 ? 'Todas as semanas liberadas para os alunos' :
+        `Semana ${target} liberada para os alunos`
       toast.success(msg)
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Erro ao liberar semana')
     } finally {
       setReleasing(false)
     }
+  }
+
+  function handleChipClick(w: 1 | 2 | 3 | 4) {
+    if (!plan) return
+    const current = plan.released_through_week
+    const target = (w === current ? w - 1 : w) as 0 | 1 | 2 | 3 | 4
+    handleSetRelease(target)
   }
 
   function switchToWeekFromMonth(weekNumber: number, dayOfWeek: number) {
@@ -281,7 +289,8 @@ export default function AdminTurmaDetail() {
                 onNavigate={setSelectedWeek}
                 onSlotClick={openSlot}
                 onCardClick={openCard}
-                onRelease={handleRelease}
+                onRelease={handleSetRelease}
+                onChipRelease={handleChipClick}
               />
             ) : (
               <MonthView
@@ -340,6 +349,7 @@ function WeekView({
   onSlotClick,
   onCardClick,
   onRelease,
+  onChipRelease,
 }: {
   cycleStart: string
   selectedWeek: number
@@ -350,7 +360,8 @@ function WeekView({
   onNavigate: (week: number) => void
   onSlotClick: (weekNumber: number, dayOfWeek: number) => void
   onCardClick: (entry: GroupDayTraining) => void
-  onRelease: (week: 1 | 2 | 3 | 4) => void
+  onRelease: (week: 0 | 1 | 2 | 3 | 4) => void
+  onChipRelease: (week: 1 | 2 | 3 | 4) => void
 }) {
   const weekTrainings = trainings.filter(t => t.weekNumber === selectedWeek)
   const trainingByDay = new Map(weekTrainings.map(t => [t.dayOfWeek, t]))
@@ -375,7 +386,7 @@ function WeekView({
               return (
                 <button
                   key={w}
-                  onClick={() => onNavigate(w)}
+                  onClick={() => { onNavigate(w); onChipRelease(w as 1 | 2 | 3 | 4) }}
                   style={{
                     padding: '2px 7px', borderRadius: '5px', border: 'none', cursor: 'pointer',
                     fontSize: '9px', fontWeight: 700, lineHeight: 1.4,

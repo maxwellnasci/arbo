@@ -5,9 +5,10 @@ import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { MessageSquare, RefreshCw, ChevronLeft } from 'lucide-react'
+import { MessageSquare, RefreshCw, ChevronLeft, Trash2 } from 'lucide-react'
 import styles from './AdminAlunoDetail.module.css'
 import AdminChatPanel from '../../components/admin/AdminChatPanel'
+import { supabase } from '../../lib/supabase'
 
 const levelLabel: Record<string, string> = {
   iniciante: 'Iniciante',
@@ -60,6 +61,39 @@ export default function AdminAlunoDetail() {
   const [activeTab, setActiveTab] = useState<'checkins' | 'records' | 'anamnesis'>('checkins')
   const [isChangingGroup, setIsChangingGroup] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  async function handleDeleteAluno() {
+    if (!id) return
+    setIsDeleting(true)
+    setDeleteError(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Sessão expirada. Faça login novamente.')
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ userId: id }),
+        },
+      )
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || 'Erro ao excluir aluno.')
+      }
+      toast.success('Aluno removido')
+      navigate('/admin/alunos')
+    } catch (e: unknown) {
+      setDeleteError(e instanceof Error ? e.message : 'Erro ao excluir aluno')
+      setIsDeleting(false)
+    }
+  }
 
   if (isLoading) {
     return <p style={{ color: 'var(--text-secondary)' }}>Carregando dados do aluno...</p>
@@ -268,12 +302,103 @@ export default function AdminAlunoDetail() {
         )}
       </div>
 
+      {/* Danger zone */}
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: '1px solid rgba(220, 38, 38, 0.2)',
+        borderRadius: '16px',
+        padding: '24px',
+        marginTop: '8px',
+      }}>
+        <h3 style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 700, margin: '0 0 6px' }}>
+          Zona de perigo
+        </h3>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 16px', lineHeight: 1.5 }}>
+          Excluir o aluno remove permanentemente todos os dados do sistema.
+        </p>
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            background: 'rgba(220, 38, 38, 0.1)', color: '#dc2626',
+            border: '1px solid rgba(220, 38, 38, 0.3)',
+            borderRadius: '12px', padding: '10px 20px',
+            fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+          }}
+        >
+          <Trash2 size={16} />
+          Excluir aluno
+        </button>
+      </div>
+
       <AdminChatPanel
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
         studentId={id || ''}
         studentName={profile.full_name || 'Aluno'}
       />
+
+      {/* Delete confirmation modal */}
+      {showDeleteModal && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px',
+        }}>
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            borderRadius: '20px',
+            padding: '32px',
+            maxWidth: '400px',
+            width: '100%',
+          }}>
+            <h2 style={{ color: 'var(--text-primary)', fontSize: '22px', fontWeight: 700, margin: '0 0 12px' }}>
+              Excluir aluno?
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.6, margin: '0 0 24px' }}>
+              Esta ação é irreversível. Todos os dados do aluno serão removidos.
+            </p>
+            {deleteError && (
+              <p style={{
+                color: '#ff6b6b', fontSize: '13px', margin: '0 0 16px',
+                padding: '10px', background: 'rgba(255, 59, 48, 0.07)',
+                borderRadius: '8px', border: '1px solid rgba(255, 59, 48, 0.25)',
+              }}>
+                {deleteError}
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteError(null) }}
+                disabled={isDeleting}
+                style={{
+                  flex: 1, background: 'transparent', color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-default)', borderRadius: '12px',
+                  padding: '12px', fontWeight: 700, fontSize: '14px',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteAluno}
+                disabled={isDeleting}
+                style={{
+                  flex: 1, background: '#dc2626', color: '#fff',
+                  border: 'none', borderRadius: '12px',
+                  padding: '12px', fontWeight: 700, fontSize: '14px',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                  opacity: isDeleting ? 0.7 : 1,
+                }}
+              >
+                {isDeleting ? 'Excluindo...' : 'Sim, excluir'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }
