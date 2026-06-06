@@ -294,32 +294,40 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 ---
 
 ## Notas Finais da Sessão 2026-06-06
-- **Nota final do projeto:** 7.9/10 (subiu de 6.9 para 7.9 na sessão) — Meta: 8.5+ de média geral.
-- **Tasks 39-42 concluídas**
+- **Média geral: 8.4/10** (subiu de 7.9 para 8.4 ao longo da sessão)
+  - Segurança: 8.2/10
+  - Performance: 8.6/10
+  - Qualidade: 8.8/10
+  - UX/Bugs: 8.5/10
+  - Arquitetura: 8.0/10
+  - PWA/Mobile: 8.3/10
+- **Tasks 39-47 concluídas nesta sessão**
+- **Meta:** chegar em 8.5+ de média geral na próxima sessão.
 - **Planejamento da Próxima Sessão:**
-  - Migrar os estilos inline/CSS remanescentes para **CSS Modules**: `Login.css`, `AdminChatPanel.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`, `AlunoDashboard.module.css`.
-  - Otimizar filtro server-side no Deep Join (`useAdminTurmaDetail.ts`).
-  - Adicionar `limit()` nas queries sem paginação.
-  - Executar auditoria de performance e PWA via Lighthouse para identificar oportunidades de otimização de velocidade e SEO.
+  - Auditoria Lighthouse no PWA (meta: score 90+).
+  - SMTP externo (Resend ou AWS SES) antes de produção.
+  - CI/CD GitHub Actions (`tsc + build + lint` a cada push).
+  - Vitest — primeiros testes unitários para hooks críticos.
+  - README.md público para o repositório.
 
 ---
 
 *Documento gerado com base nas respostas do professor e alinhamento de produto.*
-*Atualizado em 2026-06-06 com documentação da Task 42 e notas finais da sessão.*
+*Atualizado em 2026-06-06 com documentação das Tasks 43-47 e notas finais da sessão.*
 
-### Task 43 (Migra��o CSS Vars e Performance Server-side)
+### Task 43 (Migra��o CSS Vars e Performance Server-side)
 - 7 arquivos CSS migrados para design system (Login, AdminChatPanel, CreateGroupModal, EditGroupModal, AnamnesisForm, TreinoCard, AlunoDashboard)
-- Novas vari�veis: --purple-accent, --purple-subtle, --yellow-accent, --yellow-subtle
-- useAdminTurmaDetail.ts � filtro server-side no Deep Join
-- useAdminAlunos.ts � limit(200)
-- useChat.ts � limit(100) com ordena��o correta
-- AdminConvites.tsx � limit(100)
+- Novas vari�veis: --purple-accent, --purple-subtle, --yellow-accent, --yellow-subtle
+- useAdminTurmaDetail.ts � filtro server-side no Deep Join
+- useAdminAlunos.ts � limit(200)
+- useChat.ts � limit(100) com ordena��o correta
+- AdminConvites.tsx � limit(100)
 
 ### Task 44 (Limpeza de hardcoded residuais)
-- AdminConvites.tsx � #ff3b3011, #ff3b3044, #ff6b6b ? CSS vars
-- AdminTurmas.tsx � #ff6b6b, #2e2e2e, #444 ? CSS vars
-- AdminFeedbacks.tsx � #ff6b6b ? var(--red-accent)
-- AdminAlunoDetail.tsx � 5 hardcoded substitu�dos por CSS vars
+- AdminConvites.tsx � #ff3b3011, #ff3b3044, #ff6b6b ? CSS vars
+- AdminTurmas.tsx � #ff6b6b, #2e2e2e, #444 ? CSS vars
+- AdminFeedbacks.tsx � #ff6b6b ? var(--red-accent)
+- AdminAlunoDetail.tsx � 5 hardcoded substitu�dos por CSS vars
 
 ### Task 45 (Findings Claude Code)
 - Alta prioridade & Limpeza Rapida: padding-bottom em AlunoPerfil, tipagens catch(err: unknown), limits(200/50/500) em useAdminTreinos, AdminTurmaDetail, useProgresso, useAdminFeedbacks, useAdminAlunoDetail
@@ -335,4 +343,8 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 - AlunoDashboard.module.css e AlunoProgresso.module.css — safe area corrigida
 - icon-512-maskable.png criado com fundo laranja + 40% padding
 - offline.html viewport-fit=cover adicionado
+
+### Task 47 (Security Headers)
+- `vercel.json` — bloco `headers` adicionado preservando `rewrites` existente
+- Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy configurados
 

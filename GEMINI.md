@@ -670,19 +670,19 @@ npx supabase login
 9. ~~NotificaÃ§Ãµes de PR no admin~~ âœ…
 10. ~~Code Splitting (React.lazy + Suspense)~~ âœ…
 
-### Task 43 (Migração CSS Vars e Performance Server-side)
+### Task 43 (Migraï¿½ï¿½o CSS Vars e Performance Server-side)
 - 7 arquivos CSS migrados para design system (Login, AdminChatPanel, CreateGroupModal, EditGroupModal, AnamnesisForm, TreinoCard, AlunoDashboard)
-- Novas variáveis: --purple-accent, --purple-subtle, --yellow-accent, --yellow-subtle
-- useAdminTurmaDetail.ts — filtro server-side no Deep Join
-- useAdminAlunos.ts — limit(200)
-- useChat.ts — limit(100) com ordenação correta
-- AdminConvites.tsx — limit(100)
+- Novas variï¿½veis: --purple-accent, --purple-subtle, --yellow-accent, --yellow-subtle
+- useAdminTurmaDetail.ts ï¿½ filtro server-side no Deep Join
+- useAdminAlunos.ts ï¿½ limit(200)
+- useChat.ts ï¿½ limit(100) com ordenaï¿½ï¿½o correta
+- AdminConvites.tsx ï¿½ limit(100)
 
 ### Task 44 (Limpeza de hardcoded residuais)
-- AdminConvites.tsx — #ff3b3011, #ff3b3044, #ff6b6b ? CSS vars
-- AdminTurmas.tsx — #ff6b6b, #2e2e2e, #444 ? CSS vars
-- AdminFeedbacks.tsx — #ff6b6b ? var(--red-accent)
-- AdminAlunoDetail.tsx — 5 hardcoded substituídos por CSS vars
+- AdminConvites.tsx ï¿½ #ff3b3011, #ff3b3044, #ff6b6b ? CSS vars
+- AdminTurmas.tsx ï¿½ #ff6b6b, #2e2e2e, #444 ? CSS vars
+- AdminFeedbacks.tsx ï¿½ #ff6b6b ? var(--red-accent)
+- AdminAlunoDetail.tsx ï¿½ 5 hardcoded substituï¿½dos por CSS vars
 
 ### Task 45 (Findings Claude Code)
 - Alta prioridade & Limpeza Rapida: padding-bottom em AlunoPerfil, tipagens catch(err: unknown), limits(200/50/500) em useAdminTreinos, AdminTurmaDetail, useProgresso, useAdminFeedbacks, useAdminAlunoDetail
@@ -698,4 +698,11 @@ npx supabase login
 - AlunoDashboard.module.css e AlunoProgresso.module.css â€” safe area corrigida
 - icon-512-maskable.png criado com fundo laranja + 40% padding
 - offline.html viewport-fit=cover adicionado
+
+### Task 47 (Security Headers)
+- `vercel.json` â€” bloco `headers` adicionado preservando `rewrites` existente
+- Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy configurados
+
+**Notas finais 2026-06-06:** MÃ©dia geral 8.4/10 (SeguranÃ§a 8.2 Â· Performance 8.6 Â· Qualidade 8.8 Â· UX 8.5 Â· Arquitetura 8.0 Â· PWA 8.3)
+**PrÃ³xima sessÃ£o:** Lighthouse audit Â· SMTP externo Â· CI/CD GitHub Actions Â· Vitest Â· README.md
 

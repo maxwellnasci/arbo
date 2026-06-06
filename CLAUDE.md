@@ -268,13 +268,14 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 ## Estado atual (2026-06-06)
 
-- **Nota final do projeto:** 7.9/10 (subiu de 6.9 para 7.9 na sessão) — Meta: 8.5+ de média geral.
-- **Tasks 39-42 concluídas**
+- **Média geral:** 8.4/10 — Segurança 8.2 · Performance 8.6 · Qualidade 8.8 · UX/Bugs 8.5 · Arquitetura 8.0 · PWA/Mobile 8.3
+- **Tasks 39-47 concluídas**
 - **Próxima sessão:**
-  - Migrar CSS Modules restantes (`Login.css`, `AdminChatPanel.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`, `AlunoDashboard.module.css`).
-  - Otimizar filtro server-side no Deep Join (`useAdminTurmaDetail.ts`).
-  - Adicionar `limit()` nas queries sem paginação.
-  - Executar auditoria Lighthouse no PWA.
+  - Auditoria Lighthouse no PWA (meta: score 90+).
+  - SMTP externo (Resend ou AWS SES) antes de produção.
+  - CI/CD GitHub Actions (`tsc + build + lint` a cada push).
+  - Vitest — primeiros testes unitários para hooks críticos.
+  - README.md público para o repositório.
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
@@ -323,9 +324,12 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 **Fase 5:** 100% completa ✅
 
 ### Próximos passos
-- Validação visual no celular (screenshots mobile)
-- Integração Strava (Edge Function via n8n)
+- Auditoria Lighthouse no PWA (meta: score 90+)
 - SMTP externo (Resend ou AWS SES) antes de produção
+- CI/CD GitHub Actions
+- Vitest — testes unitários para hooks críticos
+- Integração Strava (Edge Function via n8n)
+- README.md público
 
 ## Roadmap de telas
 
@@ -368,4 +372,11 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - AlunoDashboard.module.css e AlunoProgresso.module.css — safe area corrigida
 - icon-512-maskable.png criado com fundo laranja + 40% padding
 - offline.html viewport-fit=cover adicionado
+
+### Task 47 (Security Headers)
+- `vercel.json` — bloco `headers` adicionado preservando `rewrites` existente
+- `Content-Security-Policy`: origens restritas (self + Supabase + Google Fonts + Resend), bloqueia framing
+- `X-Frame-Options: DENY` — proteção contra clickjacking
+- `X-Content-Type-Options: nosniff` — impede MIME sniffing
+- `Referrer-Policy: strict-origin-when-cross-origin` — limita vazamento de URL cross-origin
 

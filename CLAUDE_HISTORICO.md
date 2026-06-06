@@ -422,19 +422,19 @@ Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima s
   3. Adicionar cláusula `limit()` explícita em todas as consultas SQL/Supabase que não possuem paginação nativa.
   4. Executar auditoria de performance e PWA via Lighthouse para identificar oportunidades de otimização de velocidade e SEO.
 
-### Task 43 (Migra��o CSS Vars e Performance Server-side)
+### Task 43 (Migra��o CSS Vars e Performance Server-side)
 - 7 arquivos CSS migrados para design system (Login, AdminChatPanel, CreateGroupModal, EditGroupModal, AnamnesisForm, TreinoCard, AlunoDashboard)
-- Novas vari�veis: --purple-accent, --purple-subtle, --yellow-accent, --yellow-subtle
-- useAdminTurmaDetail.ts � filtro server-side no Deep Join
-- useAdminAlunos.ts � limit(200)
-- useChat.ts � limit(100) com ordena��o correta
-- AdminConvites.tsx � limit(100)
+- Novas vari�veis: --purple-accent, --purple-subtle, --yellow-accent, --yellow-subtle
+- useAdminTurmaDetail.ts � filtro server-side no Deep Join
+- useAdminAlunos.ts � limit(200)
+- useChat.ts � limit(100) com ordena��o correta
+- AdminConvites.tsx � limit(100)
 
 ### Task 44 (Limpeza de hardcoded residuais)
-- AdminConvites.tsx � #ff3b3011, #ff3b3044, #ff6b6b ? CSS vars
-- AdminTurmas.tsx � #ff6b6b, #2e2e2e, #444 ? CSS vars
-- AdminFeedbacks.tsx � #ff6b6b ? var(--red-accent)
-- AdminAlunoDetail.tsx � 5 hardcoded substitu�dos por CSS vars
+- AdminConvites.tsx � #ff3b3011, #ff3b3044, #ff6b6b ? CSS vars
+- AdminTurmas.tsx � #ff6b6b, #2e2e2e, #444 ? CSS vars
+- AdminFeedbacks.tsx � #ff6b6b ? var(--red-accent)
+- AdminAlunoDetail.tsx � 5 hardcoded substitu�dos por CSS vars
 
 ### Task 45 (Findings Claude Code)
 - Alta prioridade & Limpeza Rapida: padding-bottom em AlunoPerfil, tipagens catch(err: unknown), limits(200/50/500) em useAdminTreinos, AdminTurmaDetail, useProgresso, useAdminFeedbacks, useAdminAlunoDetail
@@ -450,4 +450,27 @@ Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima s
 - AlunoDashboard.module.css e AlunoProgresso.module.css — safe area corrigida
 - icon-512-maskable.png criado com fundo laranja + 40% padding
 - offline.html viewport-fit=cover adicionado
+
+### Task 47 (Security Headers — Claude Code)
+- `vercel.json` — bloco `headers` adicionado preservando `rewrites` (SPA fallback) existente
+- `Content-Security-Policy`: `default-src 'self'`; `script-src 'self' 'unsafe-inline' 'unsafe-eval'`; `style-src` + Google Fonts; `img-src self data: blob:`; `connect-src` Supabase + Resend; `frame-ancestors 'none'`
+- `X-Frame-Options: DENY` — proteção contra clickjacking
+- `X-Content-Type-Options: nosniff` — impede MIME type sniffing
+- `Referrer-Policy: strict-origin-when-cross-origin` — limita vazamento de URL em cross-origin
+
+**Notas finais da sessão 2026-06-06:**
+- Segurança: 8.2/10
+- Performance: 8.6/10
+- Qualidade: 8.8/10
+- UX/Bugs: 8.5/10
+- Arquitetura: 8.0/10
+- PWA/Mobile: 8.3/10
+- **Média geral: 8.4/10** (subiu de 7.9 para 8.4 — meta 8.5+ próxima sessão)
+
+**Próxima sessão:**
+- Lighthouse audit (meta score 90+)
+- SMTP externo (Resend ou AWS SES)
+- CI/CD GitHub Actions
+- Vitest — primeiros testes unitários
+- README.md público
 
