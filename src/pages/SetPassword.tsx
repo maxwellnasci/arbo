@@ -203,7 +203,7 @@ const styles: Record<string, React.CSSProperties> = {
     border: '1px solid var(--border-default)',
     borderRadius: '10px',
     color: 'var(--text-primary)',
-    fontSize: '15px',
+    fontSize: '16px',
     padding: '14px 16px',
     outline: 'none',
     width: '100%',

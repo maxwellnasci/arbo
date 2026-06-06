@@ -7,7 +7,7 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['icons/icon-192.png', 'icons/icon-512.png', 'offline.html'],
+            includeAssets: ['icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-512-maskable.png', 'offline.html'],
             manifest: {
                 name: 'Arbo',
                 short_name: 'Arbo',
@@ -41,11 +41,18 @@ export default defineConfig({
                         src: '/icons/icon-512.png',
                         sizes: '512x512',
                         type: 'image/png',
-                        purpose: 'any maskable'
+                        purpose: 'any'
+                    },
+                    {
+                        src: '/icons/icon-512-maskable.png',
+                        sizes: '512x512',
+                        type: 'image/png',
+                        purpose: 'maskable'
                     }
                 ]
             },
             workbox: {
+                navigateFallback: '/offline.html',
                 runtimeCaching: [
                     {
                         urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
