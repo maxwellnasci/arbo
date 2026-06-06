@@ -1,10 +1,11 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-06-05 (sessão 11)
+> Gerado em 2026-05-29 | Atualizado em 2026-06-05 (sessão 12)
+> Histórico detalhado de sessões: [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md)
 
 ---
 
-## Estado atual (2026-06-03)
+## Estado atual (2026-06-05)
 
 | Área | Status |
 |------|--------|
@@ -46,6 +47,11 @@
 | **DESING.md** | ✅ Design system completo na raiz: paleta, tipografia, variáveis CSS, animações (2026-06-05) |
 | **10 bugs pós-redesign** | ✅ var(--text-h), classes CSS deletadas, cycleBarFuture, chat offset, handleDelete, setTimeout, overflow, null safety (2026-06-05) |
 | **Lint pós-redesign** | ✅ `npm run lint` → 0 erros, 0 warnings (2026-06-05) |
+| **CLAUDE.md dividido** | ✅ `CLAUDE.md` (referência técnica) + `CLAUDE_HISTORICO.md` (histórico completo de sessões) (2026-06-05) |
+| **Toggle liberação semanal (bug fix)** | ✅ Chips S1–S4 agora bidirecionais: permite bloquear semanas já liberadas. Lógica: `w === current ? w-1 : w` (2026-06-05) |
+| **Exclusão de aluno** | ✅ Edge Function `delete-user` (JWT admin, service_role, CORS allowlist) + modal de confirmação em `AdminAlunoDetail` (2026-06-05) |
+| **7 índices SQL de performance** | ✅ `checkins(student_id)`, `records(student_id)`, `records(achieved_at DESC)`, `group_plans(group_id, starts_at)`, `group_plan_trainings(group_plan_id)`, `messages(student_id)`, `profiles(role)` — criados no Supabase (2026-06-05) |
+| **Relatório de performance** | ✅ N+1 em `useAdminAlunoDetail`, select wildcard, checkins sem limit, query strava_connections, layout shift logo — **correções no código pendentes** (2026-06-05) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 
@@ -203,6 +209,10 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 | ~~🔴 Alta~~ | ~~**Login redesign premium**~~ | ✅ Concluído — glassmorphism, logo, glow, lucide icons, gradiente |
 | ~~🔴 Alta~~ | ~~**Modal edição de turma**~~ | ✅ Concluído — `EditGroupModal.tsx`, header da turma reformulado |
 | ~~🟡 Média~~ | ~~**Domínio customizado**~~ | ✅ arbo.mxos.com.br (2026-06-04) |
+| ~~🔴 Alta~~ | ~~**Toggle liberação semanal (bug fix)**~~ | ✅ Chips S1–S4 bidirecionais (2026-06-05) |
+| ~~🔴 Alta~~ | ~~**Exclusão de aluno**~~ | ✅ Edge Function + modal de confirmação (2026-06-05) |
+| 🔴 Alta | **Correções de performance no código** | N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query desnecessária em `strava_connections`, layout shift na logo |
+| 🟡 Média | **Etiquetas + tipos inline nos formulários de treino** | Botão de seleção de etiqueta e tipo integrado inline no form de criação/edição de treino |
 | 🟡 Média | **Integração Strava** | Edge Function via n8n para OAuth + importação de atividades |
 | 🟢 Baixa | **SMTP externo** | Resend ou AWS SES para não travar com limite de 3-4 emails/hora do Supabase gratuito |
 
@@ -257,6 +267,10 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 23. ✅ Redesign Premium completo do Painel Admin (Fase 5): AdminLayout com avatar menu + toggle tema, CSS vars em todas as telas admin. DESING.md criado com design system completo.
 24. ✅ Redesign Premium completo do App do Aluno (Fase 5): AlunoDashboard, AlunoProgresso, AlunoPerfil, AlunoChat + CheckinSheet e LockedScreen extraídos como componentes. CSS vars semânticas dark/light.
 25. ✅ 10 bugs pós-redesign corrigidos: var(--text-h) indefinida, classes CSS deletadas, cycleBarFuture ausente, chat offset, handleDelete sem error handling, setTimeout sem cleanup, error handling em queries admin, hardcoded colors, overflow do chart, null safety no toUpperCase().
+26. ✅ CLAUDE.md dividido em `CLAUDE.md` (técnico) + `CLAUDE_HISTORICO.md` (histórico de sessões). Todos os agentes devem ler ambos.
+27. ✅ Bug fix: toggle bidirecional de liberação semanal — `useGroupPlanMutations` aceita `0|1|2|3|4`; `AdminTurmaDetail` com `handleChipClick` para toggle; chips S1–S4 permitem bloquear semanas já liberadas.
+28. ✅ Feature: Exclusão de aluno — Edge Function `delete-user` (Deno, service_role, CORS allowlist, anti-auto-exclusão); `AdminAlunoDetail` com zona de perigo, botão Trash2, modal de confirmação, toast + redirect.
+29. ✅ Performance: Relatório completo (8 achados) + 7 índices SQL criados no Supabase. Correções no código (N+1, limit, select wildcard) pendentes para próxima sessão.
 
 ---
 

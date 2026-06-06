@@ -95,7 +95,33 @@ Somos um **time de 3**:
 - **Types regenerados:** `database.types.ts` atualizado com tabela `invites` após criar no Supabase
 - **Fix de lint (Claude Code):** `AdminConvites.tsx` — `useEffect` refatorado para `async function load()` com `cancelled` flag
 
+### O que foi feito em 2026-06-05 (Parte 3 — Claude Code)
+
+**Divisão do CLAUDE.md:**
+- `CLAUDE.md` dividido em dois: `CLAUDE.md` (referência técnica concisa) + `CLAUDE_HISTORICO.md` (histórico completo de todas as sessões). Todos os agentes devem ler `CLAUDE_HISTORICO.md` para contexto de decisões passadas.
+
+**Relatório de performance (análise, sem código):**
+- N+1 em `useAdminAlunoDetail` — busca grupo do banco quando já está em memória
+- 3 round trips sequenciais em `useAdminTurmaDetail` (group → plan → trainings)
+- Checkins sem `limit()` em `useAdminAlunoDetail` e `useProgresso`
+- `select('*')` desnecessário em `useAdminAlunos`
+- Query em `strava_connections` sempre falha por RLS (round trip desperdiçado)
+- Imagem logo sem dimensões → layout shift (CLS)
+- 7 índices SQL criados no Supabase: `checkins(student_id)`, `records(student_id)`, `records(achieved_at DESC)`, `group_plans(group_id, starts_at)`, `group_plan_trainings(group_plan_id)`, `messages(student_id)`, `profiles(role)`
+
+**Bug fix — toggle de liberação semanal:**
+- `useGroupPlanMutations.ts`: `releaseThrough` agora aceita `0 | 1 | 2 | 3 | 4`
+- `AdminTurmaDetail.tsx`: chips S1–S4 fazem toggle — clicar em semana ativa reduz a N-1; S1 ativo → bloqueia tudo (0). Lógica: `target = w === current ? w - 1 : w`
+
+**Feature — Exclusão de aluno:**
+- `supabase/functions/delete-user/index.ts` criada e deployada: valida JWT admin, `service_role` para deleteUser, CORS allowlist, anti-auto-exclusão
+- `AdminAlunoDetail.tsx`: botão "Excluir aluno" (zona de perigo, vermelho/outline) + modal de confirmação (título, texto irreversível, ghost cancelar, vermelho `#dc2626` confirmar) + `toast.success` + `navigate('/admin/alunos')`
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` ✅ · `npm run build` ✅
+
 ### Próximo passo
+- Correções de performance no código: N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query em `strava_connections`
+- Botão de etiquetas e tipos personalizados com seleção inline nos formulários de treino
 - Validação visual no celular (screenshots mobile do redesign Fase 5)
 - Integração Strava (Edge Function via n8n)
 - ~~Domínio customizado no Vercel~~ ✅ arbo.mxos.com.br
@@ -108,9 +134,12 @@ Somos um **time de 3**:
 | Arquivo | Quem lê | Conteúdo |
 |---|---|---|
 | `CLAUDE.md` | Claude Code | Regras técnicas, padrões Supabase, estado atual, roadmap |
-| `GEMINI.md` | Gemini | Mesmo conteúdo adaptado |
+| `CLAUDE_HISTORICO.md` | Todos | Histórico detalhado de todas as sessões de desenvolvimento (2026-05-21 em diante) |
+| `GEMINI.md` | Gemini | Mesmo conteúdo do CLAUDE.md adaptado para Gemini |
 | `ANTIGRAVITY.md` | Antigravity + Claude Code | Este arquivo — briefing do time, fluxo de trabalho, preferências |
 | `ARBO_FASE2.md` | Todos | Documentação de produto completa (Fase 2 e 3) |
+
+> **Importante:** `CLAUDE.md` foi dividido em duas partes em 2026-06-05: `CLAUDE.md` contém apenas referências técnicas e estado atual; `CLAUDE_HISTORICO.md` contém todo o histórico de sessões. Ler ambos para contexto completo.
 
 ### Regra de ouro
 Após cada sessão de trabalho, **atualizar os .md** com o que foi feito. Isso mantém todos os agentes sincronizados.

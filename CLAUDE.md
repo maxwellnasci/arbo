@@ -204,7 +204,7 @@ catch (e: unknown) {
 - `profiles` **tem coluna `role text`** (`'aluno'` | `'admin'`). Filtrar alunos com `.eq('role', 'aluno')`.
 - `profiles` **tem coluna `group_id uuid`** — FK para `groups.id`, nullable (`ON DELETE SET NULL`). Alunos sem turma têm `NULL`.
 - Trigger `tr_set_profile_role` (BEFORE INSERT em `profiles`) — popula `role` de `raw_user_meta_data` ao criar perfil via convite.
-- **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by, **released_through_week smallint DEFAULT 0** — 0=bloqueado, 1–4=semanas liberadas até N, unidirecional) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id, sort_order). Ciclo de 4 semanas calculado a partir de `groups.starts_at`. Admin: acesso total. Aluno: SELECT onde `group_id = profile.group_id`.
+- **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by, **released_through_week smallint DEFAULT 0** — 0=bloqueado, 1–4=semanas liberadas até N, **bidirecional**: chips S1–S4 fazem toggle — clicar em semana já liberada reduz o valor; clicar na semana ativa seta para N-1, com S1 ativo → 0) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id, sort_order). Ciclo de 4 semanas calculado a partir de `groups.starts_at`. Admin: acesso total. Aluno: SELECT onde `group_id = profile.group_id`.
 - **`supabase gen types`** pode incluir aviso de versão no final do arquivo gerado — remover manualmente as linhas de texto após o `} as const` antes de commitar.
 - **CSS Variables:** usar sempre variáveis semânticas de `src/index.css`. Nunca hardcodar `#fff`, `#000`, `#1c1c1c` etc. em novos componentes.
 
@@ -243,6 +243,16 @@ Edge Function: `supabase/functions/invite-user/index.ts`
 
 **Segurança de role no convite:** a Edge Function pode passar `role` em `user_metadata` — o trigger `on_auth_user_role_set` garante que esse valor seja promovido automaticamente para `app_metadata` (somente servidor), tornando-o imutável pelo cliente.
 
+### Exclusão de aluno
+
+Edge Function: `supabase/functions/delete-user/index.ts`  
+- Recebe: `{ userId: string }` no body  
+- Valida JWT do admin via `app_metadata.role`  
+- Usa `service_role` para chamar `adminClient.auth.admin.deleteUser(userId)`  
+- Proteção anti-auto-exclusão (admin não pode deletar a si mesmo)  
+- CORS restrito ao mesmo allowlist de `invite-user`  
+- Deploy: `npx supabase functions deploy delete-user --project-ref jhfkflnixzivuichmkie`
+
 ### Aviso SMTP
 
 O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação de senha.  
@@ -250,6 +260,8 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
 ## Estado atual (2026-06-05)
+
+> Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
 ### Progresso geral
 - **Task 1–3:** Schema, RLS, Auth stack ✅
@@ -279,12 +291,17 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 30:** Correção responsividade mobile no header da turma ✅
 - **Task 31 (Fase 5):** CSS Variables semânticas + Dark/Light mode + Redesign premium aluno ✅
 - **Task 32:** 10 bugs pós-redesign corrigidos (CSS vars, módulos deletados, error handling) ✅
+- **Task 33:** Bug fix — chips S1–S4 agora fazem toggle bidirecional (permite bloquear semanas já liberadas) ✅
+- **Task 34:** Feature — Exclusão de aluno: Edge Function `delete-user` + modal de confirmação em `AdminAlunoDetail` ✅
+- **Task 35:** Performance — Relatório completo + 7 índices SQL criados no Supabase ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)  
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
 
 ### Próximos passos
+- Correções de performance pendentes no código: N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query desnecessária em `strava_connections`, layout shift na logo
+- Botão de etiquetas e tipos personalizados com seleção inline nos formulários de treino
 - Validação visual no celular (screenshots mobile)
 - Integração Strava (Edge Function via n8n)
 - SMTP externo (Resend ou AWS SES) antes de produção

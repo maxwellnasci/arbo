@@ -245,4 +245,64 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 - `AlunoProgresso.module.css` — `width:100%; max-width:100%; overflow:hidden` restaurados no `.chartContainer` (regressão Task 26)
 - `AlunoProgresso.tsx` — `type?.toUpperCase()` com optional chaining — evita `TypeError` quando `type` é `null`
 
+---
+
+## O que foi feito em 2026-06-05 (Parte 2)
+
+**Divisão do CLAUDE.md (commit `14d77bb`):**
+- `CLAUDE.md` estava acima de 40k caracteres. Dividido em:
+  - `CLAUDE.md` — referência técnica concisa (stack, padrões, estado atual, roadmap)
+  - `CLAUDE_HISTORICO.md` (este arquivo) — todo o histórico de sessões
+- Motivo: limite de contexto nos agentes. Leitura de ambos é necessária para contexto completo.
+
+**Relatório de performance (análise, sem código — Claude Code):**
+
+Achados identificados:
+1. **N+1 em `useAdminAlunoDetail.ts`** — query ao banco para buscar grupo quando `allGroups` já está em memória
+2. **3 round trips sequenciais em `useAdminTurmaDetail.ts`** — group → plan → trainings em cascata (~240-450ms no mobile)
+3. **Checkins sem `limit()` em `useAdminAlunoDetail.ts:59` e `useProgresso.ts:43`** — histórico inteiro sem paginação
+4. **`select('*')` em `useAdminAlunos.ts`** — traz todas as colunas quando apenas 6 são usadas
+5. **Índices ausentes** — `checkins(student_id)`, `records(student_id, achieved_at)`, `group_plans(group_id, starts_at)`, `group_plan_trainings(group_plan_id)`, `messages(student_id)`, `profiles(role)`
+6. **Query em `strava_connections` sempre falha** — RLS sem policy bloqueia silenciosamente; round trip desperdiçado em `useAlunoPerfil.ts`
+7. **Logo sem dimensões** — causa layout shift (CLS) em Login e AdminLayout
+8. **`useWeeklyPlan.ts` fallback** — até 5 queries sequenciais no path mais lento
+
+7 índices criados no Supabase (SQL Editor):
+```sql
+CREATE INDEX IF NOT EXISTS idx_checkins_student_id ON checkins(student_id);
+CREATE INDEX IF NOT EXISTS idx_records_student_id ON records(student_id);
+CREATE INDEX IF NOT EXISTS idx_records_achieved_at ON records(achieved_at DESC);
+CREATE INDEX IF NOT EXISTS idx_group_plans_group_cycle ON group_plans(group_id, starts_at);
+CREATE INDEX IF NOT EXISTS idx_gpt_plan_id ON group_plan_trainings(group_plan_id);
+CREATE INDEX IF NOT EXISTS idx_messages_student_id ON messages(student_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
+```
+
+Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima sessão.
+
+**Bug fix — toggle de liberação semanal (commit `ad42bda`):**
+- `useGroupPlanMutations.ts`: `releaseThrough` aceita `0 | 1 | 2 | 3 | 4` (antes só `1 | 2 | 3 | 4`)
+- `AdminTurmaDetail.tsx`:
+  - `handleRelease` renomeado para `handleSetRelease(target: 0|1|2|3|4)` — direto, sem guard de bloqueio
+  - Adicionado `handleChipClick(w: 1|2|3|4)`: `target = w === current ? w - 1 : w`
+  - Chips S1–S4: `onClick` chama `onNavigate(w)` + `onChipRelease(w)`
+  - WeekView recebe nova prop `onChipRelease: (week: 1|2|3|4) => void`
+  - `onRelease` agora aceita `0 | 1 | 2 | 3 | 4` (banners Liberar Sn / Liberar tudo mantidos)
+
+**Feature — Exclusão de aluno (commit `ad42bda`):**
+- `supabase/functions/delete-user/index.ts` criada e deployada:
+  - `{ userId: string }` no body
+  - Valida JWT do admin via `app_metadata.role !== 'admin'` (nunca `user_metadata`)
+  - `adminClient.auth.admin.deleteUser(userId)` via service_role
+  - Proteção: `userId === user.id` → 400
+  - CORS allowlist: `https://arbo.mxos.com.br`, `https://arbo-weld.vercel.app`, `localhost:5173/4173`
+- `AdminAlunoDetail.tsx`:
+  - Import: `Trash2` de lucide, `supabase` de `../../lib/supabase`
+  - Estado: `showDeleteModal`, `isDeleting`, `deleteError`
+  - `handleDeleteAluno()`: `getSession()` → `fetch delete-user` → `toast.success` → `navigate('/admin/alunos')`
+  - Zona de perigo: botão vermelho outline com `Trash2`
+  - Modal inline: fundo `rgba(0,0,0,0.8)`, card `var(--bg-surface)`, botão cancelar ghost, confirmar `#dc2626`
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` ✅ · `npm run build` ✅
+
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)

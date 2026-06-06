@@ -213,7 +213,7 @@ useEffect(() => {
 - `PersonalRecord` como alias de tipo em vez de `Record` (palavra reservada TS)
 - `profiles.role` existe e é populado por trigger — filtrar alunos com `.eq('role', 'aluno')`
 - `profiles.group_id` é FK nullable para `groups.id` — alunos sem turma têm NULL
-- **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by, **released_through_week smallint DEFAULT 0** — 0=bloqueado, 1–4=semanas liberadas até N, unidirecional) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id). Ciclo de 4 semanas calculado a partir de `groups.starts_at`.
+- **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by, **released_through_week smallint DEFAULT 0** — 0=bloqueado, 1–4=semanas liberadas até N, **bidirecional**: chips S1–S4 fazem toggle — clicar em semana já liberada reduz o valor; clicar na semana ativa seta para N-1, com S1 ativo → 0) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id). Ciclo de 4 semanas calculado a partir de `groups.starts_at`.
 - **Fallback de plano:** `useWeeklyPlan` busca plano individual primeiro; se não existir e `profile.group_id` não for null, usa plano do grupo da semana correspondente; se `weekNumber > released_through_week`, retorna `isLocked: true`
 - **`supabase gen types`** pode incluir aviso de versão no final — remover manualmente as linhas após o `} as const`
 
@@ -245,6 +245,16 @@ Deploy: `npx supabase functions deploy invite-user --project-ref jhfkflnixzivuic
 
 **Segurança de role:** o trigger `on_auth_user_role_set` promove automaticamente `role` de `user_metadata` → `app_metadata` no INSERT, impedindo que o usuário injete seu próprio role.
 
+### Exclusão de aluno
+
+Edge Function: `supabase/functions/delete-user/index.ts`  
+- Recebe: `{ userId: string }` no body  
+- Valida JWT do admin via `app_metadata.role` (nunca `user_metadata`)  
+- Usa `service_role` para chamar `adminClient.auth.admin.deleteUser(userId)`  
+- Proteção anti-auto-exclusão (admin não pode deletar a si mesmo)  
+- CORS restrito ao mesmo allowlist de `invite-user`  
+- Deploy: `npx supabase functions deploy delete-user --project-ref jhfkflnixzivuichmkie`
+
 ### Aviso SMTP
 
 Supabase gratuito: limite ~3-4 emails/hora. Configurar SMTP externo (Resend/SES) antes de produção:  
@@ -271,7 +281,9 @@ npx supabase login
 
 **Project ID:** `jhfkflnixzivuichmkie`
 
-## Estado Atual (2026-06-04)
+## Estado Atual (2026-06-05)
+
+> Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
 ### Progresso geral
 - Tasks 1–3: Schema, RLS, Auth stack ✅
@@ -296,14 +308,19 @@ npx supabase login
 - Task 22: Error Boundary global — ErrorBoundary.tsx com fallback elegante ✅
 - Task 23: Tabela `invites` — Supabase + RLS + log em /admin/convites ✅
 - Task 24: Filtros em /admin/alunos — busca por nome + filtro por Turma e Nível ✅
-- Task 25: Deploy no Vercel — **https://arbo-weld.vercel.app** ✅
+- Task 25: Deploy no Vercel — **https://arbo.mxos.com.br** ✅
 - Task 26: Responsividade Mobile — menu hamburguer no admin, sidebar drawer, tabelas scrolláveis, safe area no aluno ✅
 - Task 27: PWA completo — `vite-plugin-pwa`, ícones custom, service worker Workbox, meta tags iOS/Android ✅
 - Task 28: Correções UX mobile — bounce iOS, zoom bloqueado, `100dvh` com scroll no `#root` ✅
 - Task 29: Login redesign premium (logo Arbo, glassmorphism, glow laranja, ícones lucide nos inputs), novos ícones PWA em `public/icons/`, header da turma reformulado com botão Editar, `EditGroupModal.tsx` ✅
-- Task 30: Correção de responsividade mobile no header da turma — layout em coluna, `clamp()` no título, `flexWrap` nas pills, botão Editar integrado; reversão do `minHeight: '70vh'` no grid (Gemini) ✅
+- Task 30: Correção de responsividade mobile no header da turma — layout em coluna, `clamp()` no título, `flexWrap` nas pills, botão Editar integrado; reversão do `minHeight: '70vh'` no grid ✅
+- Task 31 (Fase 5): CSS Variables semânticas + Dark/Light mode + Redesign premium aluno ✅
+- Task 32: 10 bugs pós-redesign corrigidos (CSS vars, módulos deletados, error handling) ✅
+- Task 33: Bug fix — chips S1–S4 agora fazem toggle bidirecional (permite bloquear semanas já liberadas) ✅
+- Task 34: Feature — Exclusão de aluno: Edge Function `delete-user` + modal de confirmação em `AdminAlunoDetail` ✅
+- Task 35: Performance — Relatório completo + 7 índices SQL criados no Supabase ✅
 
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-04)
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan`: join N→1 corrigido (`wpt.trainings[0]` → `wpt.trainings`)
@@ -543,6 +560,8 @@ npx supabase login
 
 ### Próximos passos sugeridos
 - ~~Painel do Aluno Redesign Premium~~ ✅
+- Correções de performance no código: N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query desnecessária em `strava_connections`, layout shift na logo
+- Botão de etiquetas e tipos personalizados com seleção inline nos formulários de treino
 - Validação visual no celular (screenshots mobile)
 - Integração Strava (Edge Function via n8n)
 - ~~**Ícone do app**~~ ✅
