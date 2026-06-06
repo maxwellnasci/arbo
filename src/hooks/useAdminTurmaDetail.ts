@@ -62,49 +62,55 @@ export function useAdminTurmaDetail(groupId: string): UseAdminTurmaDetailResult 
     async function load() {
       setIsLoading(true)
       setError(null)
+      
       const { data: groupData, error: groupErr } = await supabase
         .from('groups')
-        .select('*')
+        .select(`
+          id, name, is_active, starts_at, frequency, goal, plan_type, created_at, updated_at,
+          group_plans(
+            id, starts_at, group_id, notes, released_through_week, created_at, created_by, updated_at,
+            group_plan_trainings(
+              id, week_number, day_of_week, sort_order, plan_id:group_plan_id, training_id,
+              trainings(
+                id, type, title, duration_minutes, distance_m, description, target_pace_seconds_per_km, sets, tag_id, created_at, created_by, updated_at,
+                tags(id, name, color, created_at, created_by, updated_at)
+              )
+            )
+          )
+        `)
         .eq('id', groupId)
         .single()
 
       if (cancelled) return
       if (groupErr) { setError(groupErr.message); setIsLoading(false); return }
 
-      setGroup(groupData)
+      // Extract raw group (excluding relations for state)
+      const { group_plans, ...rawGroup } = groupData
+      setGroup(rawGroup as Group)
 
-      const startsAt = groupData.starts_at ?? toDateString(new Date())
+      const startsAt = rawGroup.starts_at ?? toDateString(new Date())
       const { cycleStart: cs, weekNumber: wn } = getCurrentCycle(startsAt)
       setCycleStart(cs)
       setDefaultWeekNumber(wn)
 
-      const { data: planData, error: planErr } = await supabase
-        .from('group_plans')
-        .select('*')
-        .eq('group_id', groupId)
-        .eq('starts_at', cs)
-        .maybeSingle()
+      // Find the plan for current cycle
+      const planData = (group_plans as unknown as (GroupPlan & { group_plan_trainings: unknown[] })[] | null)?.find(p => p.starts_at === cs)
+      
+      if (!planData) { 
+        setPlan(null)
+        setTrainings([])
+        setIsLoading(false)
+        return 
+      }
 
-      if (cancelled) return
-      if (planErr) { setError(planErr.message); setIsLoading(false); return }
+      const { group_plan_trainings, ...rawPlan } = planData
+      setPlan(rawPlan as GroupPlan)
 
-      setPlan(planData)
-
-      if (!planData) { setTrainings([]); setIsLoading(false); return }
-
-      const { data: gptData, error: gptErr } = await supabase
-        .from('group_plan_trainings')
-        .select('*, trainings(*, tags(*))')
-        .eq('group_plan_id', planData.id)
-        .order('week_number')
-        .order('day_of_week')
-
-      if (cancelled) return
-      if (gptErr) { setError(gptErr.message); setIsLoading(false); return }
-
+      const gptData = group_plan_trainings || []
       setTrainings(
-        ((gptData ?? []) as unknown as RawGPT[])
+        (gptData as unknown as RawGPT[])
           .filter(r => r.trainings)
+          .sort((a, b) => a.week_number === b.week_number ? a.day_of_week - b.day_of_week : a.week_number - b.week_number)
           .map(r => ({
             id: r.id,
             weekNumber: r.week_number,

@@ -3,6 +3,7 @@ import { useAdminTreinos } from '../../hooks/useAdminTreinos'
 import { useTreinoMutations } from '../../hooks/useTreinoMutations'
 import { TreinoCard } from '../../components/admin/TreinoCard'
 import { TreinoFormPanel } from '../../components/admin/TreinoFormPanel'
+import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
 import { supabase } from '../../lib/supabase'
@@ -30,6 +31,12 @@ export function AdminTreinos() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [treinoToEdit, setTreinoToEdit] = useState<TrainingWithTag | null>(null)
   const [isManageOpen, setIsManageOpen] = useState(false)
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean
+    title: string
+    description: string
+    onConfirm: () => void
+  }>({ isOpen: false, title: '', description: '', onConfirm: () => {} })
 
   useEffect(() => {
     let cancelled = false
@@ -60,15 +67,22 @@ export function AdminTreinos() {
     setIsFormOpen(true)
   }
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este treino?')) return
-    try {
-      await deleteTraining(id)
-      toast.success('Treino excluído com sucesso')
-      refetch()
-    } catch {
-      toast.error('Erro ao excluir treino')
-    }
+  const handleDelete = (id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Excluir Treino',
+      description: 'Tem certeza que deseja excluir este treino?',
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }))
+        try {
+          await deleteTraining(id)
+          toast.success('Treino excluído com sucesso')
+          refetch()
+        } catch {
+          toast.error('Erro ao excluir treino')
+        }
+      }
+    })
   }
 
   const handleClosePanel = () => {
@@ -96,20 +110,34 @@ export function AdminTreinos() {
     }
   }
 
-  const handleDeleteTag = async (id: string) => {
-    if (!window.confirm('Excluir esta etiqueta? Ela será removida de todos os treinos que a utilizam.')) return
-    const { error } = await supabase.from('tags').delete().eq('id', id)
-    if (error) { toast.error(error.message); return }
-    setTags(prev => prev.filter(t => t.id !== id))
-    toast.success('Etiqueta excluída')
+  const handleDeleteTag = (id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Excluir Etiqueta',
+      description: 'Excluir esta etiqueta? Ela será removida de todos os treinos que a utilizam.',
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }))
+        const { error } = await supabase.from('tags').delete().eq('id', id)
+        if (error) { toast.error(error.message); return }
+        setTags(prev => prev.filter(t => t.id !== id))
+        toast.success('Etiqueta excluída')
+      }
+    })
   }
 
-  const handleDeleteType = async (id: string) => {
-    if (!window.confirm('Excluir este tipo? Treinos com este tipo poderão ficar sem classificação.')) return
-    const { error } = await supabase.from('training_types').delete().eq('id', id)
-    if (error) { toast.error(error.message); return }
-    setCustomTypes(prev => prev.filter(t => t.id !== id))
-    toast.success('Tipo excluído')
+  const handleDeleteType = (id: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Excluir Tipo',
+      description: 'Excluir este tipo? Treinos com este tipo poderão ficar sem classificação.',
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }))
+        const { error } = await supabase.from('training_types').delete().eq('id', id)
+        if (error) { toast.error(error.message); return }
+        setCustomTypes(prev => prev.filter(t => t.id !== id))
+        toast.success('Tipo excluído')
+      }
+    })
   }
 
   const handleCreateTag = async (name: string, color: string): Promise<Tag | null> => {
@@ -293,6 +321,14 @@ export function AdminTreinos() {
         customTypes={customTypes}
         onCreateTag={handleCreateTag}
         onCreateType={handleCreateType}
+      />
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.title}
+        description={confirmState.description}
+        onConfirm={confirmState.onConfirm}
+        onCancel={() => setConfirmState(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
   )

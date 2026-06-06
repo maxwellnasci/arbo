@@ -132,10 +132,10 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
     const weekStart = getMonday()
 
     const [profileRes, planRes] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', userId).single(),
+      supabase.from('profiles').select('id, full_name, avatar_url, birth_date, group_id, has_set_password, level, role, strava_athlete_id, created_at, updated_at').eq('id', userId).single(),
       supabase
         .from('weekly_plans')
-        .select('*')
+        .select('id, student_id, week_start, notes, created_at, created_by')
         .eq('student_id', userId)
         .eq('week_start', weekStart)
         .maybeSingle(),
@@ -222,12 +222,12 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
     const [trainingsRes, checkinsRes] = await Promise.all([
       supabase
         .from('weekly_plan_trainings')
-        .select('*, trainings(*)')
+        .select('id, plan_id, training_id, day_of_week, sort_order, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, tags(id, name, color, created_at, created_by, updated_at))')
         .eq('plan_id', planId)
         .order('day_of_week'),
       supabase
         .from('checkins')
-        .select('*')
+        .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
         .eq('student_id', userId)
         .eq('plan_id', planId),
     ])

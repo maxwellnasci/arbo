@@ -22,7 +22,7 @@ export function useChat(studentId?: string | null) {
       setError(null)
       const { data, error: fetchError } = await supabase
         .from('messages')
-        .select('*')
+        .select('id, content, created_at, sender_id, admin_id, student_id, deleted_by_admin, deleted_by_student, read_at')
         .eq('student_id', studentId)
         .order('created_at', { ascending: true })
       if (cancelled) return

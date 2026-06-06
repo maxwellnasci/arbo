@@ -32,8 +32,8 @@ export function useAdminAlunoDetail(alunoId: string | undefined) {
       try {
         // 1. Profile & All Groups
         const [{ data: profData, error: profErr }, { data: groupsData }] = await Promise.all([
-          supabase.from('profiles').select('*').eq('id', alunoId).single(),
-          supabase.from('groups').select('*').eq('is_active', true).order('name')
+          supabase.from('profiles').select('id, full_name, avatar_url, birth_date, group_id, has_set_password, level, role, strava_athlete_id, created_at, updated_at').eq('id', alunoId).single(),
+          supabase.from('groups').select('id, name, is_active, frequency, goal, plan_type, starts_at, created_at, updated_at').eq('is_active', true).order('name')
         ])
 
         if (cancelled) return
@@ -56,16 +56,16 @@ export function useAdminAlunoDetail(alunoId: string | undefined) {
           { data: recData },
           { data: anaData }
         ] = await Promise.all([
-          supabase.from('checkins').select('*, trainings(*)').eq('student_id', alunoId).order('created_at', { ascending: false }).limit(100),
-          supabase.from('records').select('*').eq('student_id', alunoId).order('distance_category'),
-          supabase.from('anamnesis').select('*').eq('user_id', alunoId).maybeSingle()
+          supabase.from('checkins').select('id, created_at, actual_pace_seconds_per_km, student_id, training_id, perceived_effort, actual_distance_m, actual_duration_seconds, approved, approved_by, completed_at, notes, plan_id, strava_activity_id, trainings(id, type, title, duration_minutes, distance_m, description, sets, target_pace_seconds_per_km, tags(id, name, color, created_at, created_by, updated_at))').eq('student_id', alunoId).order('created_at', { ascending: false }).limit(100),
+          supabase.from('records').select('id, distance_category, time_seconds, achieved_at, checkin_id, created_at, strava_activity_id, student_id').eq('student_id', alunoId).order('distance_category'),
+          supabase.from('anamnesis').select('id, user_id, updated_at, created_at, experience_years, height_cm, max_heart_rate, objectives, physical_limitations, weekly_frequency, weight_kg').eq('user_id', alunoId).maybeSingle()
         ])
 
         if (cancelled) return
 
         setCheckins((chkData as unknown as CheckinWithTraining[]) ?? [])
-        setRecords(recData ?? [])
-        setAnamnesis(anaData)
+        setRecords((recData as PersonalRecord[]) ?? [])
+        setAnamnesis(anaData as Anamnesis)
 
         let bestPace: number | null = null
         chkData?.forEach(c => {
@@ -101,8 +101,8 @@ export function useAdminAlunoDetail(alunoId: string | undefined) {
     // Refresh group data
     setProfile(p => p ? { ...p, group_id: groupId } : null)
     if (groupId) {
-      const { data: newGroup } = await supabase.from('groups').select('*').eq('id', groupId).single()
-      setGroup(newGroup)
+      const { data: newGroup } = await supabase.from('groups').select('id, name, is_active, frequency, goal, plan_type, starts_at, created_at, updated_at').eq('id', groupId).single()
+      setGroup(newGroup as Group)
     } else {
       setGroup(null)
     }

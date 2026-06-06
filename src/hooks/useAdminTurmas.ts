@@ -19,7 +19,7 @@ export function useAdminTurmas() {
         { data: groups, error: groupsError },
         { data: members, error: membersError },
       ] = await Promise.all([
-        supabase.from('groups').select('*').order('name'),
+        supabase.from('groups').select('id, name, is_active, frequency, goal, plan_type, starts_at, created_at, updated_at').order('name'),
         supabase
           .from('profiles')
           .select('group_id')
