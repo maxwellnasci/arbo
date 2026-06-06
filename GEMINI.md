@@ -68,7 +68,7 @@ oferecendo acompanhamento de progresso, treinos estruturados e comunidade.
 
 #### Enums
 ```sql
-training_type:     'corrida' | 'hiit' | 'recovery' | 'forca' | 'mobilidade'
+training_type:     'corrida' | 'hiit' | 'recovery' | 'forca' | 'mobilidade'  -- enum legado; trainings.type agora é text
 distance_category: '1km' | '5km' | '10km' | '21km' | '42km'
 user_level:        'iniciante' | 'intermediario' | 'avancado'
 ```
@@ -90,6 +90,9 @@ groups            -- turmas: name, goal, frequency, plan_type, starts_at, is_act
 group_plans       -- planos de ciclo por turma (group_id, starts_at, notes, created_by, released_through_week smallint DEFAULT 0 — 0=bloqueado, 1–4=semanas liberadas até N)
 group_plan_trainings -- pivot: week_number (1–4) × day_of_week (1–6) × training_id
 messages          -- chat admin↔aluno: student_id, sender_id, admin_id, content, deleted_by_student, deleted_by_admin, read_at
+invites           -- log de convites enviados: email, role, status, invited_by, created_at
+tags              -- etiquetas coloridas para treinos: name, color (#hex), created_by
+training_types    -- tipos personalizados de treino: name text NOT NULL UNIQUE, is_custom boolean DEFAULT true, created_by
 ```
 
 #### Convenções de schema
@@ -126,12 +129,17 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `group_plans` | SELECT, INSERT, UPDATE, DELETE |
 | `group_plan_trainings` | SELECT, INSERT, UPDATE, DELETE |
 | `messages` | SELECT, INSERT, UPDATE |
+| `invites` | SELECT, INSERT |
+| `tags` | SELECT, INSERT, UPDATE, DELETE |
+| `training_types` | SELECT, INSERT, DELETE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy RLS correta.
 
 ### Tipos TypeScript
 - `src/lib/database.types.ts` — gerado pelo Supabase (não editar)
-- `src/lib/types.ts` — atalhos: `Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record`!), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`, `GroupPlan`, `GroupPlanTraining`
+- `src/lib/types.ts` — atalhos: `Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record`!), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`, `GroupPlan`, `GroupPlanTraining`, `Tag`, `TrainingCustomType`
+- `TrainingType` é branded union: `'corrida' | 'hiit' | 'recovery' | 'forca' | 'mobilidade' | (string & {})` — aceita custom sem perder autocomplete
+- `src/lib/trainingUtils.ts` — constantes e helpers: `TAG_COLORS`, `TRAINING_TYPE_OPTIONS`, `TRAINING_TYPE_LABELS`, `insertTag(userId, name, color)`, `insertTrainingType(userId, name)`. Não duplicar em componentes.
 - Regenerar tipos: `npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/database.types.ts`
 
 ## Estrutura de Pastas (Frontend)
@@ -319,6 +327,8 @@ npx supabase login
 - Task 33: Bug fix — chips S1–S4 agora fazem toggle bidirecional (permite bloquear semanas já liberadas) ✅
 - Task 34: Feature — Exclusão de aluno: Edge Function `delete-user` + modal de confirmação em `AdminAlunoDetail` ✅
 - Task 35: Performance — Relatório completo + 7 índices SQL criados no Supabase ✅
+- Task 36: Sistema de Etiquetas/Tipos inline — `training_types` no banco, seleção + criação inline nos formulários, painel de gerenciamento em `/admin/treinos` ✅
+- Task 37: 10 correções no sistema de etiquetas/tipos — catch Supabase, cancelled flag, UUID vazio, UNIQUE constraint, CSS vars, is_custom filter, trainingUtils.ts, TrainingType branded union, mutations no pai ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
 

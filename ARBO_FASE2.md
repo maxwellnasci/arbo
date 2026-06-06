@@ -52,6 +52,8 @@
 | **Exclusão de aluno** | ✅ Edge Function `delete-user` (JWT admin, service_role, CORS allowlist) + modal de confirmação em `AdminAlunoDetail` (2026-06-05) |
 | **7 índices SQL de performance** | ✅ `checkins(student_id)`, `records(student_id)`, `records(achieved_at DESC)`, `group_plans(group_id, starts_at)`, `group_plan_trainings(group_plan_id)`, `messages(student_id)`, `profiles(role)` — criados no Supabase (2026-06-05) |
 | **Relatório de performance** | ✅ N+1 em `useAdminAlunoDetail`, select wildcard, checkins sem limit, query strava_connections, layout shift logo — **correções no código pendentes** (2026-06-05) |
+| **Sistema de Etiquetas/Tipos inline (Task 36)** | ✅ Tabela `training_types` (RLS + UNIQUE), `trainings.type` migrado para `text`, criação inline no formulário de treino, painel de gerenciamento em `/admin/treinos` (2026-06-05) |
+| **10 correções sistema etiquetas/tipos (Task 37)** | ✅ `trainingUtils.ts` extraído, CSS vars, cancelled flag, UNIQUE constraint, `is_custom` filter, branded union `TrainingType`, mutations no pai (2026-06-05) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 

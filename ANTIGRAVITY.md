@@ -119,9 +119,31 @@ Somos um **time de 3**:
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` ✅ · `npm run build` ✅
 
+### O que foi feito em 2026-06-05 (Parte 4 — Gemini + Claude Code)
+
+**Sistema de Etiquetas/Tipos inline (Task 36 — Gemini):**
+- Schema: tabela `training_types` (`id uuid PK`, `name text NOT NULL UNIQUE`, `is_custom boolean DEFAULT true`, `created_by uuid FK`) com RLS + GRANT SELECT, INSERT, DELETE para `authenticated`
+- `trainings.type` migrado de enum `training_type` para `text` (migration `20260606010118`)
+- `TreinoFormPanel.tsx` — campos de Tipo e Etiqueta com criação inline: seleciona existente ou abre mini-form para criar novo; color picker de 8 cores para etiquetas
+- `AdminTreinos.tsx` — painel colapsável "Gerenciar Etiquetas e Tipos" com lista + exclusão
+- `AdminTurmaDetail.tsx` — mesmo sistema inline integrado no `CreateTrainingForm` da turma
+
+**10 correções (Task 37 — Claude Code — code review completo):**
+- `src/lib/trainingUtils.ts` criado: `TAG_COLORS`, `TRAINING_TYPE_OPTIONS`, `TRAINING_TYPE_LABELS`, `insertTag()`, `insertTrainingType()` — fonte única compartilhada
+- `try/catch` ao redor de chamadas Supabase removidos (Supabase JS nunca lança; usar `{error}`)
+- `cancelled` flag adicionada no `useEffect` de carga de tags/tipos
+- User guard (`if (!user)`) nos handlers de criação
+- UNIQUE constraint `training_types_name_unique` + tratamento de código `23505`
+- Hex hardcoded em `TreinoFormPanel` → CSS vars semânticas
+- `.eq('is_custom', true)` na query de tipos
+- `refetch()` desnecessário removido dos handlers de delete
+- `TrainingType` como branded union `'corrida' | ... | (string & {})`
+- Mutations de etiqueta/tipo movidas para os pais (`AdminTreinos`, `AdminTurmaDetail`); `TreinoFormPanel` recebe callbacks async
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
+
 ### Próximo passo
 - Correções de performance no código: N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query em `strava_connections`
-- Botão de etiquetas e tipos personalizados com seleção inline nos formulários de treino
 - Validação visual no celular (screenshots mobile do redesign Fase 5)
 - Integração Strava (Edge Function via n8n)
 - ~~Domínio customizado no Vercel~~ ✅ arbo.mxos.com.br

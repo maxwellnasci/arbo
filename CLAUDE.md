@@ -66,6 +66,7 @@ src/
 | `supabase.ts` | Cliente Supabase tipado com `Database` |
 | `database.types.ts` | Tipos gerados pelo Supabase (não editar manualmente) |
 | `types.ts` | Atalhos de tipo para uso no app |
+| `trainingUtils.ts` | Constantes e helpers compartilhados: `TAG_COLORS`, `TRAINING_TYPE_OPTIONS`, `TRAINING_TYPE_LABELS`, `insertTag()`, `insertTrainingType()` |
 
 Para regenerar `database.types.ts` após mudanças no schema:
 ```bash
@@ -74,13 +75,13 @@ npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/da
 
 ### Tipos disponíveis em `src/lib/types.ts`
 
-`Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record` — palavra reservada TS), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`, `GroupPlan`, `GroupPlanTraining`, `TrainingType`, `DistanceCategory`, `UserLevel`.
+`Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record` — palavra reservada TS), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`, `GroupPlan`, `GroupPlanTraining`, `Tag`, `TrainingCustomType`, `TrainingType`, `DistanceCategory`, `UserLevel`.
 
 ### Banco de dados (Supabase — project: `jhfkflnixzivuichmkie`)
 
-**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `groups`, `group_plans`, `group_plan_trainings`, `messages`, `invites`, `tags`
+**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `groups`, `group_plans`, `group_plan_trainings`, `messages`, `invites`, `tags`, `training_types`
 
-**Enums:** `training_type` · `distance_category` · `user_level`
+**Enums:** `training_type` (enum legado — `trainings.type` migrado para `text`) · `distance_category` · `user_level`
 
 **Convenções de schema:**
 - Distâncias em metros (`integer`), tempos/paces em segundos (`integer`)
@@ -119,6 +120,7 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `tags` | SELECT, INSERT, UPDATE, DELETE |
 | `messages` | SELECT, INSERT, UPDATE |
 | `invites` | SELECT, INSERT |
+| `training_types` | SELECT, INSERT, DELETE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy correta.
 
@@ -208,6 +210,10 @@ catch (e: unknown) {
 - **`supabase gen types`** pode incluir aviso de versão no final do arquivo gerado — remover manualmente as linhas de texto após o `} as const` antes de commitar.
 - **Checkins limitados a 100 registros no frontend (`limit(100)`)** — decisão MVP 2026-06-05. Quando algum aluno atingir esse limite, implementar RPC no Supabase para calcular streak no banco e separar da query de exibição.
 - **CSS Variables:** usar sempre variáveis semânticas de `src/index.css`. Nunca hardcodar `#fff`, `#000`, `#1c1c1c` etc. em novos componentes.
+- **`TrainingType`** é branded union: `'corrida' | 'hiit' | 'recovery' | 'forca' | 'mobilidade' | (string & {})` — aceita strings arbitrárias (tipos custom) sem perder autocomplete. `trainings.type` migrado de enum para `text` (migration `20260606010118`).
+- **`training_types`** — tabela de tipos personalizados: `id uuid PK`, `name text NOT NULL UNIQUE`, `is_custom boolean DEFAULT true`, `created_by uuid FK profiles(id)`. Sempre filtrar com `.eq('is_custom', true)` para distinguir dos embutidos.
+- **`trainingUtils.ts`** (`src/lib/`) — fonte única de verdade para `TAG_COLORS`, `TRAINING_TYPE_OPTIONS`, `TRAINING_TYPE_LABELS`, e helpers `insertTag(userId, name, color)` / `insertTrainingType(userId, name)`. Não duplicar em componentes.
+- **Mutations de etiqueta/tipo** devem ficar no componente pai (page), não em componentes presentacionais. `TreinoFormPanel` expõe `onCreateTag: (name, color) => Promise<Tag | null>` e `onCreateType: (name) => Promise<TrainingCustomType | null>` — a responsabilidade de chamar Supabase é do pai.
 
 ## Autenticação (implementada)
 
@@ -295,6 +301,8 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 33:** Bug fix — chips S1–S4 agora fazem toggle bidirecional (permite bloquear semanas já liberadas) ✅
 - **Task 34:** Feature — Exclusão de aluno: Edge Function `delete-user` + modal de confirmação em `AdminAlunoDetail` ✅
 - **Task 35:** Performance — Relatório completo + 7 índices SQL criados no Supabase ✅
+- **Task 36:** Sistema de Etiquetas/Tipos inline — `training_types` no banco, seleção + criação inline nos formulários de treino, painel de gerenciamento em `/admin/treinos` ✅
+- **Task 37:** 10 correções no sistema de etiquetas/tipos — catch Supabase, cancelled flag, UUID vazio, UNIQUE constraint, hex hardcoded → CSS vars, `is_custom` filter, refetch desnecessário removido, `trainingUtils.ts` extraído, `TrainingType` branded union, mutations movidas para pai ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)  
 **Fase 3:** 100% completa ✅  
@@ -302,7 +310,6 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 ### Próximos passos
 - Correções de performance pendentes no código: N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query desnecessária em `strava_connections`, layout shift na logo
-- Botão de etiquetas e tipos personalizados com seleção inline nos formulários de treino
 - Validação visual no celular (screenshots mobile)
 - Integração Strava (Edge Function via n8n)
 - SMTP externo (Resend ou AWS SES) antes de produção

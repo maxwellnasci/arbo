@@ -280,6 +280,41 @@ CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 
 Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima sessão.
 
+---
+
+## O que foi feito em 2026-06-05 (Parte 4)
+
+**Sistema de Etiquetas/Tipos inline (Gemini — implementação inicial):**
+- Schema: tabela `training_types` criada no Supabase com RLS e GRANT: `id uuid PK`, `name text NOT NULL UNIQUE`, `is_custom boolean DEFAULT true`, `created_by uuid FK profiles(id)`, `created_at timestamptz`
+- Migration `20260606010118` aplicada: `trainings.type` migrado de `training_type` enum para `text` — permite tipos personalizados livres
+- `TreinoFormPanel.tsx` — campos de Tipo e Etiqueta com seleção inline + criação de novo tipo/etiqueta diretamente no formulário (sem sair da tela); color picker de 8 cores para etiquetas
+- `AdminTreinos.tsx` — painel "Gerenciar Etiquetas e Tipos" colapsável com lista + botão de exclusão individual para cada etiqueta/tipo
+- `AdminTurmaDetail.tsx` — integração do mesmo sistema inline no `CreateTrainingForm` da turma
+
+**10 correções (Claude Code — code review + fixes, commit `c65ef16`):**
+1. **`try/catch` em chamadas Supabase** removido — Supabase JS nunca lança; verificar `{error}` do retorno
+2. **`cancelled` flag** adicionada no `useEffect` de carga de tags/tipos em `AdminTreinos.tsx` — previne setState em componente desmontado
+3. **User guard** em `handleCreateTag`/`handleCreateType` — `if (!user) { toast.error('Sessão expirada'); return null }`
+4. **UNIQUE constraint** `training_types_name_unique` aplicada via migration `20260606020000` — previne tipos duplicados; código trata código `23505` com mensagem amigável
+5. **Hex hardcoded** em `TreinoFormPanel` substituídos por CSS vars: `#111` → `var(--bg-input)`, `#fff` → `var(--text-primary)`, `#333` → `var(--border-subtle)`, etc.
+6. **`.eq('is_custom', true)`** adicionado à query de `training_types` — distingue tipos embutidos dos personalizados
+7. **`refetch()` desnecessário** removido dos handlers de delete em `AdminTreinos.tsx` — atualização otimista via `setState` é suficiente
+8. **`TAG_COLORS` e labels extraídos** para `src/lib/trainingUtils.ts` — fonte única compartilhada entre `TreinoFormPanel` e `AdminTurmaDetail`; helpers `insertTag()` e `insertTrainingType()` também centralizados
+9. **`TrainingType` como branded union** em `src/lib/types.ts`: `'corrida' | 'hiit' | 'recovery' | 'forca' | 'mobilidade' | (string & {})` — preserva autocomplete e aceita valores custom
+10. **Mutations movidas para componente pai** — `TreinoFormPanel` agora recebe `onCreateTag: (name, color) => Promise<Tag | null>` e `onCreateType: (name) => Promise<TrainingCustomType | null>`; Supabase não é chamado dentro do componente presentacional
+
+**Arquivos criados/modificados:**
+- `src/lib/trainingUtils.ts` (NOVO) — `TAG_COLORS`, `TRAINING_TYPE_OPTIONS`, `TRAINING_TYPE_LABELS`, `insertTag()`, `insertTrainingType()`
+- `supabase/migrations/20260606020000_training_types_unique_name.sql` (NOVO — deve ser aplicado manualmente)
+- `src/lib/types.ts` — `TrainingType` alterado para branded union; `Tag` e `TrainingCustomType` adicionados
+- `src/components/admin/TreinoFormPanel.tsx` — props async, CSS vars, sem Supabase direto
+- `src/pages/admin/AdminTreinos.tsx` — useEffect com cancelled, error handling, handleCreate com user guard
+- `src/pages/admin/AdminTurmaDetail.tsx` — deduplicação via trainingUtils, mutations no pai
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
+
+---
+
 **Bug fix — toggle de liberação semanal (commit `ad42bda`):**
 - `useGroupPlanMutations.ts`: `releaseThrough` aceita `0 | 1 | 2 | 3 | 4` (antes só `1 | 2 | 3 | 4`)
 - `AdminTurmaDetail.tsx`:
