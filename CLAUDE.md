@@ -305,6 +305,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 37:** 10 correções no sistema de etiquetas/tipos — catch Supabase, cancelled flag, UUID vazio, UNIQUE constraint, hex hardcoded → CSS vars, `is_custom` filter, refetch desnecessário removido, `trainingUtils.ts` extraído, `TrainingType` branded union, mutations movidas para pai ✅
 - **Task 38:** Fix "Unexpected Application Error!" em produção — `RouterErrorElement` adicionado como `errorElement` na rota raiz do `createBrowserRouter`; detecta falha de chunk (`Failed to fetch dynamically imported module`) e faz auto-reload com guard `sessionStorage` para evitar loop ✅
 - **Task 39:** 5 Melhorias DeepSeek — RLS em `messages`, remoção de `select('*')`, queries paralelizadas via Deep Join em `useAdminTurmaDetail`, `<ConfirmModal />` premium em vez de `window.confirm`, Workbox runtimeCaching + fallback `offline.html` ✅
+- **Task 40:** Limpeza profunda de performance/qualidade — 10 ocorrências de `select('*')` removidas em 8 arquivos, deleção do gargalo de N+1 no `changeGroup`, variáveis CSS globais fixadas no `<ConfirmModal />` (`--red-accent` adicionada no Light/Dark) e screenshots fantasmas do manifest.webmanifest exterminados ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)  
 **Fase 3:** 100% completa ✅  

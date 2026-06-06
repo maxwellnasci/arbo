@@ -331,6 +331,7 @@ npx supabase login
 - Task 37: 10 correções no sistema de etiquetas/tipos — catch Supabase, cancelled flag, UUID vazio, UNIQUE constraint, CSS vars, is_custom filter, trainingUtils.ts, TrainingType branded union, mutations no pai ✅
 - Task 38: Fix "Unexpected Application Error!" em produção — `RouterErrorElement` com `errorElement` na rota raiz do `createBrowserRouter`; detecta chunk errors e auto-reload com guard sessionStorage ✅
 - Task 39: 5 Melhorias DeepSeek — RLS messages, remoção de wildcard select, paralelização `useAdminTurmaDetail` com join, `ConfirmModal` UX, e caching avançado PWA com `offline.html` ✅
+- Task 40: Qualidade & Perfomance — N+1 eliminado no changeGroup, 10 `select('*')` removidos, CSS vars aplicadas no `ConfirmModal` e manifesto PWA higienizado ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)
 

@@ -369,3 +369,11 @@ Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima s
 5. **PWA Avançado:** Configurado `runtimeCaching` no Workbox (NetworkFirst para API) e página de fallback `public/offline.html`.
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
+
+**Task 40 — Limpeza de Qualidade & Performance Pós-Task 39 (Antigravity):**
+1. **Performance (`select('*')`):** 10 remoções simultâneas em 8 arquivos (`useProgresso`, `useWeeklyPlan`, `useAlunoPerfil`, `useAdminFeedbacks`, `useAdminPRs`, `AdminConvites`, `AdminTurmaDetail` e `AdminTreinos`), economizando banda.
+2. **Performance (N+1 no changeGroup):** Erradicado recarregamento de DB em `useAdminAlunoDetail.ts`, operando agora estritamente com `allGroups` já cacheados na memória.
+3. **Qualidade CSS (ConfirmModal):** Adequação para o design system (`var(--bg-surface)`, `var(--red-accent)`) + injeção de `--red-accent` oficial no `index.css` suportando light e dark mode fluídos.
+4. **Resiliência PWA:** Removido rastros de `screenshots` não existentes do `vite.config.ts`, extirpando falsos `404` no browser.
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
