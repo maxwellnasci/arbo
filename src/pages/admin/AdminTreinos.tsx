@@ -7,6 +7,8 @@ import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
 import { supabase } from '../../lib/supabase'
 import type { Tag, TrainingCustomType } from '../../lib/types'
+import { insertTag, insertTrainingType } from '../../lib/trainingUtils'
+import { useAuth } from '../../contexts/AuthContext'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, ChevronDown, Trash2 } from 'lucide-react'
@@ -21,6 +23,7 @@ const listContainer = {
 export function AdminTreinos() {
   const { treinos, loading, error, refetch } = useAdminTreinos()
   const { createTraining, updateTraining, deleteTraining } = useTreinoMutations()
+  const { user } = useAuth()
   const [tags, setTags] = useState<Tag[]>([])
   const [customTypes, setCustomTypes] = useState<TrainingCustomType[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -29,12 +32,20 @@ export function AdminTreinos() {
   const [isManageOpen, setIsManageOpen] = useState(false)
 
   useEffect(() => {
-    supabase.from('tags').select('*').order('name').then(({ data }) => {
-      if (data) setTags(data)
-    })
-    supabase.from('training_types').select('*').order('name').then(({ data }) => {
-      if (data) setCustomTypes(data)
-    })
+    let cancelled = false
+    async function load() {
+      const [tagsRes, typesRes] = await Promise.all([
+        supabase.from('tags').select('*').order('name'),
+        supabase.from('training_types').select('*').eq('is_custom', true).order('name'),
+      ])
+      if (cancelled) return
+      if (tagsRes.error) { toast.error('Erro ao carregar etiquetas: ' + tagsRes.error.message); return }
+      if (typesRes.error) { toast.error('Erro ao carregar tipos: ' + typesRes.error.message); return }
+      if (tagsRes.data) setTags(tagsRes.data)
+      if (typesRes.data) setCustomTypes(typesRes.data)
+    }
+    load()
+    return () => { cancelled = true }
   }, [])
 
   const filteredTreinos = useMemo(() => {
@@ -87,25 +98,42 @@ export function AdminTreinos() {
 
   const handleDeleteTag = async (id: string) => {
     if (!window.confirm('Excluir esta etiqueta? Ela será removida de todos os treinos que a utilizam.')) return
-    try {
-      await supabase.from('tags').delete().eq('id', id)
-      setTags(prev => prev.filter(t => t.id !== id))
-      toast.success('Etiqueta excluída')
-      refetch()
-    } catch {
-      toast.error('Erro ao excluir etiqueta')
-    }
+    const { error } = await supabase.from('tags').delete().eq('id', id)
+    if (error) { toast.error(error.message); return }
+    setTags(prev => prev.filter(t => t.id !== id))
+    toast.success('Etiqueta excluída')
   }
 
   const handleDeleteType = async (id: string) => {
     if (!window.confirm('Excluir este tipo? Treinos com este tipo poderão ficar sem classificação.')) return
-    try {
-      await supabase.from('training_types').delete().eq('id', id)
-      setCustomTypes(prev => prev.filter(t => t.id !== id))
-      toast.success('Tipo excluído')
-    } catch {
-      toast.error('Erro ao excluir tipo')
+    const { error } = await supabase.from('training_types').delete().eq('id', id)
+    if (error) { toast.error(error.message); return }
+    setCustomTypes(prev => prev.filter(t => t.id !== id))
+    toast.success('Tipo excluído')
+  }
+
+  const handleCreateTag = async (name: string, color: string): Promise<Tag | null> => {
+    if (!user) { toast.error('Sessão expirada. Recarregue a página.'); return null }
+    const { data, error } = await insertTag(user.id, name, color)
+    if (error || !data) {
+      if (error?.code === '23505') toast.error('Já existe uma etiqueta com esse nome')
+      else toast.error(error?.message ?? 'Erro ao criar etiqueta')
+      return null
     }
+    setTags(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    return data
+  }
+
+  const handleCreateType = async (name: string): Promise<TrainingCustomType | null> => {
+    if (!user) { toast.error('Sessão expirada. Recarregue a página.'); return null }
+    const { data, error } = await insertTrainingType(user.id, name)
+    if (error || !data) {
+      if (error?.code === '23505') toast.error('Já existe um tipo com esse nome')
+      else toast.error(error?.message ?? 'Erro ao criar tipo')
+      return null
+    }
+    setCustomTypes(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    return data
   }
 
   return (
@@ -263,8 +291,8 @@ export function AdminTreinos() {
         onClose={handleClosePanel}
         tags={tags}
         customTypes={customTypes}
-        onTagCreated={tag => setTags(prev => [...prev, tag].sort((a, b) => a.name.localeCompare(b.name)))}
-        onTypeCreated={type => setCustomTypes(prev => [...prev, type].sort((a, b) => a.name.localeCompare(b.name)))}
+        onCreateTag={handleCreateTag}
+        onCreateType={handleCreateType}
       />
     </div>
   )

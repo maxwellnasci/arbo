@@ -18,6 +18,10 @@ export type Tag             = Database['public']['Tables']['tags']['Row']
 export type TrainingCustomType = Database['public']['Tables']['training_types']['Row']
 
 // Enums
-export type TrainingType     = string // Database['public']['Enums']['training_type'] is now obsolete as column is text
+// trainings.type was converted from enum to text (migration 20260606010118).
+// The branded union `(string & {})` preserves IDE autocomplete for known values
+// while allowing custom types. Record<TrainingType, V> maps still need `?? fallback`
+// for custom type keys not present in the record.
+export type TrainingType = 'corrida' | 'hiit' | 'recovery' | 'forca' | 'mobilidade' | (string & {})
 export type DistanceCategory = Database['public']['Enums']['distance_category']
 export type UserLevel        = Database['public']['Enums']['user_level']

@@ -6,6 +6,7 @@ import { useAdminTurmaDetail, type GroupDayTraining } from '../../hooks/useAdmin
 import { useGroupPlanMutations, type NewTrainingInput } from '../../hooks/useGroupPlanMutations'
 import { useAuth } from '../../contexts/AuthContext'
 import type { Tag, Training, TrainingCustomType } from '../../lib/types'
+import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS, insertTag, insertTrainingType } from '../../lib/trainingUtils'
 import { EditGroupModal } from '../../components/admin/EditGroupModal'
 import { Edit2 } from 'lucide-react'
 
@@ -16,23 +17,8 @@ const goalLabel: Record<string, string> = {
   evoluir_10k: 'Evolução 10K', evoluir_21k: 'Evolução 21K',
 }
 const frequencyLabel: Record<string, string> = { '2x': '2×/sem', '3x': '3×/sem' }
-const typeLabel: Record<string, string> = {
-  corrida: 'Corrida', hiit: 'HIIT', recovery: 'Recuperação',
-  forca: 'Força', mobilidade: 'Mobilidade',
-}
 const DAY_NAMES = ['', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
 const MONTH_NAMES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
-
-const TAG_COLORS = [
-  { name: 'Laranja', hex: '#E8521A' },
-  { name: 'Azul', hex: '#3B82F6' },
-  { name: 'Verde', hex: '#22C55E' },
-  { name: 'Vermelho', hex: '#EF4444' },
-  { name: 'Amarelo', hex: '#EAB308' },
-  { name: 'Roxo', hex: '#A855F7' },
-  { name: 'Ciano', hex: '#06B6D4' },
-  { name: 'Cinza', hex: '#71717A' },
-]
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -76,6 +62,7 @@ export default function AdminTurmaDetail() {
     useAdminTurmaDetail(id ?? '')
   const { addTraining, removeTraining, createAndAddTraining, releaseThrough } =
     useGroupPlanMutations(id ?? '', cycleStart, plan?.id ?? null)
+  const { user } = useAuth()
 
   const [view, setView] = useState<'week' | 'month'>('week')
   const [selectedWeek, setSelectedWeek] = useState(0)
@@ -99,7 +86,7 @@ export default function AdminTurmaDetail() {
       const [trainingsRes, tagsRes, typesRes] = await Promise.all([
         supabase.from('trainings').select('*').order('title'),
         supabase.from('tags').select('*').order('name'),
-        supabase.from('training_types').select('*').order('name'),
+        supabase.from('training_types').select('*').eq('is_custom', true).order('name'),
       ])
       if (cancelled) return
       if (trainingsRes.error) { setMutationError('Erro ao carregar treinos: ' + trainingsRes.error.message); return }
@@ -167,6 +154,30 @@ export default function AdminTurmaDetail() {
     } finally {
       setMutating(false)
     }
+  }
+
+  async function handleCreateTagMutation(name: string, color: string): Promise<Tag | null> {
+    if (!user) { toast.error('Sessão expirada. Recarregue a página.'); return null }
+    const { data, error } = await insertTag(user.id, name, color)
+    if (error || !data) {
+      if (error?.code === '23505') toast.error('Já existe uma etiqueta com esse nome')
+      else toast.error(error?.message ?? 'Erro ao criar etiqueta')
+      return null
+    }
+    setAllTags(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    return data
+  }
+
+  async function handleCreateTypeMutation(name: string): Promise<TrainingCustomType | null> {
+    if (!user) { toast.error('Sessão expirada. Recarregue a página.'); return null }
+    const { data, error } = await insertTrainingType(user.id, name)
+    if (error || !data) {
+      if (error?.code === '23505') toast.error('Já existe um tipo com esse nome')
+      else toast.error(error?.message ?? 'Erro ao criar tipo')
+      return null
+    }
+    setAllCustomTypes(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+    return data
   }
 
   async function handleSetRelease(target: 0 | 1 | 2 | 3 | 4) {
@@ -321,8 +332,8 @@ export default function AdminTurmaDetail() {
               onRemoveTraining={handleRemoveTraining}
               onCreateTraining={handleCreateTraining}
               onClose={() => { setMutationError(null); setPanel(null) }}
-              onTagCreated={(tag: Tag) => setAllTags(prev => [...prev, tag].sort((a, b) => a.name.localeCompare(b.name)))}
-              onTypeCreated={(type: TrainingCustomType) => setAllCustomTypes(prev => [...prev, type].sort((a, b) => a.name.localeCompare(b.name)))}
+              onCreateTag={handleCreateTagMutation}
+              onCreateType={handleCreateTypeMutation}
             />
           )}
         </div>
@@ -496,7 +507,7 @@ function WeekView({
                       </div>
                     )}
                     <div style={{ fontSize: '8px', color: '#E8521A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '2px' }}>
-                      {typeLabel[entry.training.type] ?? entry.training.type}
+                      {TRAINING_TYPE_LABELS[entry.training.type] ?? entry.training.type}
                     </div>
                     <div style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 600, lineHeight: 1.3 }}>{entry.training.title}</div>
                     {entry.training.distance_m && (
@@ -590,8 +601,8 @@ function SidePanel({
   onRemoveTraining,
   onCreateTraining,
   onClose,
-  onTagCreated,
-  onTypeCreated,
+  onCreateTag,
+  onCreateType,
 }: {
   cycleStart: string
   panelState: PanelState
@@ -606,8 +617,8 @@ function SidePanel({
   onRemoveTraining: () => void
   onCreateTraining: (input: NewTrainingInput) => void
   onClose: () => void
-  onTagCreated: (tag: Tag) => void
-  onTypeCreated: (type: TrainingCustomType) => void
+  onCreateTag: (name: string, color: string) => Promise<Tag | null>
+  onCreateType: (name: string) => Promise<TrainingCustomType | null>
 }) {
   const { weekNumber, dayOfWeek, mode, existing } = panelState
   const date = cycleStart ? dayDate(cycleStart, weekNumber, dayOfWeek) : null
@@ -642,7 +653,7 @@ function SidePanel({
         <div>
           <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>
             {existing ? (
-              <><span style={{ color: '#E8521A' }}>{typeLabel[existing.training.type] ?? existing.training.type}</span> — {DAY_NAMES[dayOfWeek]}</>
+              <><span style={{ color: '#E8521A' }}>{TRAINING_TYPE_LABELS[existing.training.type] ?? existing.training.type}</span> — {DAY_NAMES[dayOfWeek]}</>
             ) : (
               <><span style={{ color: '#E8521A' }}>Adicionar treino</span> — {dayLabel}</>
             )}
@@ -730,8 +741,8 @@ function SidePanel({
           allCustomTypes={allCustomTypes}
           onBack={() => onModeChange('search')}
           onSubmit={onCreateTraining}
-          onTagCreated={onTagCreated}
-          onTypeCreated={onTypeCreated}
+          onCreateTag={onCreateTag}
+          onCreateType={onCreateType}
         />
       )}
     </div>
@@ -755,7 +766,7 @@ function TrainingListItem({ training, mutating, onSelect, tagName, tagColor }: {
       <div>
         <div style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 600 }}>{training.title}</div>
         <div style={{ fontSize: '8px', color: 'var(--text-secondary)', marginTop: '1px' }}>
-          {typeLabel[training.type] ?? training.type}
+          {TRAINING_TYPE_LABELS[training.type] ?? training.type}
           {tagName && <> · <span style={{ color: tagColor }}>{tagName}</span></>}
           {training.distance_m ? ` · ${(training.distance_m / 1000).toFixed(1)}km` : ''}
         </div>
@@ -766,7 +777,6 @@ function TrainingListItem({ training, mutating, onSelect, tagName, tagColor }: {
 
 // ─── CreateTrainingForm ─────────────────────────────────────────────────────
 
-const TRAINING_TYPES: string[] = ['corrida', 'hiit', 'recovery', 'forca', 'mobilidade']
 
 function parsePace(value: string): number | undefined {
   const match = value.match(/^(\d+):(\d{2})$/)
@@ -774,16 +784,15 @@ function parsePace(value: string): number | undefined {
   return parseInt(match[1]) * 60 + parseInt(match[2])
 }
 
-function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmit, onTagCreated, onTypeCreated }: {
+function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmit, onCreateTag, onCreateType }: {
   mutating: boolean
   allTags: Tag[]
   allCustomTypes: TrainingCustomType[]
   onBack: () => void
   onSubmit: (input: NewTrainingInput) => void
-  onTagCreated: (tag: Tag) => void
-  onTypeCreated: (type: TrainingCustomType) => void
+  onCreateTag: (name: string, color: string) => Promise<Tag | null>
+  onCreateType: (name: string) => Promise<TrainingCustomType | null>
 }) {
-  const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [type, setType] = useState<string>('corrida')
   const [distanceKm, setDistanceKm] = useState('')
@@ -791,15 +800,13 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
   const [sets, setSets] = useState('')
   const [description, setDescription] = useState('')
   const [tagId, setTagId] = useState<string>('')
-  
-  // Tag creation state
+
   const [showNewTag, setShowNewTag] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('#E8521A')
   const [creatingTag, setCreatingTag] = useState(false)
   const [tagError, setTagError] = useState<string | null>(null)
 
-  // Type creation state
   const [showNewType, setShowNewType] = useState(false)
   const [newTypeName, setNewTypeName] = useState('')
   const [creatingType, setCreatingType] = useState(false)
@@ -809,15 +816,10 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
     if (!newTagName.trim()) return
     setCreatingTag(true)
     setTagError(null)
-    const { data, error } = await supabase
-      .from('tags')
-      .insert({ name: newTagName.trim(), color: newTagColor, created_by: user?.id ?? '' })
-      .select('*')
-      .single()
+    const tag = await onCreateTag(newTagName.trim(), newTagColor)
     setCreatingTag(false)
-    if (error || !data) { setTagError(error?.message ?? 'Erro ao criar etiqueta'); return }
-    onTagCreated(data as Tag)
-    setTagId(data.id)
+    if (!tag) { setTagError('Erro ao criar etiqueta'); return }
+    setTagId(tag.id)
     setShowNewTag(false)
     setNewTagName('')
   }
@@ -826,15 +828,10 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
     if (!newTypeName.trim()) return
     setCreatingType(true)
     setTypeError(null)
-    const { data, error } = await supabase
-      .from('training_types')
-      .insert({ name: newTypeName.trim(), is_custom: true, created_by: user?.id ?? '' })
-      .select('*')
-      .single()
+    const customType = await onCreateType(newTypeName.trim())
     setCreatingType(false)
-    if (error || !data) { setTypeError(error?.message ?? 'Erro ao criar tipo'); return }
-    onTypeCreated(data as TrainingCustomType)
-    setType(data.name)
+    if (!customType) { setTypeError('Erro ao criar tipo'); return }
+    setType(customType.name)
     setShowNewType(false)
     setNewTypeName('')
   }
@@ -903,7 +900,7 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
             }}
           >
             <optgroup label="Padrão">
-              {TRAINING_TYPES.map(t => <option key={t} value={t}>{typeLabel[t]}</option>)}
+              {TRAINING_TYPE_OPTIONS.map(t => <option key={t} value={t}>{TRAINING_TYPE_LABELS[t]}</option>)}
             </optgroup>
             {allCustomTypes.length > 0 && (
               <optgroup label="Personalizados">

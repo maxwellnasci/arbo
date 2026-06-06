@@ -3,9 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { Tag, TrainingType, TrainingCustomType } from '../../lib/types'
 import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
-import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../contexts/AuthContext'
-import { toast } from 'sonner'
+import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS } from '../../lib/trainingUtils'
 
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
 
@@ -16,46 +14,25 @@ interface TreinoFormPanelProps {
   onSubmit: (data: Omit<TrainingInsert, 'created_by'>) => void
   tags: Tag[]
   customTypes: TrainingCustomType[]
-  onTagCreated: (tag: Tag) => void
-  onTypeCreated: (type: TrainingCustomType) => void
-}
-
-const TAG_COLORS = [
-  { name: 'Laranja', hex: '#E8521A' },
-  { name: 'Azul', hex: '#3B82F6' },
-  { name: 'Verde', hex: '#22C55E' },
-  { name: 'Vermelho', hex: '#EF4444' },
-  { name: 'Amarelo', hex: '#EAB308' },
-  { name: 'Roxo', hex: '#A855F7' },
-  { name: 'Ciano', hex: '#06B6D4' },
-  { name: 'Cinza', hex: '#71717A' },
-]
-
-const typeOptions: TrainingType[] = ['corrida', 'hiit', 'recovery', 'forca', 'mobilidade']
-
-const typeLabel: Record<TrainingType, string> = {
-  corrida: 'Corrida',
-  hiit: 'HIIT',
-  recovery: 'Recuperação',
-  forca: 'Força',
-  mobilidade: 'Mobilidade',
+  onCreateTag: (name: string, color: string) => Promise<Tag | null>
+  onCreateType: (name: string) => Promise<TrainingCustomType | null>
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
-  background: '#111',
-  border: '1px solid #2a2a2a',
+  background: 'var(--bg-input)',
+  border: '1px solid var(--border-subtle)',
   borderRadius: '8px',
   padding: '10px 14px',
-  color: '#fff',
+  color: 'var(--text-primary)',
   fontSize: '14px',
   outline: 'none',
 }
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  color: '#888',
+  color: 'var(--text-secondary)',
   fontSize: '12px',
   fontWeight: 600,
   textTransform: 'uppercase',
@@ -63,8 +40,7 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
 }
 
-export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, onTagCreated, onTypeCreated }: TreinoFormPanelProps) {
-  const { user } = useAuth()
+export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, onCreateTag, onCreateType }: TreinoFormPanelProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [distanceM, setDistanceM] = useState<number | ''>('')
@@ -75,7 +51,6 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
   const [type, setType] = useState<string>('corrida')
   const [tagId, setTagId] = useState('')
 
-  // Inline Creation State
   const [showNewTag, setShowNewTag] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('#E8521A')
@@ -150,18 +125,10 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
   async function handleCreateTag() {
     if (!newTagName.trim()) return
     setCreatingTag(true)
-    const { data, error } = await supabase
-      .from('tags')
-      .insert({ name: newTagName.trim(), color: newTagColor, created_by: user?.id ?? '' })
-      .select('*')
-      .single()
+    const tag = await onCreateTag(newTagName.trim(), newTagColor)
     setCreatingTag(false)
-    if (error || !data) {
-      toast.error(error?.message ?? 'Erro ao criar etiqueta')
-      return
-    }
-    onTagCreated(data as Tag)
-    setTagId(data.id)
+    if (!tag) return
+    setTagId(tag.id)
     setShowNewTag(false)
     setNewTagName('')
   }
@@ -169,18 +136,10 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
   async function handleCreateType() {
     if (!newTypeName.trim()) return
     setCreatingType(true)
-    const { data, error } = await supabase
-      .from('training_types')
-      .insert({ name: newTypeName.trim(), is_custom: true, created_by: user?.id ?? '' })
-      .select('*')
-      .single()
+    const customType = await onCreateType(newTypeName.trim())
     setCreatingType(false)
-    if (error || !data) {
-      toast.error(error?.message ?? 'Erro ao criar tipo')
-      return
-    }
-    onTypeCreated(data as TrainingCustomType)
-    setType(data.name) // Types are string-based now
+    if (!customType) return
+    setType(customType.name)
     setShowNewType(false)
     setNewTypeName('')
   }
@@ -213,7 +172,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
               height: '100%',
               width: '100%',
               maxWidth: '480px',
-              background: '#1c1c1e',
+              background: 'var(--bg-surface)',
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
@@ -227,12 +186,12 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '20px 24px',
-                borderBottom: '1px solid #2a2a2a',
+                borderBottom: '1px solid var(--border-default)',
               }}
             >
               <h2
                 style={{
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   fontSize: '22px',
                   fontWeight: 700,
                   margin: 0,
@@ -248,7 +207,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#555',
+                  color: 'var(--text-tertiary)',
                   cursor: 'pointer',
                   fontSize: '20px',
                   lineHeight: 1,
@@ -300,7 +259,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                       />
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <button type="button" onClick={() => setShowNewType(false)} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1, padding: '6px' }}>Cancelar</button>
-                        <button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim()} style={{ flex: 1, background: '#E8521A', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                        <button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim()} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                           {creatingType ? '...' : 'Criar'}
                         </button>
                       </div>
@@ -315,8 +274,8 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                       style={{ ...inputStyle, cursor: 'pointer' }}
                     >
                       <optgroup label="Padrão">
-                        {typeOptions.map(opt => (
-                          <option key={opt} value={opt}>{typeLabel[opt]}</option>
+                        {TRAINING_TYPE_OPTIONS.map(opt => (
+                          <option key={opt} value={opt}>{TRAINING_TYPE_LABELS[opt]}</option>
                         ))}
                       </optgroup>
                       {customTypes.length > 0 && (
@@ -347,7 +306,8 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                             type="button"
                             onClick={() => setNewTagColor(c.hex)}
                             style={{
-                              width: 20, height: 20, borderRadius: '50%', border: newTagColor === c.hex ? '2px solid #fff' : '2px solid transparent',
+                              width: 20, height: 20, borderRadius: '50%',
+                              border: newTagColor === c.hex ? '2px solid var(--text-primary)' : '2px solid transparent',
                               background: c.hex, cursor: 'pointer', padding: 0,
                             }}
                             title={c.name}
@@ -356,7 +316,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <button type="button" onClick={() => setShowNewTag(false)} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1, padding: '6px' }}>Cancelar</button>
-                        <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: '#E8521A', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                        <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                           {creatingTag ? '...' : 'Criar'}
                         </button>
                       </div>
@@ -419,7 +379,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                     placeholder="Min"
                     style={inputStyle}
                   />
-                  <span style={{ color: '#555', fontSize: '18px', fontWeight: 600 }}>:</span>
+                  <span style={{ color: 'var(--text-tertiary)', fontSize: '18px', fontWeight: 600 }}>:</span>
                   <input
                     type="number"
                     min="0"
@@ -452,10 +412,10 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                   onClick={onClose}
                   style={{
                     background: 'none',
-                    border: '1px solid #2a2a2a',
+                    border: '1px solid var(--border-default)',
                     borderRadius: '8px',
                     padding: '10px 20px',
-                    color: '#aaa',
+                    color: 'var(--text-secondary)',
                     fontSize: '14px',
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -466,7 +426,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                 <button
                   type="submit"
                   style={{
-                    background: '#E8521A',
+                    background: 'var(--orange)',
                     border: 'none',
                     borderRadius: '8px',
                     padding: '10px 24px',
