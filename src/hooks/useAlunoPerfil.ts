@@ -27,7 +27,7 @@ export function useAlunoPerfil(studentId: string) {
         setError(null);
 
         const [profileRes] = await Promise.all([
-          supabase.from('profiles').select('*, groups(name)').eq('id', studentId).single()
+          supabase.from('profiles').select('id, full_name, avatar_url, level, groups(name)').eq('id', studentId).single()
         ]);
 
         if (cancelled) return;

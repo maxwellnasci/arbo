@@ -33,7 +33,7 @@ export default function AdminConvites() {
   const fetchInvites = async () => {
     const { data, error } = await supabase
       .from('invites')
-      .select('*')
+      .select('id, email, role, status, created_at')
       .order('created_at', { ascending: false })
     
     if (!error && data) {
@@ -46,7 +46,7 @@ export default function AdminConvites() {
     async function load() {
       const { data, error } = await supabase
         .from('invites')
-        .select('*')
+        .select('id, email, role, status, created_at')
         .order('created_at', { ascending: false })
       if (!error && data && !cancelled) setInvites(data)
     }

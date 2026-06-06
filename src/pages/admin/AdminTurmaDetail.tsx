@@ -84,9 +84,9 @@ export default function AdminTurmaDetail() {
 
     async function load() {
       const [trainingsRes, tagsRes, typesRes] = await Promise.all([
-        supabase.from('trainings').select('*').order('title'),
-        supabase.from('tags').select('*').order('name'),
-        supabase.from('training_types').select('*').eq('is_custom', true).order('name'),
+        supabase.from('trainings').select('id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, tag_id, created_at, created_by, updated_at').order('title'),
+        supabase.from('tags').select('id, name, color, created_at, created_by, updated_at').order('name'),
+        supabase.from('training_types').select('id, name, is_custom, created_at, created_by').eq('is_custom', true).order('name'),
       ])
       if (cancelled) return
       if (trainingsRes.error) { setMutationError('Erro ao carregar treinos: ' + trainingsRes.error.message); return }

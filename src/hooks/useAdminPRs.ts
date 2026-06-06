@@ -29,7 +29,7 @@ export function useAdminPRs(limit = 10) {
 
         const { data, error } = await supabase
           .from('records')
-          .select('*, profiles(full_name, avatar_url)')
+          .select('id, student_id, distance_category, time_seconds, achieved_at, profiles(full_name, avatar_url)')
           .order('achieved_at', { ascending: false })
           .limit(limit);
 

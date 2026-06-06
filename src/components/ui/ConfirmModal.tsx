@@ -27,7 +27,7 @@ export function ConfirmModal({
     switch (type) {
       case 'danger':
       case 'warning':
-        return <AlertTriangle size={24} color={type === 'danger' ? '#ef4444' : '#E8521A'} />
+        return <AlertTriangle size={24} color={type === 'danger' ? 'var(--red-accent)' : 'var(--orange)'} />
       case 'info':
         return <Info size={24} color="#3b82f6" />
     }
@@ -35,10 +35,10 @@ export function ConfirmModal({
 
   const getButtonColor = () => {
     switch (type) {
-      case 'danger': return '#ef4444'
-      case 'warning': return '#E8521A'
+      case 'danger': return 'var(--red-accent)'
+      case 'warning': return 'var(--orange)'
       case 'info': return '#3b82f6'
-      default: return '#E8521A'
+      default: return 'var(--orange)'
     }
   }
 
@@ -68,8 +68,8 @@ export function ConfirmModal({
             exit={{ scale: 0.95, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             style={{
-              backgroundColor: 'var(--color-bg-secondary, #1e1e1e)',
-              border: '1px solid var(--color-border, #2a2a2a)',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-default)',
               borderRadius: '16px',
               padding: '24px',
               width: '100%',
@@ -93,7 +93,7 @@ export function ConfirmModal({
                 <h3 style={{ 
                   margin: '0 0 8px 0', 
                   fontSize: '18px', 
-                  color: 'var(--color-text-primary, #ffffff)',
+                  color: 'var(--text-primary)',
                   fontWeight: 600
                 }}>
                   {title}
@@ -101,7 +101,7 @@ export function ConfirmModal({
                 <p style={{ 
                   margin: 0, 
                   fontSize: '14px', 
-                  color: 'var(--color-text-secondary, #a1a1aa)',
+                  color: 'var(--text-secondary)',
                   lineHeight: '1.5'
                 }}>
                   {description}
@@ -114,8 +114,8 @@ export function ConfirmModal({
                 onClick={onCancel}
                 style={{
                   background: 'transparent',
-                  border: '1px solid var(--color-border, #2a2a2a)',
-                  color: 'var(--color-text-primary, #ffffff)',
+                  border: '1px solid var(--border-default)',
+                  color: 'var(--text-primary)',
                   padding: '10px 16px',
                   borderRadius: '8px',
                   fontSize: '14px',

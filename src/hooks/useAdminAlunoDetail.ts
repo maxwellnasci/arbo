@@ -101,8 +101,8 @@ export function useAdminAlunoDetail(alunoId: string | undefined) {
     // Refresh group data
     setProfile(p => p ? { ...p, group_id: groupId } : null)
     if (groupId) {
-      const { data: newGroup } = await supabase.from('groups').select('id, name, is_active, frequency, goal, plan_type, starts_at, created_at, updated_at').eq('id', groupId).single()
-      setGroup(newGroup as Group)
+      const newGroup = allGroups.find(g => g.id === groupId) ?? null
+      setGroup(newGroup)
     } else {
       setGroup(null)
     }

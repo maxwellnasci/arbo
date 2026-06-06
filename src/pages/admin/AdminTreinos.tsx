@@ -42,8 +42,8 @@ export function AdminTreinos() {
     let cancelled = false
     async function load() {
       const [tagsRes, typesRes] = await Promise.all([
-        supabase.from('tags').select('*').order('name'),
-        supabase.from('training_types').select('*').eq('is_custom', true).order('name'),
+        supabase.from('tags').select('id, name, color, created_at, created_by, updated_at').order('name'),
+        supabase.from('training_types').select('id, name, is_custom, created_at, created_by').eq('is_custom', true).order('name'),
       ])
       if (cancelled) return
       if (tagsRes.error) { toast.error('Erro ao carregar etiquetas: ' + tagsRes.error.message); return }
@@ -188,7 +188,7 @@ export function AdminTreinos() {
         </button>
       </div>
 
-      {error && <p style={{ color: '#ff6b6b', marginBottom: '16px' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--red-accent)', marginBottom: '16px' }}>{error}</p>}
 
       <div style={{ position: 'relative', marginBottom: '32px' }}>
         <Search size={16} color="var(--text-tertiary)" style={{ position: 'absolute', left: '16px', top: '16px' }} />

@@ -199,7 +199,7 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
 
       const { data: gptData, error: gptError } = await supabase
         .from('group_plan_trainings')
-        .select('*, trainings(*)')
+        .select('id, group_plan_id, week_number, day_of_week, training_id, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, tags(id, name, color, created_at, created_by, updated_at))')
         .eq('group_plan_id', groupPlan.id)
         .eq('week_number', weekNumber)
         .order('day_of_week')

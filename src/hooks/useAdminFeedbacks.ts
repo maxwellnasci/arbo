@@ -23,7 +23,7 @@ export function useAdminFeedbacks() {
       const [{ data: checkins, error: checkinError }, { data: records }] = await Promise.all([
         supabase
           .from('checkins')
-          .select('*, profiles!checkins_student_id_fkey(*)')
+          .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id, profiles!checkins_student_id_fkey(id, full_name, avatar_url, birth_date, group_id, has_set_password, level, role, strava_athlete_id, created_at, updated_at)')
           .gte('created_at', sinceIso)
           .order('created_at', { ascending: false })
           .limit(50),

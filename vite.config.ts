@@ -32,20 +32,6 @@ export default defineConfig({
             icons: [{ src: '/icons/icon-192.png', sizes: '192x192' }]
           }
         ],
-        screenshots: [
-          {
-            src: '/screenshots/1.png',
-            sizes: '1080x2400',
-            type: 'image/png',
-            form_factor: 'narrow'
-          },
-          {
-            src: '/screenshots/2.png',
-            sizes: '1080x2400',
-            type: 'image/png',
-            form_factor: 'narrow'
-          }
-        ],
         icons: [
           {
             src: '/icons/icon-192.png',
