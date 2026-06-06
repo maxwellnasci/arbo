@@ -307,6 +307,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 39:** 5 Melhorias DeepSeek — RLS em `messages`, remoção de `select('*')`, queries paralelizadas via Deep Join em `useAdminTurmaDetail`, `<ConfirmModal />` premium em vez de `window.confirm`, Workbox runtimeCaching + fallback `offline.html` ✅
 - **Task 40:** Limpeza profunda de performance/qualidade — 10 ocorrências de `select('*')` removidas em 8 arquivos, deleção do gargalo de N+1 no `changeGroup`, variáveis CSS globais fixadas no `<ConfirmModal />` (`--red-accent` adicionada no Light/Dark) e screenshots fantasmas do manifesto PWA higienizados ✅
 - **Task 41:** Refatoração de Qualidade — Remoção de select wildcard em `useAdminTreinos.ts` / `useTreinoMutations.ts`, 25+ hex hardcoded substituídos por CSS variables em `AdminTurmaDetail.tsx`, novas variáveis CSS de suporte no `index.css`, `ConfirmModal.tsx` padronizado, suporte a Light Mode estendido para `ErrorBoundary`, `ProtectedRoute`, `PageLoader`, `RouterErrorElement`, `SetPassword`, e tipos explícitos `DBGroupPlan`/`DBGroupPlanTraining` em `useAdminTurmaDetail.ts` ✅
+- **Task 42:** Micro-residuais de Qualidade — Correção de hex em `ErrorBoundary.tsx` (#d14312 e sombra), `SetPassword.tsx` (#ff6b6b), `ConfirmModal.tsx` (background subtleMap e sombra) e `App.tsx` (sombra de erro); novas variáveis de sombra `--shadow-modal` e `--shadow-card` no `index.css` ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)  
 **Fase 3:** 100% completa ✅  

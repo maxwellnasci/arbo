@@ -393,3 +393,19 @@ Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima s
    - Adicionada documentação detalhando o motivo do filtro de ciclo permanecer no lado do cliente.
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ · `npm run build` ✅
+
+**Task 42 — Correção de Micro-residuais de Qualidade (Antigravity):**
+1. **Padronização de CSS & Sombra (index.css):**
+   - Injetadas variáveis de sombra `--shadow-modal` e `--shadow-card` em `:root` (dark) e `[data-theme="light"]` (light), permitindo contrastes mais leves no tema claro.
+2. **ErrorBoundary.tsx:**
+   - Substituição de `#d14312` por `var(--orange)` no hover do botão de recarga (controlando o estado visual através de `opacity: 0.9` e `opacity: 1`).
+   - Substituição da sombra de box shadow hardcoded por `var(--shadow-card)`.
+3. **SetPassword.tsx:**
+   - Correção de cor do texto de erro `#ff6b6b` em favor de `var(--red-accent)`.
+4. **ConfirmModal.tsx:**
+   - Substituição da string concat frágil `${getButtonColor()}15` por um mapa semântico `subtleMap` (`--red-subtle`, `--orange-subtle`, `--blue-subtle`) acoplado ao tipo do modal (`type`).
+   - Substituição do box shadow fixado por `var(--shadow-modal)`.
+5. **App.tsx:**
+   - Adaptada a sombra do card de erro em `RouterErrorElement` para utilizar a variável global `var(--shadow-card)`.
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ · `npm run build` ✅

@@ -277,6 +277,7 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 28. ✅ Feature: Exclusão de aluno — Edge Function `delete-user` (Deno, service_role, CORS allowlist, anti-auto-exclusão); `AdminAlunoDetail` com zona de perigo, botão Trash2, modal de confirmação, toast + redirect.
 29. ✅ Performance: Relatório completo (8 achados) + 7 índices SQL criados no Supabase. Correções no código (N+1, limit, select wildcard) pendentes para próxima sessão.
 30. ✅ Task 41 — Refatoração de Qualidade: select explícito em useAdminTreinos/useTreinoMutations; 25+ hex hardcoded → CSS vars em AdminTurmaDetail; suporte a Light Mode estendido para ErrorBoundary/ProtectedRoute/PageLoader/RouterErrorElement/SetPassword; e tipos explícitos DBGroupPlan/DBGroupPlanTraining em useAdminTurmaDetail.
+31. ✅ Task 42 — Correção de Micro-residuais: ErrorBoundary hover (#d14312 → var(--orange)), SetPassword (#ff6b6b → var(--red-accent)), ConfirmModal (subtleMap para backgrounds, sombra var(--shadow-modal)), App.tsx (sombra var(--shadow-card)), index.css (centralização de shadows).
 
 ---
 

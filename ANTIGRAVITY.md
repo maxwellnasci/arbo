@@ -57,6 +57,7 @@ Somos um **time de 3**:
 - Task 39: 5 Melhorias DeepSeek (RLS messages, sem select(*), paralelizar turmaDetail com joins, ConfirmModal premium, Workbox runtimeCaching + offline.html) ✅
 - Task 40: Qualidade & Perfomance (N+1 mitigado no changeGroup em memória, eliminação restritiva de `select('*')` em mais 8 arquivos, correção das variáveis CSS de temas no ConfirmModal) ✅
 - Task 41: Refatoração de Qualidade (remoção de select wildcard em `useAdminTreinos`/`useTreinoMutations`, novas variáveis CSS orange-subtle/red-subtle/blue-accent/backdrop-bg no index.css, 25+ cores hex hardcoded eliminadas em `AdminTurmaDetail.tsx`, modal de confirmação padronizado, suporte a Light Mode estendido para ErrorBoundary/ProtectedRoute/PageLoader/RouterErrorElement/SetPassword, e tipos explícitos `DBGroupPlan`/`DBGroupPlanTraining` em `useAdminTurmaDetail.ts`) ✅
+- Task 42: Micro-residuais de Qualidade (ErrorBoundary hover e sombra, SetPassword cor de erro, ConfirmModal subtleMap de backgrounds e sombra, RouterErrorElement sombra, shadows centralizadas no index.css) ✅
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.

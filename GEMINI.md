@@ -333,6 +333,7 @@ npx supabase login
 - Task 39: 5 Melhorias DeepSeek — RLS messages, remoção de wildcard select, paralelização `useAdminTurmaDetail` com join, `ConfirmModal` UX, e caching avançado PWA com `offline.html` ✅
 - Task 40: Qualidade & Perfomance — N+1 eliminado no changeGroup, 10 `select('*')` removidos, CSS vars aplicadas no `ConfirmModal` e manifesto PWA higienizado ✅
 - Task 41: Refatoração de Qualidade — Remoção de select wildcard em `useAdminTreinos.ts` / `useTreinoMutations.ts`, 25+ hex hardcoded substituídos por CSS variables em `AdminTurmaDetail.tsx`, novas variáveis CSS de suporte no `index.css`, `ConfirmModal.tsx` padronizado, suporte a Light Mode estendido para `ErrorBoundary`, `ProtectedRoute`, `PageLoader`, `RouterErrorElement`, `SetPassword`, e tipos explícitos `DBGroupPlan`/`DBGroupPlanTraining` em `useAdminTurmaDetail.ts` ✅
+- Task 42: Micro-residuais de Qualidade — Correção de hex em `ErrorBoundary.tsx` (#d14312 e sombra), `SetPassword.tsx` (#ff6b6b), `ConfirmModal.tsx` (background subtleMap e sombra) e `App.tsx` (sombra de erro); novas variáveis de sombra `--shadow-modal` e `--shadow-card` no `index.css` ✅
 
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)
 
