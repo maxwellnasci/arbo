@@ -409,3 +409,15 @@ Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima s
    - Adaptada a sombra do card de erro em `RouterErrorElement` para utilizar a variável global `var(--shadow-card)`.
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ · `npm run build` ✅
+
+---
+
+### Notas Finais da Sessão 2026-06-06:
+- **Nota final do projeto:** 7.9/10 (subiu de 6.9 para 7.9 na sessão)
+- **Tasks 39-42 concluídas**
+- **Meta:** chegar em 8.5+ de média geral nas próximas rodadas.
+- **Próxima sessão planeada:**
+  1. Migrar os estilos inline/CSS remanescentes para **CSS Modules**: `Login.css`, `AdminChatPanel.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`, `AlunoDashboard.module.css`.
+  2. Implementar filtro server-side no Deep Join do `useAdminTurmaDetail.ts` se possível, ou otimizar a estrutura de consultas.
+  3. Adicionar cláusula `limit()` explícita em todas as consultas SQL/Supabase que não possuem paginação nativa.
+  4. Executar auditoria de performance e PWA via Lighthouse para identificar oportunidades de otimização de velocidade e SEO.

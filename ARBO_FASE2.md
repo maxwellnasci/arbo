@@ -293,11 +293,16 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 
 ---
 
-## Planejamento Seguinte: Painel do Aluno
-
-O próximo passo é o redesign visual premium completo do Painel do Aluno, alinhando a estética (Glassmorphism, Modo Claro/Escuro, Tema Laranja/Verde) ao que foi implementado no Admin. Aguardando especificações do prompt de negócio.
+## Notas Finais da Sessão 2026-06-06
+- **Nota final do projeto:** 7.9/10 (subiu de 6.9 para 7.9 na sessão) — Meta: 8.5+ de média geral.
+- **Tasks 39-42 concluídas**
+- **Planejamento da Próxima Sessão:**
+  - Migrar os estilos inline/CSS remanescentes para **CSS Modules**: `Login.css`, `AdminChatPanel.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`, `AlunoDashboard.module.css`.
+  - Otimizar filtro server-side no Deep Join (`useAdminTurmaDetail.ts`).
+  - Adicionar `limit()` nas queries sem paginação.
+  - Executar auditoria de performance e PWA via Lighthouse para identificar oportunidades de otimização de velocidade e SEO.
 
 ---
 
 *Documento gerado com base nas respostas do professor e alinhamento de produto.*
-*Atualizado em 2026-06-05 com documentação da Fase 5 e setup para Painel do Aluno.*
+*Atualizado em 2026-06-06 com documentação da Task 42 e notas finais da sessão.*

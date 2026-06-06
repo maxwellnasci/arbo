@@ -291,6 +291,14 @@ npx supabase login
 
 ## Estado Atual (2026-06-06)
 
+- **Nota final do projeto:** 7.9/10 (subiu de 6.9 para 7.9 na sessão) — Meta: 8.5+ de média geral.
+- **Tasks 39-42 concluídas**
+- **Próxima sessão:**
+  - Migrar CSS Modules restantes (`Login.css`, `AdminChatPanel.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`, `AlunoDashboard.module.css`).
+  - Otimizar filtro server-side no Deep Join (`useAdminTurmaDetail.ts`).
+  - Adicionar `limit()` nas queries sem paginação.
+  - Executar auditoria Lighthouse no PWA.
+
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
 ### Progresso geral
@@ -572,6 +580,33 @@ npx supabase login
 - `AlunoProgresso.tsx` — `type?.toUpperCase()` com optional chaining — evita `TypeError` quando `type` é `null`
 
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
+
+### O que foi feito em 2026-06-06
+
+**Fix "Unexpected Application Error!" em produção (Task 38 — Claude Code):**
+- `RouterErrorElement` adicionado como `errorElement` na rota raiz do `createBrowserRouter` — detecta falhas de chunk PWA (`Failed to fetch dynamically imported module`) e faz auto-reload uma vez com guard `sessionStorage` para evitar loop. Outros erros exibem tela amigável em vez de tela padrão do React Router. Root cause: data router API capturava erros antes do `ErrorBoundary` externo. Commit `7535ce1`.
+
+**5 Melhorias DeepSeek (Task 39 — Antigravity):**
+- SQL de RLS para tabela `messages` gerado; Remoção de wildcard select em hooks via mapeamento `database.types.ts`; Paralelização otimizada em `useAdminTurmaDetail` com Deep Joins ao invés de cascata; Modal premium `<ConfirmModal />` em `AdminTreinos` extinguindo `window.confirm`; Estratégias `NetworkFirst`/`CacheFirst` em `vite-plugin-pwa` (Workbox) e fallback `offline.html` para experiência offline sem interrupções. Build + Lint 100% limpo.
+
+**Limpeza de Qualidade (Task 40 — Antigravity):**
+- Fechamento de gargalos menores remanescentes detectados — N+1 queries banidas no `useAdminAlunoDetail` (`changeGroup`); mais 10 `select('*')` substituídos por colunas exatas pelo sistema (`useWeeklyPlan`, `AdminTurmaDetail` etc.); refatoração do `<ConfirmModal />` para usar `var(--red-accent)` recém injetada globalmente e `var(--bg-surface)`; remoção de imagens faltantes (404) no Array de PWA screenshoots no Vite.
+
+**Refatoração de Qualidade e Suporte Light Mode (Task 41 — Antigravity):**
+- Remoção de select wildcard em `useAdminTreinos.ts` / `useTreinoMutations.ts`; 25+ hex hardcoded substituídos por CSS variables em `AdminTurmaDetail.tsx`; novas variáveis CSS de suporte no `index.css`; `<ConfirmModal />` padronizado; suporte a Light Mode estendido para `ErrorBoundary`, `ProtectedRoute`, `PageLoader`, `RouterErrorElement`, `SetPassword`; e tipos explícitos `DBGroupPlan`/`DBGroupPlanTraining` em `useAdminTurmaDetail.ts`.
+
+**Micro-residuais de Qualidade (Task 42 — Antigravity):**
+- Erradicação de hex em `ErrorBoundary.tsx` (#d14312 e sombra), `SetPassword.tsx` (#ff6b6b), `ConfirmModal.tsx` (background subtleMap e sombra) e `App.tsx` (sombra de erro); novas variáveis de sombra `--shadow-modal` e `--shadow-card` no `index.css`.
+
+### Notas Finais da Sessão 2026-06-06:
+- **Nota final do projeto:** 7.9/10 (subiu de 6.9 para 7.9 na sessão)
+- **Tasks 39-42 concluídas**
+- **Meta:** chegar em 8.5+ de média geral nas próximas rodadas.
+- **Próxima sessão planeada:**
+  1. Migrar os estilos inline/CSS remanescentes para **CSS Modules**: `Login.css`, `AdminChatPanel.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`, `AlunoDashboard.module.css`.
+  2. Otimizar filtro server-side no Deep Join (`useAdminTurmaDetail.ts`).
+  3. Adicionar cláusula `limit()` explícita em todas as consultas SQL/Supabase que não possuem paginação nativa.
+  4. Executar auditoria de performance e PWA via Lighthouse para identificar oportunidades de otimização de velocidade e SEO.
 
 ### Próximos passos sugeridos
 - ~~Painel do Aluno Redesign Premium~~ ✅

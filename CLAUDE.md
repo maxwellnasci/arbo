@@ -268,6 +268,14 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 ## Estado atual (2026-06-06)
 
+- **Nota final do projeto:** 7.9/10 (subiu de 6.9 para 7.9 na sessão) — Meta: 8.5+ de média geral.
+- **Tasks 39-42 concluídas**
+- **Próxima sessão:**
+  - Migrar CSS Modules restantes (`Login.css`, `AdminChatPanel.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`, `AlunoDashboard.module.css`).
+  - Otimizar filtro server-side no Deep Join (`useAdminTurmaDetail.ts`).
+  - Adicionar `limit()` nas queries sem paginação.
+  - Executar auditoria Lighthouse no PWA.
+
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
 ### Progresso geral
