@@ -15,8 +15,9 @@ export type Group           = Database['public']['Tables']['groups']['Row']
 export type GroupPlan       = Database['public']['Tables']['group_plans']['Row']
 export type GroupPlanTraining = Database['public']['Tables']['group_plan_trainings']['Row']
 export type Tag             = Database['public']['Tables']['tags']['Row']
+export type TrainingCustomType = Database['public']['Tables']['training_types']['Row']
 
 // Enums
-export type TrainingType     = Database['public']['Enums']['training_type']
+export type TrainingType     = string // Database['public']['Enums']['training_type'] is now obsolete as column is text
 export type DistanceCategory = Database['public']['Enums']['distance_category']
 export type UserLevel        = Database['public']['Enums']['user_level']

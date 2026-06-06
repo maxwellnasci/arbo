@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase'
 import { useAdminTurmaDetail, type GroupDayTraining } from '../../hooks/useAdminTurmaDetail'
 import { useGroupPlanMutations, type NewTrainingInput } from '../../hooks/useGroupPlanMutations'
 import { useAuth } from '../../contexts/AuthContext'
-import type { Tag, Training, TrainingType } from '../../lib/types'
+import type { Tag, Training, TrainingCustomType } from '../../lib/types'
 import { EditGroupModal } from '../../components/admin/EditGroupModal'
 import { Edit2 } from 'lucide-react'
 
@@ -84,6 +84,7 @@ export default function AdminTurmaDetail() {
   const [mutationError, setMutationError] = useState<string | null>(null)
   const [allTrainings, setAllTrainings] = useState<Training[]>([])
   const [allTags, setAllTags] = useState<Tag[]>([])
+  const [allCustomTypes, setAllCustomTypes] = useState<TrainingCustomType[]>([])
   const [releasing, setReleasing] = useState(false)
 
   const [showEditModal, setShowEditModal] = useState(false)
@@ -95,15 +96,18 @@ export default function AdminTurmaDetail() {
     let cancelled = false
 
     async function load() {
-      const [trainingsRes, tagsRes] = await Promise.all([
+      const [trainingsRes, tagsRes, typesRes] = await Promise.all([
         supabase.from('trainings').select('*').order('title'),
         supabase.from('tags').select('*').order('name'),
+        supabase.from('training_types').select('*').order('name'),
       ])
       if (cancelled) return
       if (trainingsRes.error) { setMutationError('Erro ao carregar treinos: ' + trainingsRes.error.message); return }
       if (tagsRes.error)      { setMutationError('Erro ao carregar etiquetas: ' + tagsRes.error.message); return }
+      if (typesRes.error)     { setMutationError('Erro ao carregar tipos: ' + typesRes.error.message); return }
       if (trainingsRes.data) setAllTrainings(trainingsRes.data)
       if (tagsRes.data) setAllTags(tagsRes.data)
+      if (typesRes.data) setAllCustomTypes(typesRes.data)
     }
 
     load()
@@ -309,6 +313,7 @@ export default function AdminTurmaDetail() {
               cycleTrainings={trainings}
               allTrainings={allTrainings}
               allTags={allTags}
+              allCustomTypes={allCustomTypes}
               mutating={mutating}
               mutationError={mutationError}
               onModeChange={mode => setPanel(p => p ? { ...p, mode } : null)}
@@ -317,6 +322,7 @@ export default function AdminTurmaDetail() {
               onCreateTraining={handleCreateTraining}
               onClose={() => { setMutationError(null); setPanel(null) }}
               onTagCreated={(tag: Tag) => setAllTags(prev => [...prev, tag].sort((a, b) => a.name.localeCompare(b.name)))}
+              onTypeCreated={(type: TrainingCustomType) => setAllCustomTypes(prev => [...prev, type].sort((a, b) => a.name.localeCompare(b.name)))}
             />
           )}
         </div>
@@ -576,6 +582,7 @@ function SidePanel({
   cycleTrainings,
   allTrainings,
   allTags,
+  allCustomTypes,
   mutating,
   mutationError,
   onModeChange,
@@ -584,12 +591,14 @@ function SidePanel({
   onCreateTraining,
   onClose,
   onTagCreated,
+  onTypeCreated,
 }: {
   cycleStart: string
   panelState: PanelState
   cycleTrainings: GroupDayTraining[]
   allTrainings: Training[]
   allTags: Tag[]
+  allCustomTypes: TrainingCustomType[]
   mutating: boolean
   mutationError: string | null
   onModeChange: (mode: PanelMode) => void
@@ -598,6 +607,7 @@ function SidePanel({
   onCreateTraining: (input: NewTrainingInput) => void
   onClose: () => void
   onTagCreated: (tag: Tag) => void
+  onTypeCreated: (type: TrainingCustomType) => void
 }) {
   const { weekNumber, dayOfWeek, mode, existing } = panelState
   const date = cycleStart ? dayDate(cycleStart, weekNumber, dayOfWeek) : null
@@ -717,9 +727,11 @@ function SidePanel({
         <CreateTrainingForm
           mutating={mutating}
           allTags={allTags}
+          allCustomTypes={allCustomTypes}
           onBack={() => onModeChange('search')}
           onSubmit={onCreateTraining}
           onTagCreated={onTagCreated}
+          onTypeCreated={onTypeCreated}
         />
       )}
     </div>
@@ -754,7 +766,7 @@ function TrainingListItem({ training, mutating, onSelect, tagName, tagColor }: {
 
 // ─── CreateTrainingForm ─────────────────────────────────────────────────────
 
-const TRAINING_TYPES: TrainingType[] = ['corrida', 'hiit', 'recovery', 'forca', 'mobilidade']
+const TRAINING_TYPES: string[] = ['corrida', 'hiit', 'recovery', 'forca', 'mobilidade']
 
 function parsePace(value: string): number | undefined {
   const match = value.match(/^(\d+):(\d{2})$/)
@@ -762,26 +774,36 @@ function parsePace(value: string): number | undefined {
   return parseInt(match[1]) * 60 + parseInt(match[2])
 }
 
-function CreateTrainingForm({ mutating, allTags, onBack, onSubmit, onTagCreated }: {
+function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmit, onTagCreated, onTypeCreated }: {
   mutating: boolean
   allTags: Tag[]
+  allCustomTypes: TrainingCustomType[]
   onBack: () => void
   onSubmit: (input: NewTrainingInput) => void
   onTagCreated: (tag: Tag) => void
+  onTypeCreated: (type: TrainingCustomType) => void
 }) {
   const { user } = useAuth()
   const [title, setTitle] = useState('')
-  const [type, setType] = useState<TrainingType>('corrida')
+  const [type, setType] = useState<string>('corrida')
   const [distanceKm, setDistanceKm] = useState('')
   const [pace, setPace] = useState('')
   const [sets, setSets] = useState('')
   const [description, setDescription] = useState('')
   const [tagId, setTagId] = useState<string>('')
+  
+  // Tag creation state
   const [showNewTag, setShowNewTag] = useState(false)
   const [newTagName, setNewTagName] = useState('')
   const [newTagColor, setNewTagColor] = useState('#E8521A')
   const [creatingTag, setCreatingTag] = useState(false)
   const [tagError, setTagError] = useState<string | null>(null)
+
+  // Type creation state
+  const [showNewType, setShowNewType] = useState(false)
+  const [newTypeName, setNewTypeName] = useState('')
+  const [creatingType, setCreatingType] = useState(false)
+  const [typeError, setTypeError] = useState<string | null>(null)
 
   async function handleCreateTag() {
     if (!newTagName.trim()) return
@@ -798,6 +820,23 @@ function CreateTrainingForm({ mutating, allTags, onBack, onSubmit, onTagCreated 
     setTagId(data.id)
     setShowNewTag(false)
     setNewTagName('')
+  }
+
+  async function handleCreateType() {
+    if (!newTypeName.trim()) return
+    setCreatingType(true)
+    setTypeError(null)
+    const { data, error } = await supabase
+      .from('training_types')
+      .insert({ name: newTypeName.trim(), is_custom: true, created_by: user?.id ?? '' })
+      .select('*')
+      .single()
+    setCreatingType(false)
+    if (error || !data) { setTypeError(error?.message ?? 'Erro ao criar tipo'); return }
+    onTypeCreated(data as TrainingCustomType)
+    setType(data.name)
+    setShowNewType(false)
+    setNewTypeName('')
   }
 
   function handleSubmit() {
@@ -834,9 +873,46 @@ function CreateTrainingForm({ mutating, allTags, onBack, onSubmit, onTagCreated 
       </div>
       <div>
         <label style={labelStyle}>Tipo *</label>
-        <select style={{ ...inputStyle, color: '#E8521A', fontWeight: 600 }} value={type} onChange={e => setType(e.target.value as TrainingType)}>
-          {TRAINING_TYPES.map(t => <option key={t} value={t}>{typeLabel[t]}</option>)}
-        </select>
+        {showNewType ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <input
+              style={inputStyle}
+              value={newTypeName}
+              onChange={e => setNewTypeName(e.target.value)}
+              placeholder="Ex: Fartlek"
+            />
+            {typeError && (
+              <div style={{ fontSize: '10px', color: '#ff6b6b', padding: '4px 6px', background: '#ff3b3011', borderRadius: '5px', border: '1px solid #ff3b3044' }}>
+                {typeError}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button type="button" onClick={() => { setShowNewType(false); setTypeError(null) }} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1, padding: '6px' }}>Cancelar</button>
+              <button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim()} style={{ flex: 1, background: '#E8521A', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                {creatingType ? '...' : 'Criar'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <select 
+            style={{ ...inputStyle, color: '#E8521A', fontWeight: 600 }} 
+            value={type} 
+            onChange={e => {
+              if (e.target.value === 'NEW') setShowNewType(true)
+              else setType(e.target.value)
+            }}
+          >
+            <optgroup label="Padrão">
+              {TRAINING_TYPES.map(t => <option key={t} value={t}>{typeLabel[t]}</option>)}
+            </optgroup>
+            {allCustomTypes.length > 0 && (
+              <optgroup label="Personalizados">
+                {allCustomTypes.map(ct => <option key={ct.id} value={ct.name}>{ct.name}</option>)}
+              </optgroup>
+            )}
+            <option value="NEW">+ Criar novo tipo</option>
+          </select>
+        )}
       </div>
       <div style={{ display: 'flex', gap: '6px' }}>
         <div style={{ flex: 1 }}>
@@ -898,13 +974,14 @@ function CreateTrainingForm({ mutating, allTags, onBack, onSubmit, onTagCreated 
             </div>
           </div>
         ) : (
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <select style={{ ...inputStyle, flex: 1 }} value={tagId} onChange={e => setTagId(e.target.value)}>
-              <option value="">Nenhuma</option>
-              {allTags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-            </select>
-            <button type="button" onClick={() => setShowNewTag(true)} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)', borderRadius: '7px', padding: '6px 8px', fontSize: '11px', color: 'var(--orange)', cursor: 'pointer', whiteSpace: 'nowrap' }}>+ Nova</button>
-          </div>
+          <select style={inputStyle} value={tagId} onChange={e => {
+            if (e.target.value === 'NEW') setShowNewTag(true)
+            else setTagId(e.target.value)
+          }}>
+            <option value="">Nenhuma etiqueta</option>
+            {allTags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            <option value="NEW">+ Criar nova etiqueta</option>
+          </select>
         )}
       </div>
       <button

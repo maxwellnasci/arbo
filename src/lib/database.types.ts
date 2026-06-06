@@ -652,6 +652,38 @@ export type Database = {
           },
         ]
       }
+      training_types: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_custom: boolean | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_custom?: boolean | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_custom?: boolean | null
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_types_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trainings: {
         Row: {
           created_at: string | null
@@ -664,7 +696,7 @@ export type Database = {
           tag_id: string | null
           target_pace_seconds_per_km: number | null
           title: string
-          type: Database["public"]["Enums"]["training_type"]
+          type: string
           updated_at: string | null
         }
         Insert: {
@@ -678,7 +710,7 @@ export type Database = {
           tag_id?: string | null
           target_pace_seconds_per_km?: number | null
           title: string
-          type: Database["public"]["Enums"]["training_type"]
+          type: string
           updated_at?: string | null
         }
         Update: {
@@ -692,7 +724,7 @@ export type Database = {
           tag_id?: string | null
           target_pace_seconds_per_km?: number | null
           title?: string
-          type?: Database["public"]["Enums"]["training_type"]
+          type?: string
           updated_at?: string | null
         }
         Relationships: [

@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { Tag, TrainingType } from '../../lib/types'
+import type { Tag, TrainingType, TrainingCustomType } from '../../lib/types'
 import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
+import { supabase } from '../../lib/supabase'
+import { useAuth } from '../../contexts/AuthContext'
+import { toast } from 'sonner'
 
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
 
@@ -12,7 +15,21 @@ interface TreinoFormPanelProps {
   treinoToEdit?: TrainingWithTag | null
   onSubmit: (data: Omit<TrainingInsert, 'created_by'>) => void
   tags: Tag[]
+  customTypes: TrainingCustomType[]
+  onTagCreated: (tag: Tag) => void
+  onTypeCreated: (type: TrainingCustomType) => void
 }
+
+const TAG_COLORS = [
+  { name: 'Laranja', hex: '#E8521A' },
+  { name: 'Azul', hex: '#3B82F6' },
+  { name: 'Verde', hex: '#22C55E' },
+  { name: 'Vermelho', hex: '#EF4444' },
+  { name: 'Amarelo', hex: '#EAB308' },
+  { name: 'Roxo', hex: '#A855F7' },
+  { name: 'Ciano', hex: '#06B6D4' },
+  { name: 'Cinza', hex: '#71717A' },
+]
 
 const typeOptions: TrainingType[] = ['corrida', 'hiit', 'recovery', 'forca', 'mobilidade']
 
@@ -46,7 +63,8 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
 }
 
-export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags }: TreinoFormPanelProps) {
+export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, onTagCreated, onTypeCreated }: TreinoFormPanelProps) {
+  const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [distanceM, setDistanceM] = useState<number | ''>('')
@@ -54,8 +72,18 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags 
   const [paceMinutes, setPaceMinutes] = useState<number | ''>('')
   const [paceSeconds, setPaceSeconds] = useState<number | ''>('')
   const [sets, setSets] = useState<number | ''>('')
-  const [type, setType] = useState<TrainingType>('corrida')
+  const [type, setType] = useState<string>('corrida')
   const [tagId, setTagId] = useState('')
+
+  // Inline Creation State
+  const [showNewTag, setShowNewTag] = useState(false)
+  const [newTagName, setNewTagName] = useState('')
+  const [newTagColor, setNewTagColor] = useState('#E8521A')
+  const [creatingTag, setCreatingTag] = useState(false)
+
+  const [showNewType, setShowNewType] = useState(false)
+  const [newTypeName, setNewTypeName] = useState('')
+  const [creatingType, setCreatingType] = useState(false)
 
   function resetForm() {
     setTitle('')
@@ -67,6 +95,8 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags 
     setSets('')
     setType('corrida')
     setTagId('')
+    setShowNewTag(false)
+    setShowNewType(false)
   }
 
   useEffect(() => {
@@ -115,6 +145,44 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags 
     }
 
     onSubmit(data)
+  }
+
+  async function handleCreateTag() {
+    if (!newTagName.trim()) return
+    setCreatingTag(true)
+    const { data, error } = await supabase
+      .from('tags')
+      .insert({ name: newTagName.trim(), color: newTagColor, created_by: user?.id ?? '' })
+      .select('*')
+      .single()
+    setCreatingTag(false)
+    if (error || !data) {
+      toast.error(error?.message ?? 'Erro ao criar etiqueta')
+      return
+    }
+    onTagCreated(data as Tag)
+    setTagId(data.id)
+    setShowNewTag(false)
+    setNewTagName('')
+  }
+
+  async function handleCreateType() {
+    if (!newTypeName.trim()) return
+    setCreatingType(true)
+    const { data, error } = await supabase
+      .from('training_types')
+      .insert({ name: newTypeName.trim(), is_custom: true, created_by: user?.id ?? '' })
+      .select('*')
+      .single()
+    setCreatingType(false)
+    if (error || !data) {
+      toast.error(error?.message ?? 'Erro ao criar tipo')
+      return
+    }
+    onTypeCreated(data as TrainingCustomType)
+    setType(data.name) // Types are string-based now
+    setShowNewType(false)
+    setNewTypeName('')
   }
 
   return (
@@ -219,31 +287,96 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags 
               </div>
 
               {/* Tipo + Etiqueta */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', alignItems: 'flex-start' }}>
                 <div>
                   <label style={labelStyle}>Tipo</label>
-                  <select
-                    value={type}
-                    onChange={e => setType(e.target.value as TrainingType)}
-                    style={{ ...inputStyle, cursor: 'pointer' }}
-                  >
-                    {typeOptions.map(opt => (
-                      <option key={opt} value={opt}>{typeLabel[opt]}</option>
-                    ))}
-                  </select>
+                  {showNewType ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <input
+                        style={inputStyle}
+                        value={newTypeName}
+                        onChange={e => setNewTypeName(e.target.value)}
+                        placeholder="Ex: Fartlek"
+                      />
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button type="button" onClick={() => setShowNewType(false)} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1, padding: '6px' }}>Cancelar</button>
+                        <button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim()} style={{ flex: 1, background: '#E8521A', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                          {creatingType ? '...' : 'Criar'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <select
+                      value={type}
+                      onChange={e => {
+                        if (e.target.value === 'NEW') setShowNewType(true)
+                        else setType(e.target.value)
+                      }}
+                      style={{ ...inputStyle, cursor: 'pointer' }}
+                    >
+                      <optgroup label="Padrão">
+                        {typeOptions.map(opt => (
+                          <option key={opt} value={opt}>{typeLabel[opt]}</option>
+                        ))}
+                      </optgroup>
+                      {customTypes.length > 0 && (
+                        <optgroup label="Personalizados">
+                          {customTypes.map(ct => (
+                            <option key={ct.id} value={ct.name}>{ct.name}</option>
+                          ))}
+                        </optgroup>
+                      )}
+                      <option value="NEW">+ Criar novo tipo</option>
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label style={labelStyle}>Etiqueta</label>
-                  <select
-                    value={tagId}
-                    onChange={e => setTagId(e.target.value)}
-                    style={{ ...inputStyle, cursor: 'pointer' }}
-                  >
-                    <option value="">Nenhuma</option>
-                    {tags.map(tag => (
-                      <option key={tag.id} value={tag.id}>{tag.name}</option>
-                    ))}
-                  </select>
+                  {showNewTag ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <input
+                        style={inputStyle}
+                        value={newTagName}
+                        onChange={e => setNewTagName(e.target.value)}
+                        placeholder="Ex: Fase de Base"
+                      />
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                        {TAG_COLORS.map(c => (
+                          <button
+                            key={c.hex}
+                            type="button"
+                            onClick={() => setNewTagColor(c.hex)}
+                            style={{
+                              width: 20, height: 20, borderRadius: '50%', border: newTagColor === c.hex ? '2px solid #fff' : '2px solid transparent',
+                              background: c.hex, cursor: 'pointer', padding: 0,
+                            }}
+                            title={c.name}
+                          />
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button type="button" onClick={() => setShowNewTag(false)} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1, padding: '6px' }}>Cancelar</button>
+                        <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: '#E8521A', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                          {creatingTag ? '...' : 'Criar'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <select
+                      value={tagId}
+                      onChange={e => {
+                        if (e.target.value === 'NEW') setShowNewTag(true)
+                        else setTagId(e.target.value)
+                      }}
+                      style={{ ...inputStyle, cursor: 'pointer' }}
+                    >
+                      <option value="">Nenhuma</option>
+                      {tags.map(tag => (
+                        <option key={tag.id} value={tag.id}>{tag.name}</option>
+                      ))}
+                      <option value="NEW">+ Criar nova etiqueta</option>
+                    </select>
+                  )}
                 </div>
               </div>
 
