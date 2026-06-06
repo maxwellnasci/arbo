@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Group, GroupPlan, Tag, Training } from '../lib/types'
+import type { Group, GroupPlan, Tag, Training, GroupPlanTraining } from '../lib/types'
 
 export type GroupDayTraining = {
   id: string
@@ -20,11 +20,13 @@ export type UseAdminTurmaDetailResult = {
   refresh: () => void
 }
 
-type RawGPT = {
-  id: string
-  week_number: number
-  day_of_week: number
-  trainings: Training & { tags: Tag | null }
+type DBGroupPlanTraining = Omit<GroupPlanTraining, 'group_plan_id'> & {
+  plan_id: string
+  trainings: (Training & { tags: Tag | null }) | null
+}
+
+type DBGroupPlan = GroupPlan & {
+  group_plan_trainings: DBGroupPlanTraining[]
 }
 
 function toDateString(d: Date): string {
@@ -94,7 +96,7 @@ export function useAdminTurmaDetail(groupId: string): UseAdminTurmaDetailResult 
       setDefaultWeekNumber(wn)
 
       // Find the plan for current cycle
-      const planData = (group_plans as unknown as (GroupPlan & { group_plan_trainings: unknown[] })[] | null)?.find(p => p.starts_at === cs)
+      const planData = (group_plans as DBGroupPlan[] | null)?.find(p => p.starts_at === cs)
       
       if (!planData) { 
         setPlan(null)
@@ -108,14 +110,14 @@ export function useAdminTurmaDetail(groupId: string): UseAdminTurmaDetailResult 
 
       const gptData = group_plan_trainings || []
       setTrainings(
-        (gptData as unknown as RawGPT[])
+        (gptData as DBGroupPlanTraining[])
           .filter(r => r.trainings)
           .sort((a, b) => a.week_number === b.week_number ? a.day_of_week - b.day_of_week : a.week_number - b.week_number)
           .map(r => ({
             id: r.id,
             weekNumber: r.week_number,
             dayOfWeek: r.day_of_week,
-            training: r.trainings,
+            training: r.trainings!,
           }))
       )
       setIsLoading(false)

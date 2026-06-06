@@ -40,15 +40,15 @@ class ErrorBoundary extends React.Component<Props, State> {
           alignItems: 'center',
           justifyContent: 'center',
           minHeight: '100dvh',
-          background: '#111111',
-          color: '#ffffff',
+          background: 'var(--bg-primary)',
+          color: 'var(--text-primary)',
           fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
           padding: '24px',
           textAlign: 'center'
         }}>
           <div style={{
-            background: 'rgba(232, 82, 26, 0.05)',
-            border: '1px solid rgba(232, 82, 26, 0.15)',
+            background: 'var(--orange-subtle)',
+            border: '1px solid var(--orange-border)',
             padding: '40px',
             borderRadius: '24px',
             maxWidth: '480px',
@@ -56,7 +56,7 @@ class ErrorBoundary extends React.Component<Props, State> {
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
           }}>
             <h1 style={{ 
-              color: '#E8521A', 
+              color: 'var(--orange)', 
               margin: '0 0 16px 0',
               fontSize: '28px',
               fontWeight: 600,
@@ -65,7 +65,7 @@ class ErrorBoundary extends React.Component<Props, State> {
               Oops! Algo deu errado.
             </h1>
             <p style={{ 
-              color: '#a0a0a0',
+              color: 'var(--text-secondary)',
               margin: '0 0 24px 0',
               lineHeight: 1.6,
               fontSize: '15px'
@@ -73,16 +73,16 @@ class ErrorBoundary extends React.Component<Props, State> {
               Ocorreu um erro inesperado no aplicativo. Nossa equipe técnica já foi notificada.
             </p>
             <div style={{
-              background: '#0a0a0a',
+              background: 'var(--bg-input)',
               padding: '16px',
               borderRadius: '12px',
               overflowX: 'auto',
               marginBottom: '32px',
               textAlign: 'left',
-              border: '1px solid rgba(255, 255, 255, 0.05)'
+              border: '1px solid var(--border-subtle)'
             }}>
               <code style={{ 
-                color: '#E8521A', 
+                color: 'var(--orange)', 
                 fontSize: '13px',
                 fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
               }}>
@@ -92,8 +92,8 @@ class ErrorBoundary extends React.Component<Props, State> {
             <button 
               onClick={() => window.location.reload()}
               style={{
-                background: '#E8521A',
-                color: '#ffffff',
+                background: 'var(--orange)',
+                color: 'var(--text-primary)',
                 border: 'none',
                 padding: '14px 24px',
                 borderRadius: '12px',
@@ -109,7 +109,7 @@ class ErrorBoundary extends React.Component<Props, State> {
                 e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.background = '#E8521A';
+                e.currentTarget.style.background = 'var(--orange)';
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
               onMouseDown={(e) => e.currentTarget.style.transform = 'translateY(1px)'}

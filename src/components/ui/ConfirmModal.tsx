@@ -29,7 +29,7 @@ export function ConfirmModal({
       case 'warning':
         return <AlertTriangle size={24} color={type === 'danger' ? 'var(--red-accent)' : 'var(--orange)'} />
       case 'info':
-        return <Info size={24} color="#3b82f6" />
+        return <Info size={24} color="var(--blue-accent)" />
     }
   }
 
@@ -37,7 +37,7 @@ export function ConfirmModal({
     switch (type) {
       case 'danger': return 'var(--red-accent)'
       case 'warning': return 'var(--orange)'
-      case 'info': return '#3b82f6'
+      case 'info': return 'var(--blue-accent)'
       default: return 'var(--orange)'
     }
   }
@@ -52,7 +52,7 @@ export function ConfirmModal({
           style={{
             position: 'fixed',
             top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backgroundColor: 'var(--backdrop-bg)',
             backdropFilter: 'blur(4px)',
             display: 'flex',
             alignItems: 'center',
@@ -124,7 +124,7 @@ export function ConfirmModal({
                   transition: 'background 0.2s',
                   flex: 1
                 }}
-                onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                onMouseOver={(e) => e.currentTarget.style.background = 'var(--bg-surface-hover)'}
                 onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
               >
                 {cancelText}

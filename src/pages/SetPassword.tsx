@@ -76,18 +76,18 @@ export default function SetPassword() {
     return (
       <div style={styles.page}>
         <div style={{ ...styles.card, textAlign: 'center', padding: '48px 28px' }}>
-          <div style={{ background: '#E8521A22', color: '#E8521A', width: '64px', height: '64px', borderRadius: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+          <div style={{ background: 'var(--orange-subtle)', color: 'var(--orange)', width: '64px', height: '64px', borderRadius: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
           </div>
           <h2 style={{ ...styles.title, fontSize: '28px', marginBottom: '12px' }}>Acesso Liberado!</h2>
-          <p style={{ ...styles.subtitle, fontSize: '15px', color: '#aaa', lineHeight: 1.5, marginBottom: '32px' }}>
+          <p style={{ ...styles.subtitle, fontSize: '15px', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: '32px' }}>
             Sua senha foi configurada com sucesso. Seja muito bem-vindo(a) ao Arbo.
           </p>
           
-          <div style={{ background: '#111', border: '1px solid #333', borderRadius: '12px', padding: '16px', marginBottom: '32px' }}>
-            <p style={{ fontSize: '13px', color: '#888', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Link oficial do App</p>
-            <p style={{ fontSize: '16px', color: '#fff', margin: 0, fontWeight: 700 }}>arbo.mxos.com.br</p>
-            <p style={{ fontSize: '12px', color: '#666', margin: '8px 0 0' }}>Salve este link para seus próximos acessos</p>
+          <div style={{ background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: '12px', padding: '16px', marginBottom: '32px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '0 0 8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Link oficial do App</p>
+            <p style={{ fontSize: '16px', color: 'var(--text-primary)', margin: 0, fontWeight: 700 }}>arbo.mxos.com.br</p>
+            <p style={{ fontSize: '12px', color: 'var(--text-tertiary)', margin: '8px 0 0' }}>Salve este link para seus próximos acessos</p>
           </div>
 
           <button 
@@ -150,34 +150,34 @@ export default function SetPassword() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: '100svh',
-    backgroundColor: '#111111',
+    backgroundColor: 'var(--bg-primary)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     padding: '24px 16px',
   },
   validating: {
-    color: '#E8521A',
+    color: 'var(--orange)',
     fontFamily: 'sans-serif',
     fontSize: '1rem',
   },
   card: {
     width: '100%',
     maxWidth: '390px',
-    backgroundColor: '#1c1c1e',
+    backgroundColor: 'var(--bg-surface)',
     borderRadius: '24px',
     padding: '36px 28px 28px',
     boxSizing: 'border-box',
   },
   title: {
-    color: '#ffffff',
+    color: 'var(--text-primary)',
     fontSize: '24px',
     fontWeight: 800,
     margin: '0 0 8px',
     fontFamily: 'sans-serif',
   },
   subtitle: {
-    color: '#888',
+    color: 'var(--text-secondary)',
     fontSize: '14px',
     margin: '0 0 28px',
     fontFamily: 'sans-serif',
@@ -193,16 +193,16 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '7px',
   },
   label: {
-    color: '#d0d0d0',
+    color: 'var(--text-secondary)',
     fontSize: '13px',
     fontWeight: 500,
     fontFamily: 'sans-serif',
   },
   input: {
-    backgroundColor: '#2a2a2a',
-    border: '1.5px solid #3a3a3a',
+    backgroundColor: 'var(--bg-input)',
+    border: '1px solid var(--border-default)',
     borderRadius: '10px',
-    color: '#fff',
+    color: 'var(--text-primary)',
     fontSize: '15px',
     padding: '14px 16px',
     outline: 'none',
@@ -217,8 +217,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'sans-serif',
   },
   button: {
-    backgroundColor: '#E8521A',
-    color: '#ffffff',
+    backgroundColor: 'var(--orange)',
+    color: 'var(--text-primary)',
     border: 'none',
     borderRadius: '12px',
     fontSize: '16px',

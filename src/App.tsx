@@ -32,13 +32,13 @@ function PageLoader() {
       alignItems: 'center',
       justifyContent: 'center',
       height: '100dvh',
-      background: '#111111',
+      background: 'var(--bg-primary)',
     }}>
       <div style={{
         width: 32,
         height: 32,
-        border: '3px solid rgba(232, 82, 26, 0.2)',
-        borderTopColor: '#E8521A',
+        border: '3px solid var(--orange-border)',
+        borderTopColor: 'var(--orange)',
         borderRadius: '50%',
         animation: 'spin 0.8s linear infinite',
       }} />
@@ -87,45 +87,45 @@ function RouterErrorElement() {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: '100dvh',
-      background: '#111111',
-      color: '#ffffff',
+      background: 'var(--bg-primary)',
+      color: 'var(--text-primary)',
       fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
       padding: '24px',
       textAlign: 'center',
     }}>
       <div style={{
-        background: 'rgba(232, 82, 26, 0.05)',
-        border: '1px solid rgba(232, 82, 26, 0.15)',
+        background: 'var(--orange-subtle)',
+        border: '1px solid var(--orange-border)',
         padding: '40px',
         borderRadius: '24px',
         maxWidth: '480px',
         width: '100%',
         boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
       }}>
-        <h1 style={{ color: '#E8521A', margin: '0 0 16px 0', fontSize: '28px', fontWeight: 600 }}>
+        <h1 style={{ color: 'var(--orange)', margin: '0 0 16px 0', fontSize: '28px', fontWeight: 600 }}>
           Oops! Algo deu errado.
         </h1>
-        <p style={{ color: '#a0a0a0', margin: '0 0 24px 0', lineHeight: 1.6, fontSize: '15px' }}>
+        <p style={{ color: 'var(--text-secondary)', margin: '0 0 24px 0', lineHeight: 1.6, fontSize: '15px' }}>
           Ocorreu um erro inesperado no aplicativo.
         </p>
         <div style={{
-          background: '#0a0a0a',
+          background: 'var(--bg-input)',
           padding: '12px 16px',
           borderRadius: '8px',
           marginBottom: '24px',
           textAlign: 'left',
-          border: '1px solid rgba(255,255,255,0.05)',
+          border: '1px solid var(--border-subtle)',
           overflowX: 'auto',
         }}>
-          <code style={{ color: '#E8521A', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+          <code style={{ color: 'var(--orange)', fontSize: '12px', fontFamily: 'monospace', wordBreak: 'break-all' }}>
             {msg}
           </code>
         </div>
         <button
           onClick={() => window.location.reload()}
           style={{
-            background: '#E8521A',
-            color: '#ffffff',
+            background: 'var(--orange)',
+            color: 'var(--text-primary)',
             border: 'none',
             padding: '14px 24px',
             borderRadius: '12px',

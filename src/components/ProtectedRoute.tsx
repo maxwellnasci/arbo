@@ -11,8 +11,8 @@ export default function ProtectedRoute() {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100vh',
-        backgroundColor: '#111111',
-        color: '#E8521A',
+        backgroundColor: 'var(--bg-primary)',
+        color: 'var(--orange)',
         fontSize: '1rem',
         fontFamily: 'sans-serif',
       }}>

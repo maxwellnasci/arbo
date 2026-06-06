@@ -284,10 +284,10 @@ export default function AdminTurmaDetail() {
         )}
       </div>
 
-      {error && <p style={{ color: '#ff6b6b', marginBottom: '16px' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--red-accent)', marginBottom: '16px' }}>{error}</p>}
 
       {isLoading ? (
-        <p style={{ color: '#555' }}>Carregando...</p>
+        <p style={{ color: 'var(--text-secondary)' }}>Carregando...</p>
       ) : (
         <div style={{ display: 'flex', gap: '0', background: 'var(--bg-card-green)', borderRadius: '12px', border: '1px solid var(--border-green)', overflow: 'hidden' }}>
 
@@ -429,8 +429,8 @@ function WeekView({
       {releasedThroughWeek !== null && selectedWeek > releasedThroughWeek && (
         <div style={{
           margin: '0 16px 8px',
-          background: '#E8521A0f',
-          border: '1px solid #E8521A33',
+          background: 'var(--orange-subtle)',
+          border: '1px solid var(--orange-border)',
           borderRadius: '9px',
           padding: '10px 12px',
           display: 'flex',
@@ -439,10 +439,10 @@ function WeekView({
           gap: '8px',
         }}>
           <div>
-            <div style={{ color: '#E8521A', fontSize: '11px', fontWeight: 700, marginBottom: '2px' }}>
+            <div style={{ color: 'var(--orange)', fontSize: '11px', fontWeight: 700, marginBottom: '2px' }}>
               Semana {selectedWeek} bloqueada
             </div>
-            <div style={{ color: '#666', fontSize: '10px' }}>
+            <div style={{ color: 'var(--text-secondary)', fontSize: '10px' }}>
               Alunos não veem os treinos desta semana
             </div>
           </div>
@@ -451,7 +451,7 @@ function WeekView({
               onClick={() => onRelease(selectedWeek as 1 | 2 | 3 | 4)}
               disabled={releasing}
               style={{
-                background: '#E8521A', color: '#fff', border: 'none',
+                background: 'var(--orange)', color: '#fff', border: 'none',
                 borderRadius: '6px', padding: '6px 12px', fontSize: '10px',
                 fontWeight: 700, cursor: releasing ? 'not-allowed' : 'pointer',
                 opacity: releasing ? 0.6 : 1,
@@ -506,12 +506,12 @@ function WeekView({
                         {entry.training.tags.name}
                       </div>
                     )}
-                    <div style={{ fontSize: '8px', color: '#E8521A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '2px' }}>
+                    <div style={{ fontSize: '8px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '2px' }}>
                       {TRAINING_TYPE_LABELS[entry.training.type] ?? entry.training.type}
                     </div>
                     <div style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 600, lineHeight: 1.3 }}>{entry.training.title}</div>
                     {entry.training.distance_m && (
-                      <div style={{ fontSize: '8px', color: '#555', marginTop: '3px' }}>{(entry.training.distance_m / 1000).toFixed(1)}km</div>
+                      <div style={{ fontSize: '8px', color: 'var(--text-secondary)', marginTop: '3px' }}>{(entry.training.distance_m / 1000).toFixed(1)}km</div>
                     )}
                   </button>
                 ) : (
@@ -521,7 +521,7 @@ function WeekView({
                       border: `1px dashed ${isSelected ? 'var(--orange)' : 'var(--border-default)'}`,
                       borderRadius: '8px', minHeight: '52px', display: 'flex', alignItems: 'center',
                       justifyContent: 'center', color: isSelected ? 'var(--orange)' : 'var(--text-disabled)',
-                      fontSize: '18px', cursor: 'pointer', background: isSelected ? '#E8521A0a' : 'transparent',
+                      fontSize: '18px', cursor: 'pointer', background: isSelected ? 'var(--orange-subtle)' : 'transparent',
                       width: '100%',
                     }}
                   >+</button>
@@ -550,7 +550,7 @@ function MonthView({
     <div style={{ padding: '14px 16px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
       {[1, 2, 3, 4].map(wn => (
         <div key={wn}>
-          <div style={{ fontSize: '10px', color: '#444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>
             Semana {wn} · {cycleStart ? weekRange(cycleStart, wn) : ''}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px' }}>
@@ -569,7 +569,7 @@ function MonthView({
                 >
                   <div style={{ fontSize: '8px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '3px' }}>{DAY_NAMES[dow]}</div>
                   {entry ? (
-                    <div style={{ fontSize: '8px', color: '#E8521A', fontWeight: 600, lineHeight: 1.3 }}>
+                    <div style={{ fontSize: '8px', color: 'var(--orange)', fontWeight: 600, lineHeight: 1.3 }}>
                       {entry.training.title.length > 14 ? entry.training.title.slice(0, 13) + '…' : entry.training.title}
                     </div>
                   ) : (
@@ -653,20 +653,20 @@ function SidePanel({
         <div>
           <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-primary)' }}>
             {existing ? (
-              <><span style={{ color: '#E8521A' }}>{TRAINING_TYPE_LABELS[existing.training.type] ?? existing.training.type}</span> — {DAY_NAMES[dayOfWeek]}</>
+              <><span style={{ color: 'var(--orange)' }}>{TRAINING_TYPE_LABELS[existing.training.type] ?? existing.training.type}</span> — {DAY_NAMES[dayOfWeek]}</>
             ) : (
-              <><span style={{ color: '#E8521A' }}>Adicionar treino</span> — {dayLabel}</>
+              <><span style={{ color: 'var(--orange)' }}>Adicionar treino</span> — {dayLabel}</>
             )}
           </div>
           {existing && (
             <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '3px', fontWeight: 600 }}>{existing.training.title}</div>
           )}
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#444', fontSize: '14px', cursor: 'pointer', padding: '0', lineHeight: 1 }}>✕</button>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-tertiary)', fontSize: '14px', cursor: 'pointer', padding: '0', lineHeight: 1 }}>✕</button>
       </div>
 
       {mutationError && (
-        <div style={{ margin: '8px 14px 0', padding: '7px 10px', background: '#ff3b3011', border: '1px solid #ff3b3044', borderRadius: '7px', fontSize: '10px', color: '#ff6b6b' }}>
+        <div style={{ margin: '8px 14px 0', padding: '7px 10px', background: 'var(--red-subtle)', border: '1px solid var(--red-border)', borderRadius: '7px', fontSize: '10px', color: 'var(--red-accent)' }}>
           {mutationError}
         </div>
       )}
@@ -675,15 +675,15 @@ function SidePanel({
       {mode === 'view' && existing && (
         <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {existing.training.distance_m && (
-            <div style={{ fontSize: '11px', color: '#888' }}>Distância: {(existing.training.distance_m / 1000).toFixed(1)} km</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Distância: {(existing.training.distance_m / 1000).toFixed(1)} km</div>
           )}
           {existing.training.description && (
-            <div style={{ fontSize: '11px', color: '#666', lineHeight: 1.4 }}>{existing.training.description}</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{existing.training.description}</div>
           )}
           <button
             onClick={onRemoveTraining}
             disabled={mutating}
-            style={{ marginTop: '8px', background: '#ff3b3011', border: '1px solid #ff3b3044', borderRadius: '8px', padding: '8px', color: '#ff6b6b', fontSize: '11px', fontWeight: 600, cursor: mutating ? 'not-allowed' : 'pointer' }}
+            style={{ marginTop: '8px', background: 'var(--red-subtle)', border: '1px solid var(--red-border)', borderRadius: '8px', padding: '8px', color: 'var(--red-accent)', fontSize: '11px', fontWeight: 600, cursor: mutating ? 'not-allowed' : 'pointer' }}
           >
             {mutating ? 'Removendo…' : 'Remover deste dia'}
           </button>
@@ -705,7 +705,7 @@ function SidePanel({
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 14px' }}>
             {filtered(inCycle).length > 0 && (
               <>
-                <div style={{ fontSize: '9px', color: '#444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>Usados neste ciclo</div>
+                <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>Usados neste ciclo</div>
                 {filtered(inCycle).map(t => {
                   const tag = allTags.find(tg => tg.id === t.tag_id)
                   return <TrainingListItem key={t.id} training={t} mutating={mutating} onSelect={() => onAddTraining(t.id)} tagName={tag?.name} tagColor={tag?.color} />
@@ -714,7 +714,7 @@ function SidePanel({
             )}
             {filtered(others).length > 0 && (
               <>
-                <div style={{ fontSize: '9px', color: '#444', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '8px 0 5px' }}>Outros treinos</div>
+                <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '8px 0 5px' }}>Outros treinos</div>
                 {filtered(others).map(t => {
                   const tag = allTags.find(tg => tg.id === t.tag_id)
                   return <TrainingListItem key={t.id} training={t} mutating={mutating} onSelect={() => onAddTraining(t.id)} tagName={tag?.name} tagColor={tag?.color} />
@@ -725,7 +725,7 @@ function SidePanel({
           <div style={{ padding: '8px 14px 12px', borderTop: '1px solid var(--border-default)' }}>
             <button
               onClick={() => onModeChange('create')}
-              style={{ width: '100%', background: '#E8521A11', border: '1px solid #E8521A33', borderRadius: '8px', padding: '8px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: '#E8521A', cursor: 'pointer' }}
+              style={{ width: '100%', background: 'var(--orange-subtle)', border: '1px solid var(--orange-border)', borderRadius: '8px', padding: '8px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: 'var(--orange)', cursor: 'pointer' }}
             >
               + Criar novo treino
             </button>
@@ -762,7 +762,7 @@ function TrainingListItem({ training, mutating, onSelect, tagName, tagColor }: {
         border: 'none', cursor: mutating ? 'not-allowed' : 'pointer', marginBottom: '3px', textAlign: 'left',
       }}
     >
-      <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#E8521A', flexShrink: 0 }} />
+      <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--orange)', flexShrink: 0 }} />
       <div>
         <div style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 600 }}>{training.title}</div>
         <div style={{ fontSize: '8px', color: 'var(--text-secondary)', marginTop: '1px' }}>
@@ -861,7 +861,7 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
 
   return (
     <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', flex: 1 }}>
-      <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#E8521A', fontSize: '10px', fontWeight: 600, cursor: 'pointer', padding: 0, textAlign: 'left', marginBottom: '2px' }}>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'var(--orange)', fontSize: '10px', fontWeight: 600, cursor: 'pointer', padding: 0, textAlign: 'left', marginBottom: '2px' }}>
         ← Voltar à busca
       </button>
       <div>
@@ -879,20 +879,20 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
               placeholder="Ex: Fartlek"
             />
             {typeError && (
-              <div style={{ fontSize: '10px', color: '#ff6b6b', padding: '4px 6px', background: '#ff3b3011', borderRadius: '5px', border: '1px solid #ff3b3044' }}>
+              <div style={{ fontSize: '10px', color: 'var(--red-accent)', padding: '4px 6px', background: 'var(--red-subtle)', borderRadius: '5px', border: '1px solid var(--red-border)' }}>
                 {typeError}
               </div>
             )}
             <div style={{ display: 'flex', gap: '6px' }}>
               <button type="button" onClick={() => { setShowNewType(false); setTypeError(null) }} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1, padding: '6px' }}>Cancelar</button>
-              <button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim()} style={{ flex: 1, background: '#E8521A', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+              <button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim()} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                 {creatingType ? '...' : 'Criar'}
               </button>
             </div>
           </div>
         ) : (
           <select 
-            style={{ ...inputStyle, color: '#E8521A', fontWeight: 600 }} 
+            style={{ ...inputStyle, color: 'var(--orange)', fontWeight: 600 }} 
             value={type} 
             onChange={e => {
               if (e.target.value === 'NEW') setShowNewType(true)
@@ -959,13 +959,13 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
               ))}
             </div>
             {tagError && (
-              <div style={{ fontSize: '10px', color: '#ff6b6b', padding: '4px 6px', background: '#ff3b3011', borderRadius: '5px', border: '1px solid #ff3b3044' }}>
+              <div style={{ fontSize: '10px', color: 'var(--red-accent)', padding: '4px 6px', background: 'var(--red-subtle)', borderRadius: '5px', border: '1px solid var(--red-border)' }}>
                 {tagError}
               </div>
             )}
             <div style={{ display: 'flex', gap: '6px' }}>
               <button type="button" onClick={() => { setShowNewTag(false); setTagError(null) }} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1 }}>Cancelar</button>
-              <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: '#E8521A', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+              <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                 {creatingTag ? '...' : 'Criar'}
               </button>
             </div>
