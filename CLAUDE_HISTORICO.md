@@ -421,3 +421,11 @@ Corre√ß√µes no c√≥digo (itens 1, 3, 4, 6, 7) ainda **pendentes** para pr√≥xima s
   2. Implementar filtro server-side no Deep Join do `useAdminTurmaDetail.ts` se poss√≠vel, ou otimizar a estrutura de consultas.
   3. Adicionar cl√°usula `limit()` expl√≠cita em todas as consultas SQL/Supabase que n√£o possuem pagina√ß√£o nativa.
   4. Executar auditoria de performance e PWA via Lighthouse para identificar oportunidades de otimiza√ß√£o de velocidade e SEO.
+
+### Task 43 (MigraÁ„o CSS Vars e Performance Server-side)
+- 7 arquivos CSS migrados para design system (Login, AdminChatPanel, CreateGroupModal, EditGroupModal, AnamnesisForm, TreinoCard, AlunoDashboard)
+- Novas vari·veis: --purple-accent, --purple-subtle, --yellow-accent, --yellow-subtle
+- useAdminTurmaDetail.ts ó filtro server-side no Deep Join
+- useAdminAlunos.ts ó limit(200)
+- useChat.ts ó limit(100) com ordenaÁ„o correta
+- AdminConvites.tsx ó limit(100)

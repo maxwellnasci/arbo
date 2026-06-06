@@ -669,3 +669,11 @@ npx supabase login
 8. ~~Aba Perfil~~ âœ…
 9. ~~NotificaÃ§Ãµes de PR no admin~~ âœ…
 10. ~~Code Splitting (React.lazy + Suspense)~~ âœ…
+
+### Task 43 (Migração CSS Vars e Performance Server-side)
+- 7 arquivos CSS migrados para design system (Login, AdminChatPanel, CreateGroupModal, EditGroupModal, AnamnesisForm, TreinoCard, AlunoDashboard)
+- Novas variáveis: --purple-accent, --purple-subtle, --yellow-accent, --yellow-subtle
+- useAdminTurmaDetail.ts — filtro server-side no Deep Join
+- useAdminAlunos.ts — limit(200)
+- useChat.ts — limit(100) com ordenação correta
+- AdminConvites.tsx — limit(100)

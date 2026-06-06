@@ -306,3 +306,11 @@ Identifica√ß√£o vis√≠vel no card do treino tanto no admin quanto no app do aluno
 
 *Documento gerado com base nas respostas do professor e alinhamento de produto.*
 *Atualizado em 2026-06-06 com documenta√ß√£o da Task 42 e notas finais da sess√£o.*
+
+### Task 43 (MigraÁ„o CSS Vars e Performance Server-side)
+- 7 arquivos CSS migrados para design system (Login, AdminChatPanel, CreateGroupModal, EditGroupModal, AnamnesisForm, TreinoCard, AlunoDashboard)
+- Novas vari·veis: --purple-accent, --purple-subtle, --yellow-accent, --yellow-subtle
+- useAdminTurmaDetail.ts ó filtro server-side no Deep Join
+- useAdminAlunos.ts ó limit(200)
+- useChat.ts ó limit(100) com ordenaÁ„o correta
+- AdminConvites.tsx ó limit(100)
