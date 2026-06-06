@@ -16,11 +16,27 @@ const typeLabel: Record<string, string> = {
 }
 
 const typeColor: Record<string, string> = {
-  corrida: '#E8521A',
-  hiit: '#EF4444',
-  recovery: '#22C55E',
-  forca: '#3B82F6',
-  mobilidade: '#A855F7',
+  corrida: 'var(--orange)',
+  hiit: 'var(--red-accent)',
+  recovery: 'var(--green-accent)',
+  forca: 'var(--blue-accent)',
+  mobilidade: 'var(--purple-accent)',
+}
+
+const typeBgColor: Record<string, string> = {
+  corrida: 'var(--orange-subtle)',
+  hiit: 'var(--red-subtle)',
+  recovery: 'var(--green-subtle)',
+  forca: 'var(--blue-subtle)',
+  mobilidade: 'var(--purple-subtle)',
+}
+
+const typeBorderColor: Record<string, string> = {
+  corrida: 'var(--orange-border)',
+  hiit: 'var(--red-border)',
+  recovery: 'var(--green-border)',
+  forca: 'var(--blue-border)',
+  mobilidade: 'var(--purple-border)',
 }
 
 const listItem = {
@@ -35,6 +51,7 @@ function formatPace(secondsPerKm: number | null): string {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}/km`
 }
 
+// Helper formatting function
 function formatDistance(meters: number | null): string {
   if (!meters) return '—'
   return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${meters} m`
@@ -42,6 +59,8 @@ function formatDistance(meters: number | null): string {
 
 export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardProps) {
   const color = typeColor[treino.type] ?? 'var(--text-secondary)'
+  const bgColor = typeBgColor[treino.type] ?? 'var(--bg-surface-hover)'
+  const borderColor = typeBorderColor[treino.type] ?? 'var(--border-default)'
   const label = typeLabel[treino.type] ?? treino.type
 
   return (
@@ -61,7 +80,7 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
       onMouseEnter={e => {
         e.currentTarget.style.background = 'var(--bg-surface-hover)';
         e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4)';
+        e.currentTarget.style.boxShadow = 'var(--shadow-card)';
       }}
       onMouseLeave={e => {
         e.currentTarget.style.background = 'var(--bg-surface)';
@@ -73,7 +92,7 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
         <span
           style={{
-            background: color + '1a',
+            background: bgColor,
             color,
             borderRadius: '20px',
             padding: '4px 10px',
@@ -81,7 +100,7 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
             fontWeight: 700,
             letterSpacing: '0.5px',
             textTransform: 'uppercase',
-            border: `1px solid ${color}33`
+            border: `1px solid ${borderColor}`
           }}
         >
           {label}
@@ -170,7 +189,7 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
             style={{
               background: 'none',
               border: 'none',
-              color: '#ff6b6b',
+              color: 'var(--red-accent)',
               fontSize: '13px',
               fontWeight: 600,
               cursor: 'pointer',

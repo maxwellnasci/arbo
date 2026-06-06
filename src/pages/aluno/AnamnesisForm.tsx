@@ -171,7 +171,7 @@ export default function AnamnesisForm() {
 
             {form.age && (
               <p style={styles.hint}>
-                FC máxima estimada: <strong style={{ color: '#E8521A' }}>{220 - parseInt(form.age)} bpm</strong>
+                FC máxima estimada: <strong style={{ color: 'var(--orange)' }}>{220 - parseInt(form.age)} bpm</strong>
               </p>
             )}
           </section>
@@ -296,7 +296,7 @@ function YesNoField({
 }) {
   return (
     <div style={{ marginBottom: '16px' }}>
-      <p style={{ color: '#d0d0d0', fontSize: '14px', margin: '0 0 8px', fontFamily: 'sans-serif' }}>
+      <p style={{ color: 'var(--text-primary)', fontSize: '14px', margin: '0 0 8px', fontFamily: 'sans-serif' }}>
         {label}
       </p>
       <div style={{ display: 'flex', gap: '10px' }}>
@@ -309,9 +309,9 @@ function YesNoField({
               padding: '10px 24px',
               borderRadius: '8px',
               border: '1.5px solid',
-              borderColor: value === opt ? '#E8521A' : '#3a3a3a',
-              backgroundColor: value === opt ? '#E8521A22' : '#2a2a2a',
-              color: value === opt ? '#E8521A' : '#888',
+              borderColor: value === opt ? 'var(--orange)' : 'var(--border-default)',
+              backgroundColor: value === opt ? 'var(--orange-subtle)' : 'var(--bg-input)',
+              color: value === opt ? 'var(--orange)' : 'var(--text-secondary)',
               fontWeight: 600,
               fontSize: '14px',
               cursor: 'pointer',
@@ -329,7 +329,7 @@ function YesNoField({
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: '100svh',
-    backgroundColor: '#111111',
+    backgroundColor: 'var(--bg-primary)',
     padding: '24px 16px 48px',
     fontFamily: 'sans-serif',
   },
@@ -341,13 +341,13 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '32px',
   },
   title: {
-    color: '#ffffff',
+    color: 'var(--text-primary)',
     fontSize: '28px',
     fontWeight: 800,
     margin: '0 0 8px',
   },
   subtitle: {
-    color: '#888',
+    color: 'var(--text-secondary)',
     fontSize: '15px',
     margin: 0,
   },
@@ -357,13 +357,13 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '8px',
   },
   section: {
-    backgroundColor: '#1c1c1e',
+    backgroundColor: 'var(--bg-surface)',
     borderRadius: '16px',
     padding: '20px',
     marginBottom: '12px',
   },
   sectionTitle: {
-    color: '#E8521A',
+    color: 'var(--orange)',
     fontSize: '14px',
     fontWeight: 700,
     textTransform: 'uppercase',
@@ -384,15 +384,15 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: '12px',
   },
   label: {
-    color: '#d0d0d0',
+    color: 'var(--text-primary)',
     fontSize: '13px',
     fontWeight: 500,
   },
   input: {
-    backgroundColor: '#2a2a2a',
-    border: '1.5px solid #3a3a3a',
+    backgroundColor: 'var(--bg-input)',
+    border: '1.5px solid var(--border-default)',
     borderRadius: '10px',
-    color: '#fff',
+    color: 'var(--text-primary)',
     fontSize: '15px',
     padding: '12px 16px',
     outline: 'none',
@@ -400,10 +400,10 @@ const styles: Record<string, React.CSSProperties> = {
     boxSizing: 'border-box',
   },
   select: {
-    backgroundColor: '#2a2a2a',
-    border: '1.5px solid #3a3a3a',
+    backgroundColor: 'var(--bg-input)',
+    border: '1.5px solid var(--border-default)',
     borderRadius: '10px',
-    color: '#fff',
+    color: 'var(--text-primary)',
     fontSize: '15px',
     padding: '12px 16px',
     outline: 'none',
@@ -412,10 +412,10 @@ const styles: Record<string, React.CSSProperties> = {
     appearance: 'none',
   },
   textarea: {
-    backgroundColor: '#2a2a2a',
-    border: '1.5px solid #3a3a3a',
+    backgroundColor: 'var(--bg-input)',
+    border: '1.5px solid var(--border-default)',
     borderRadius: '10px',
-    color: '#fff',
+    color: 'var(--text-primary)',
     fontSize: '15px',
     padding: '12px 16px',
     outline: 'none',
@@ -432,28 +432,28 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
-    color: '#d0d0d0',
+    color: 'var(--text-primary)',
     fontSize: '14px',
     cursor: 'pointer',
   },
   checkbox: {
-    accentColor: '#E8521A',
+    accentColor: 'var(--orange)',
     width: '18px',
     height: '18px',
   },
   hint: {
-    color: '#888',
+    color: 'var(--text-secondary)',
     fontSize: '13px',
     margin: '4px 0 0',
   },
   error: {
-    color: '#ff6b6b',
+    color: 'var(--red-accent)',
     fontSize: '13px',
     margin: '4px 0',
   },
   button: {
-    backgroundColor: '#E8521A',
-    color: '#ffffff',
+    backgroundColor: 'var(--orange)',
+    color: 'var(--text-primary)',
     border: 'none',
     borderRadius: '12px',
     fontSize: '17px',

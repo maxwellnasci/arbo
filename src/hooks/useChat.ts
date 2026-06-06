@@ -24,12 +24,13 @@ export function useChat(studentId?: string | null) {
         .from('messages')
         .select('id, content, created_at, sender_id, admin_id, student_id, deleted_by_admin, deleted_by_student, read_at')
         .eq('student_id', studentId)
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
+        .limit(100)
       if (cancelled) return
       if (fetchError) {
         setError(fetchError.message)
       } else if (data) {
-        setMessages(data)
+        setMessages([...data].reverse())
       }
       setIsLoading(false)
     }

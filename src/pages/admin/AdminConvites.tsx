@@ -35,6 +35,7 @@ export default function AdminConvites() {
       .from('invites')
       .select('id, email, role, status, created_at')
       .order('created_at', { ascending: false })
+      .limit(100)
     
     if (!error && data) {
       setInvites(data)
@@ -48,6 +49,7 @@ export default function AdminConvites() {
         .from('invites')
         .select('id, email, role, status, created_at')
         .order('created_at', { ascending: false })
+        .limit(100)
       if (!error && data && !cancelled) setInvites(data)
     }
     load()

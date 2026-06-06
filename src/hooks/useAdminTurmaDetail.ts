@@ -25,9 +25,6 @@ type DBGroupPlanTraining = Omit<GroupPlanTraining, 'group_plan_id'> & {
   trainings: (Training & { tags: Tag | null }) | null
 }
 
-type DBGroupPlan = GroupPlan & {
-  group_plan_trainings: DBGroupPlanTraining[]
-}
 
 function toDateString(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -67,37 +64,39 @@ export function useAdminTurmaDetail(groupId: string): UseAdminTurmaDetailResult 
       
       const { data: groupData, error: groupErr } = await supabase
         .from('groups')
-        .select(`
-          id, name, is_active, starts_at, frequency, goal, plan_type, created_at, updated_at,
-          group_plans(
-            id, starts_at, group_id, notes, released_through_week, created_at, created_by, updated_at,
-            group_plan_trainings(
-              id, week_number, day_of_week, sort_order, plan_id:group_plan_id, training_id,
-              trainings(
-                id, type, title, duration_minutes, distance_m, description, target_pace_seconds_per_km, sets, tag_id, created_at, created_by, updated_at,
-                tags(id, name, color, created_at, created_by, updated_at)
-              )
-            )
-          )
-        `)
+        .select('id, name, is_active, starts_at, frequency, goal, plan_type, created_at, updated_at')
         .eq('id', groupId)
         .single()
 
       if (cancelled) return
       if (groupErr) { setError(groupErr.message); setIsLoading(false); return }
 
-      // Extract raw group (excluding relations for state)
-      const { group_plans, ...rawGroup } = groupData
-      setGroup(rawGroup as Group)
+      setGroup(groupData as Group)
 
-      const startsAt = rawGroup.starts_at ?? toDateString(new Date())
+      const startsAt = groupData.starts_at ?? toDateString(new Date())
       const { cycleStart: cs, weekNumber: wn } = getCurrentCycle(startsAt)
       setCycleStart(cs)
       setDefaultWeekNumber(wn)
 
-      // Find the plan for current cycle
-      const planData = (group_plans as DBGroupPlan[] | null)?.find(p => p.starts_at === cs)
-      
+      const { data: planData, error: planErr } = await supabase
+        .from('group_plans')
+        .select(`
+          id, starts_at, group_id, notes, released_through_week, created_at, created_by, updated_at,
+          group_plan_trainings(
+            id, week_number, day_of_week, sort_order, plan_id:group_plan_id, training_id,
+            trainings(
+              id, type, title, duration_minutes, distance_m, description, target_pace_seconds_per_km, sets, tag_id, created_at, created_by, updated_at,
+              tags(id, name, color, created_at, created_by, updated_at)
+            )
+          )
+        `)
+        .eq('group_id', groupId)
+        .eq('starts_at', cs)
+        .maybeSingle()
+
+      if (cancelled) return
+      if (planErr) { setError(planErr.message); setIsLoading(false); return }
+
       if (!planData) { 
         setPlan(null)
         setTrainings([])

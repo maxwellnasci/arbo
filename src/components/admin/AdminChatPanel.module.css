@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--backdrop-bg);
   backdrop-filter: blur(4px);
   z-index: 100;
 }
@@ -16,9 +16,9 @@
   bottom: 0;
   width: 100%;
   max-width: 400px;
-  background: #111111;
-  border-left: 1px solid #222;
-  box-shadow: -8px 0 24px rgba(0, 0, 0, 0.5);
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border-default);
+  box-shadow: -8px 0 24px var(--backdrop-bg);
   z-index: 101;
   display: flex;
   flex-direction: column;
@@ -29,9 +29,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(17, 17, 17, 0.8);
+  background: var(--bg-surface);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--border-default);
   z-index: 2;
 }
 
@@ -45,33 +45,33 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #1e1e1e;
-  color: #fff;
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   font-weight: 700;
-  border: 1px solid #333;
+  border: 1px solid var(--border-default);
 }
 
 .title {
   font-size: 16px;
   font-weight: 600;
-  color: #fff;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .subtitle {
   font-size: 12px;
-  color: #888;
+  color: var(--text-secondary);
   margin: 0;
 }
 
 .closeBtn {
   background: transparent;
   border: none;
-  color: #888;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 8px;
   border-radius: 50%;
@@ -82,8 +82,8 @@
 }
 
 .closeBtn:hover {
-  background: #1e1e1e;
-  color: #fff;
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
 }
 
 .messagesContainer {
@@ -99,13 +99,13 @@
   width: 6px;
 }
 .messagesContainer::-webkit-scrollbar-thumb {
-  background: #333;
+  background: var(--border-default);
   border-radius: 3px;
 }
 
 .loading, .empty {
   text-align: center;
-  color: #666;
+  color: var(--text-tertiary);
   font-size: 14px;
   margin-top: 40px;
 }
@@ -133,15 +133,15 @@
 }
 
 .bubbleAdmin {
-  background: #E8521A;
-  color: #fff;
+  background: var(--orange);
+  color: var(--text-primary);
   border-radius: 16px 16px 4px 16px;
-  box-shadow: 0 4px 12px rgba(232, 82, 26, 0.2);
+  box-shadow: 0 4px 12px var(--orange-border);
 }
 
 .bubbleStudent {
-  background: #27272a;
-  color: #e4e4e7;
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
   border-radius: 16px 16px 16px 4px;
 }
 
@@ -161,9 +161,9 @@
 }
 
 .deleteBtn {
-  background: #1e1e1e;
-  border: 1px solid #333;
-  color: #888;
+  background: var(--bg-surface-hover);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -182,15 +182,15 @@
 }
 
 .deleteBtn:hover {
-  background: #ef4444;
-  color: #fff;
-  border-color: #ef4444;
+  background: var(--red-accent);
+  color: var(--text-primary);
+  border-color: var(--red-accent);
 }
 
 .inputArea {
   padding: 16px;
-  background: #111;
-  border-top: 1px solid #222;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
 }
 
 .form {
@@ -201,22 +201,22 @@
 
 .input {
   flex: 1;
-  background: #1a1a1a;
-  border: 1px solid #333;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
   border-radius: 20px;
   padding: 12px 16px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .input:focus {
-  border-color: #E8521A;
+  border-color: var(--orange);
 }
 
 .sendBtn {
-  background: #E8521A;
+  background: var(--orange);
   border: none;
   width: 42px;
   height: 42px;
@@ -224,20 +224,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .sendBtn:disabled {
-  background: #333;
-  color: #666;
+  background: var(--text-disabled);
+  color: var(--text-tertiary);
   cursor: not-allowed;
 }
 
 .sendBtn:not(:disabled):hover {
   transform: scale(1.05);
-  background: #ff5e22;
+  background: var(--orange);
+  filter: brightness(1.1);
 }
 
 .sendBtn:not(:disabled):active {

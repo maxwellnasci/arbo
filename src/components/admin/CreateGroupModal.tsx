@@ -50,7 +50,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.7)',
+      backgroundColor: 'var(--backdrop-bg)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -58,25 +58,25 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
       backdropFilter: 'blur(4px)'
     }}>
       <div style={{
-        background: '#1c1c1e',
+        background: 'var(--bg-surface)',
         borderRadius: '16px',
         padding: '32px',
         width: '100%',
         maxWidth: '500px',
-        border: '1px solid #333',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+        border: '1px solid var(--border-default)',
+        boxShadow: 'var(--shadow-card)'
       }}>
-        <h2 style={{ margin: '0 0 24px', fontSize: '20px', color: '#fff' }}>Nova Turma</h2>
+        <h2 style={{ margin: '0 0 24px', fontSize: '20px', color: 'var(--text-primary)' }}>Nova Turma</h2>
         
         {error && (
-          <div style={{ padding: '12px', background: 'rgba(255, 107, 107, 0.1)', color: '#ff6b6b', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' }}>
+          <div style={{ padding: '12px', background: 'var(--red-subtle)', color: 'var(--red-accent)', borderRadius: '8px', marginBottom: '16px', fontSize: '14px' }}>
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Nome da Turma</label>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>Nome da Turma</label>
             <input 
               type="text" 
               value={name}
@@ -86,9 +86,9 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
                 width: '100%',
                 padding: '12px',
                 borderRadius: '8px',
-                border: '1px solid #333',
-                background: '#2a2a2c',
-                color: '#fff',
+                border: '1px solid var(--border-default)',
+                background: 'var(--bg-input)',
+                color: 'var(--text-primary)',
                 outline: 'none',
                 boxSizing: 'border-box'
               }}
@@ -97,7 +97,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
 
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 200px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Objetivo</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>Objetivo</label>
               <select 
                 value={goal}
                 onChange={e => setGoal(e.target.value)}
@@ -105,9 +105,9 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: '1px solid #333',
-                  background: '#2a2a2c',
-                  color: '#fff',
+                  border: '1px solid var(--border-default)',
+                  background: 'var(--bg-input)',
+                  color: 'var(--text-primary)',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
@@ -121,7 +121,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
             </div>
 
             <div style={{ flex: '1 1 200px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Frequência</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>Frequência</label>
               <select 
                 value={frequency}
                 onChange={e => setFrequency(e.target.value)}
@@ -129,9 +129,9 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: '1px solid #333',
-                  background: '#2a2a2c',
-                  color: '#fff',
+                  border: '1px solid var(--border-default)',
+                  background: 'var(--bg-input)',
+                  color: 'var(--text-primary)',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
@@ -144,7 +144,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
 
           <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
             <div style={{ flex: '1 1 200px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Tipo de Plano</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>Tipo de Plano</label>
               <select 
                 value={planType}
                 onChange={e => setPlanType(e.target.value)}
@@ -152,9 +152,9 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: '1px solid #333',
-                  background: '#2a2a2c',
-                  color: '#fff',
+                  border: '1px solid var(--border-default)',
+                  background: 'var(--bg-input)',
+                  color: 'var(--text-primary)',
                   outline: 'none',
                   boxSizing: 'border-box'
                 }}
@@ -165,7 +165,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
             </div>
 
             <div style={{ flex: '1 1 200px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: '#aaa' }}>Início (Opcional)</label>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>Início (Opcional)</label>
               <input 
                 type="date"
                 value={startsAt}
@@ -174,9 +174,9 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
                   width: '100%',
                   padding: '12px',
                   borderRadius: '8px',
-                  border: '1px solid #333',
-                  background: '#2a2a2c',
-                  color: '#fff',
+                  border: '1px solid var(--border-default)',
+                  background: 'var(--bg-input)',
+                  color: 'var(--text-primary)',
                   outline: 'none',
                   boxSizing: 'border-box',
                   colorScheme: 'dark'
@@ -195,7 +195,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
                 borderRadius: '8px',
                 border: 'none',
                 background: 'transparent',
-                color: '#aaa',
+                color: 'var(--text-secondary)',
                 cursor: 'pointer',
                 fontWeight: 600
               }}
@@ -209,8 +209,8 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
                 padding: '12px 24px',
                 borderRadius: '8px',
                 border: 'none',
-                background: '#E8521A',
-                color: '#fff',
+                background: 'var(--orange)',
+                color: 'var(--text-primary)',
                 cursor: isSubmitting ? 'not-allowed' : 'pointer',
                 fontWeight: 600,
                 opacity: isSubmitting ? 0.7 : 1
