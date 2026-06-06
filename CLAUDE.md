@@ -353,3 +353,9 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 ### Pendentes
 - Integração Strava (Edge Function via n8n)
 - SMTP externo (Resend ou AWS SES)
+
+### Task 45 (Findings Claude Code)
+- Alta prioridade & Limpeza Rapida: padding-bottom em AlunoPerfil, tipagens catch(err: unknown), limits(200/50/500) em useAdminTreinos, AdminTurmaDetail, useProgresso, useAdminFeedbacks, useAdminAlunoDetail
+- CSS e Hardcoded: Migracao de hardcoded hex nos modulos restantes (AdminChatPanel, AdminSidebar, AdminAlunos, DashboardRedirect, AdminLayout.module.css, AlunoChat.module.css, AdminPRFeed.module.css)
+- Configuracao: lang pt-BR no index.html e timeout de rede 10s no vite config
+

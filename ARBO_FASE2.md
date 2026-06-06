@@ -320,3 +320,9 @@ Identifica√ß√£o vis√≠vel no card do treino tanto no admin quanto no app do aluno
 - AdminTurmas.tsx ó #ff6b6b, #2e2e2e, #444 ? CSS vars
 - AdminFeedbacks.tsx ó #ff6b6b ? var(--red-accent)
 - AdminAlunoDetail.tsx ó 5 hardcoded substituÌdos por CSS vars
+
+### Task 45 (Findings Claude Code)
+- Alta prioridade & Limpeza Rapida: padding-bottom em AlunoPerfil, tipagens catch(err: unknown), limits(200/50/500) em useAdminTreinos, AdminTurmaDetail, useProgresso, useAdminFeedbacks, useAdminAlunoDetail
+- CSS e Hardcoded: Migracao de hardcoded hex nos modulos restantes (AdminChatPanel, AdminSidebar, AdminAlunos, DashboardRedirect, AdminLayout.module.css, AlunoChat.module.css, AdminPRFeed.module.css)
+- Configuracao: lang pt-BR no index.html e timeout de rede 10s no vite config
+
