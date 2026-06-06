@@ -289,3 +289,13 @@ Utilize os comandos abaixo para acionar a revisão e melhoria visual pelo AntiGr
 - CSS e Hardcoded: Migracao de hardcoded hex nos modulos restantes (AdminChatPanel, AdminSidebar, AdminAlunos, DashboardRedirect, AdminLayout.module.css, AlunoChat.module.css, AdminPRFeed.module.css)
 - Configuracao: lang pt-BR no index.html e timeout de rede 10s no vite config
 
+
+### Task 46 (Correções PWA e Mobile)
+- navigateFallback: '/offline.html' adicionado no Workbox
+- Inputs 15px → 16px em Login.css, SetPassword.tsx, AnamnesisForm.tsx
+- Inter duplicada removida do index.html + preload adicionado
+- Bebas Neue movida para AdminLayout.module.css (local)
+- AlunoDashboard.module.css e AlunoProgresso.module.css — safe area corrigida
+- icon-512-maskable.png criado com fundo laranja + 40% padding
+- offline.html viewport-fit=cover adicionado
+
