@@ -100,7 +100,7 @@ function RouterErrorElement() {
         borderRadius: '24px',
         maxWidth: '480px',
         width: '100%',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        boxShadow: 'var(--shadow-card)',
       }}>
         <h1 style={{ color: 'var(--orange)', margin: '0 0 16px 0', fontSize: '28px', fontWeight: 600 }}>
           Oops! Algo deu errado.

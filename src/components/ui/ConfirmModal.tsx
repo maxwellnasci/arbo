@@ -74,13 +74,16 @@ export function ConfirmModal({
               padding: '24px',
               width: '100%',
               maxWidth: '400px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+              boxShadow: 'var(--shadow-modal)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '24px' }}>
               <div style={{
-                background: `${getButtonColor()}15`,
+                background: (() => {
+                  const subtleMap = { danger: 'var(--red-subtle)', warning: 'var(--orange-subtle)', info: 'var(--blue-subtle)' };
+                  return subtleMap[type];
+                })(),
                 padding: '12px',
                 borderRadius: '50%',
                 display: 'flex',

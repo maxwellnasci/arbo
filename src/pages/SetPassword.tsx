@@ -211,7 +211,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: 'sans-serif',
   },
   error: {
-    color: '#ff6b6b',
+    color: 'var(--red-accent)',
     fontSize: '13px',
     margin: 0,
     fontFamily: 'sans-serif',

@@ -53,7 +53,7 @@ class ErrorBoundary extends React.Component<Props, State> {
             borderRadius: '24px',
             maxWidth: '480px',
             width: '100%',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)'
+            boxShadow: 'var(--shadow-card)'
           }}>
             <h1 style={{ 
               color: 'var(--orange)', 
@@ -105,11 +105,13 @@ class ErrorBoundary extends React.Component<Props, State> {
                 outline: 'none'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.background = '#d14312';
+                e.currentTarget.style.background = 'var(--orange)';
+                e.currentTarget.style.opacity = '0.9';
                 e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.background = 'var(--orange)';
+                e.currentTarget.style.opacity = '1';
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
               onMouseDown={(e) => e.currentTarget.style.transform = 'translateY(1px)'}
