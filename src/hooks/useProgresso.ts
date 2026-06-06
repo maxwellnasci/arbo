@@ -43,7 +43,8 @@ export function useProgresso(studentId: string) {
           supabase.from('checkins')
             .select('*, trainings(title, distance_m, type)')
             .eq('student_id', studentId)
-            .order('created_at', { ascending: false }),
+            .order('created_at', { ascending: false })
+            .limit(100),
         ]);
 
         if (cancelled) return;

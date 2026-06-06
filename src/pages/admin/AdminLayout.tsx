@@ -38,7 +38,7 @@ export function AdminLayout() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.logoContainer}>
-          <img src={arboLogo} alt="Arbo" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+          <img src={arboLogo} alt="Arbo" width="32" height="32" style={{ width: 32, height: 32, objectFit: 'contain' }} />
           <span className={styles.headerTitle}>ARBO</span>
         </div>
         

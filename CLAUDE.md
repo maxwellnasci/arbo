@@ -206,6 +206,7 @@ catch (e: unknown) {
 - Trigger `tr_set_profile_role` (BEFORE INSERT em `profiles`) — popula `role` de `raw_user_meta_data` ao criar perfil via convite.
 - **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by, **released_through_week smallint DEFAULT 0** — 0=bloqueado, 1–4=semanas liberadas até N, **bidirecional**: chips S1–S4 fazem toggle — clicar em semana já liberada reduz o valor; clicar na semana ativa seta para N-1, com S1 ativo → 0) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id, sort_order). Ciclo de 4 semanas calculado a partir de `groups.starts_at`. Admin: acesso total. Aluno: SELECT onde `group_id = profile.group_id`.
 - **`supabase gen types`** pode incluir aviso de versão no final do arquivo gerado — remover manualmente as linhas de texto após o `} as const` antes de commitar.
+- **Checkins limitados a 100 registros no frontend (`limit(100)`)** — decisão MVP 2026-06-05. Quando algum aluno atingir esse limite, implementar RPC no Supabase para calcular streak no banco e separar da query de exibição.
 - **CSS Variables:** usar sempre variáveis semânticas de `src/index.css`. Nunca hardcodar `#fff`, `#000`, `#1c1c1c` etc. em novos componentes.
 
 ## Autenticação (implementada)

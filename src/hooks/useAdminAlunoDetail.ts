@@ -44,7 +44,7 @@ export function useAdminAlunoDetail(alunoId: string | undefined) {
 
         // 2. Group for profile (if any)
         if (profData?.group_id) {
-          const { data: groupData } = await supabase.from('groups').select('*').eq('id', profData.group_id).single()
+          const groupData = groupsData?.find(g => g.id === profData.group_id) || null
           if (!cancelled) setGroup(groupData)
         } else {
           setGroup(null)
@@ -56,7 +56,7 @@ export function useAdminAlunoDetail(alunoId: string | undefined) {
           { data: recData },
           { data: anaData }
         ] = await Promise.all([
-          supabase.from('checkins').select('*, trainings(*)').eq('student_id', alunoId).order('created_at', { ascending: false }),
+          supabase.from('checkins').select('*, trainings(*)').eq('student_id', alunoId).order('created_at', { ascending: false }).limit(100),
           supabase.from('records').select('*').eq('student_id', alunoId).order('distance_category'),
           supabase.from('anamnesis').select('*').eq('user_id', alunoId).maybeSingle()
         ])

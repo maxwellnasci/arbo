@@ -39,14 +39,14 @@ Deno.serve(async (req) => {
   const siteUrl = Deno.env.get('SITE_URL') ?? 'http://localhost:5173'
 
   // Valida o JWT do chamador com a anon key
-  const userClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-  })
+  const userClient = createClient(supabaseUrl, anonKey)
 
-  const { data: { user }, error: authError } = await userClient.auth.getUser()
+  const token = authHeader.replace('Bearer ', '')
+  const { data: { user }, error: authError } = await userClient.auth.getUser(token)
 
   if (authError || !user) {
-    return new Response('Não autorizado', { status: 401, headers: corsHeaders })
+    console.error('Auth Error:', authError)
+    return new Response(`Não autorizado: ${authError?.message || 'Usuário não encontrado'}`, { status: 401, headers: corsHeaders })
   }
 
   // Role SEMPRE de app_metadata — nunca de user_metadata

@@ -13,13 +13,13 @@ export function useAdminAlunos() {
     async function fetchAlunos() {
       const { data, error: fetchError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, full_name, avatar_url, level, role, group_id, updated_at')
         .eq('role', 'aluno')
         .order('full_name', { ascending: true, nullsFirst: false })
 
       if (cancelled) return
       if (fetchError) setError(fetchError.message)
-      else setAlunos(data ?? [])
+      else setAlunos((data as unknown as Profile[]) ?? [])
       setIsLoading(false)
     }
 

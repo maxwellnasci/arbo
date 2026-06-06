@@ -26,9 +26,8 @@ export function useAlunoPerfil(studentId: string) {
         setIsLoading(true);
         setError(null);
 
-        const [profileRes, stravaRes] = await Promise.all([
-          supabase.from('profiles').select('*, groups(name)').eq('id', studentId).single(),
-          supabase.from('strava_connections').select('id').eq('user_id', studentId).maybeSingle()
+        const [profileRes] = await Promise.all([
+          supabase.from('profiles').select('*, groups(name)').eq('id', studentId).single()
         ]);
 
         if (cancelled) return;
@@ -41,7 +40,7 @@ export function useAlunoPerfil(studentId: string) {
           avatar_url: data.avatar_url,
           level: data.level,
           groups: data.groups,
-          strava_connected: !!stravaRes.data
+          strava_connected: false
         });
       } catch (e: unknown) {
         if (!cancelled) {
