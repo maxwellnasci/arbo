@@ -1,11 +1,11 @@
 # Arbo — Documentação Fase 2
 
-> Gerado em 2026-05-29 | Atualizado em 2026-06-05 (sessão 12)
+> Gerado em 2026-05-29 | Atualizado em 2026-06-06 (sessão 13)
 > Histórico detalhado de sessões: [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md)
 
 ---
 
-## Estado atual (2026-06-05)
+## Estado atual (2026-06-06)
 
 | Área | Status |
 |------|--------|
@@ -54,6 +54,7 @@
 | **Relatório de performance** | ✅ N+1 em `useAdminAlunoDetail`, select wildcard, checkins sem limit, query strava_connections, layout shift logo — **correções no código pendentes** (2026-06-05) |
 | **Sistema de Etiquetas/Tipos inline (Task 36)** | ✅ Tabela `training_types` (RLS + UNIQUE), `trainings.type` migrado para `text`, criação inline no formulário de treino, painel de gerenciamento em `/admin/treinos` (2026-06-05) |
 | **10 correções sistema etiquetas/tipos (Task 37)** | ✅ `trainingUtils.ts` extraído, CSS vars, cancelled flag, UNIQUE constraint, `is_custom` filter, branded union `TrainingType`, mutations no pai (2026-06-05) |
+| **Fix "Unexpected Application Error!" (Task 38)** | ✅ `RouterErrorElement` como `errorElement` na rota raiz do `createBrowserRouter` — chunk errors → auto-reload com guard `sessionStorage`; outros erros → tela amigável. Root cause: data router API captava erros antes do `ErrorBoundary` externo (2026-06-06) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 

@@ -266,7 +266,7 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-06-05)
+## Estado atual (2026-06-06)
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
@@ -303,13 +303,14 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 35:** Performance — Relatório completo + 7 índices SQL criados no Supabase ✅
 - **Task 36:** Sistema de Etiquetas/Tipos inline — `training_types` no banco, seleção + criação inline nos formulários de treino, painel de gerenciamento em `/admin/treinos` ✅
 - **Task 37:** 10 correções no sistema de etiquetas/tipos — catch Supabase, cancelled flag, UUID vazio, UNIQUE constraint, hex hardcoded → CSS vars, `is_custom` filter, refetch desnecessário removido, `trainingUtils.ts` extraído, `TrainingType` branded union, mutations movidas para pai ✅
+- **Task 38:** Fix "Unexpected Application Error!" em produção — `RouterErrorElement` adicionado como `errorElement` na rota raiz do `createBrowserRouter`; detecta falha de chunk (`Failed to fetch dynamically imported module`) e faz auto-reload com guard `sessionStorage` para evitar loop ✅
 
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)  
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)  
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
 
 ### Próximos passos
-- Correções de performance pendentes no código: N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query desnecessária em `strava_connections`, layout shift na logo
+- Correções de performance pendentes no código: N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, query desnecessária em `strava_connections`, layout shift na logo
 - Validação visual no celular (screenshots mobile)
 - Integração Strava (Edge Function via n8n)
 - SMTP externo (Resend ou AWS SES) antes de produção

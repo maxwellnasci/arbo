@@ -289,7 +289,7 @@ npx supabase login
 
 **Project ID:** `jhfkflnixzivuichmkie`
 
-## Estado Atual (2026-06-05)
+## Estado Atual (2026-06-06)
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
@@ -329,8 +329,9 @@ npx supabase login
 - Task 35: Performance — Relatório completo + 7 índices SQL criados no Supabase ✅
 - Task 36: Sistema de Etiquetas/Tipos inline — `training_types` no banco, seleção + criação inline nos formulários, painel de gerenciamento em `/admin/treinos` ✅
 - Task 37: 10 correções no sistema de etiquetas/tipos — catch Supabase, cancelled flag, UUID vazio, UNIQUE constraint, CSS vars, is_custom filter, trainingUtils.ts, TrainingType branded union, mutations no pai ✅
+- Task 38: Fix "Unexpected Application Error!" em produção — `RouterErrorElement` com `errorElement` na rota raiz do `createBrowserRouter`; detecta chunk errors e auto-reload com guard sessionStorage ✅
 
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)
 
 ### O que foi feito em 2026-05-21
 - `useWeeklyPlan`: join N→1 corrigido (`wpt.trainings[0]` → `wpt.trainings`)

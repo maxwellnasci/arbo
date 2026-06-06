@@ -1,6 +1,6 @@
 # 🌳 Arbo — Briefing do Time de IA
 
-> Última atualização: 2026-06-05
+> Última atualização: 2026-06-06
 > Autor: Maxwell + Antigravity
 
 ---
@@ -46,13 +46,14 @@ Somos um **time de 3**:
 - **sonner** — Toasts/notificações estilo Apple
 - **date-fns** — Formatação de datas em PT-BR
 
-### Estado atual (2026-06-05)
+### Estado atual (2026-06-06)
 - **App publicado:** **https://arbo.mxos.com.br** (Vercel, SPA routing)
 - **23+ telas/features implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
 - Fase 2 (Admin Turmas + Planos + Perfil Aluno + Etiquetas + Controle de Liberação + Nova Turma + Filtros + Invites): ✅ 100%
 - Fase 3 (Treinos + Chat + Progresso + Perfil + PRs + Error Boundary + Code Splitting): ✅ **100%**
 - Fase 5 (Redesign Premium Admin + Aluno + Dark/Light Mode + 10 bugs pós-redesign corrigidos): ✅ **100%**
+- Task 38: Fix "Unexpected Application Error!" em produção (RouterErrorElement + sessionStorage guard) ✅
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
@@ -141,6 +142,9 @@ Somos um **time de 3**:
 - Mutations de etiqueta/tipo movidas para os pais (`AdminTreinos`, `AdminTurmaDetail`); `TreinoFormPanel` recebe callbacks async
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
+
+### O que foi feito em 2026-06-06
+- **Fix "Unexpected Application Error!" em produção (Task 38 — Claude Code):** `RouterErrorElement` adicionado como `errorElement` na rota raiz do `createBrowserRouter` — detecta falhas de chunk PWA (`Failed to fetch dynamically imported module`) e faz auto-reload uma vez com guard `sessionStorage` para evitar loop. Outros erros exibem tela amigável em vez de tela padrão do React Router. Root cause: data router API capturava erros antes do `ErrorBoundary` externo. Commit `7535ce1`.
 
 ### Próximo passo
 - Correções de performance no código: N+1 em `useAdminAlunoDetail`, `select('*')` em `useAdminAlunos`, checkins sem `limit()`, query em `strava_connections`

@@ -341,3 +341,22 @@ Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima s
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` ✅ · `npm run build` ✅
 
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-05)
+
+---
+
+### O que foi feito em 2026-06-06 (Claude Code)
+
+**Task 38 — Fix "Unexpected Application Error!" em produção (commit `7535ce1`):**
+
+**Root cause:** `createBrowserRouter` (React Router v6 data router API) tem um error boundary interno que captura erros de rota **antes** de propagá-los ao `ErrorBoundary` externo (class component). A lógica de reload em `ErrorBoundary.componentDidCatch` era completamente inacessível para falhas de carregamento de chunk — o router interceptava e exibia a tela padrão "Unexpected Application Error!" da React Router.
+
+**Trigger:** Após novo deploy Vite (conteúdo com novos content-hash nos nomes dos chunks), usuários com o service worker PWA cacheando `index.html` antigo recebiam "Failed to fetch dynamically imported module" quando o browser tentava carregar chunks inexistentes. O React Router capturava esse erro internamente.
+
+**Fix — `RouterErrorElement` em `src/App.tsx`:**
+- Função componente `RouterErrorElement` usa `useRouteError()` (hook React Router) para acessar o erro capturado pelo router
+- Detecta 5 padrões de chunk error: `Failed to fetch dynamically imported module`, `Importing a module script failed`, `Failed to load module script`, `Unable to preload CSS`, `error loading dynamically imported module`
+- Chunk error → auto-reload uma vez; guard `sessionStorage` com chave `'arbo_chunk_reload'` evita loop infinito; exibe `<PageLoader />` enquanto aguarda reload
+- Outros erros → tela amigável com mensagem e botão "Recarregar a página" (nunca tela em branco)
+- Adicionado como `errorElement` em rota raiz wrapper (`path: undefined`) em `createBrowserRouter`
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
