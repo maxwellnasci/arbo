@@ -348,3 +348,17 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 - `vercel.json` — bloco `headers` adicionado preservando `rewrites` existente
 - Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy configurados
 
+
+### Task 48 (Correções Lighthouse)
+- index.html — meta description adicionada
+- public/robots.txt — criado com allow all
+- AlunoDashboard.tsx — tag <main> adicionada
+- index.css — --text-tertiary #444444 → #666666 (contraste WCAG AA)
+- index.html — preload Inter com onload fallback
+
+Resultado Lighthouse antes:
+- Performance: 96
+- Accessibility: 87
+- Best Practices: 100
+- SEO: 83
+

@@ -380,3 +380,17 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - `X-Content-Type-Options: nosniff` — impede MIME sniffing
 - `Referrer-Policy: strict-origin-when-cross-origin` — limita vazamento de URL cross-origin
 
+
+### Task 48 (Correções Lighthouse)
+- index.html — meta description adicionada
+- public/robots.txt — criado com allow all
+- AlunoDashboard.tsx — tag <main> adicionada
+- index.css — --text-tertiary #444444 → #666666 (contraste WCAG AA)
+- index.html — preload Inter com onload fallback
+
+Resultado Lighthouse antes:
+- Performance: 96
+- Accessibility: 87
+- Best Practices: 100
+- SEO: 83
+

@@ -474,3 +474,17 @@ Correções no código (itens 1, 3, 4, 6, 7) ainda **pendentes** para próxima s
 - Vitest — primeiros testes unitários
 - README.md público
 
+
+### Task 48 (Correções Lighthouse)
+- index.html — meta description adicionada
+- public/robots.txt — criado com allow all
+- AlunoDashboard.tsx — tag <main> adicionada
+- index.css — --text-tertiary #444444 → #666666 (contraste WCAG AA)
+- index.html — preload Inter com onload fallback
+
+Resultado Lighthouse antes:
+- Performance: 96
+- Accessibility: 87
+- Best Practices: 100
+- SEO: 83
+

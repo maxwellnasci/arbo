@@ -706,3 +706,17 @@ npx supabase login
 **Notas finais 2026-06-06:** Média geral 8.4/10 (Segurança 8.2 · Performance 8.6 · Qualidade 8.8 · UX 8.5 · Arquitetura 8.0 · PWA 8.3)
 **Próxima sessão:** Lighthouse audit · SMTP externo · CI/CD GitHub Actions · Vitest · README.md
 
+
+### Task 48 (Correções Lighthouse)
+- index.html — meta description adicionada
+- public/robots.txt — criado com allow all
+- AlunoDashboard.tsx — tag <main> adicionada
+- index.css — --text-tertiary #444444 → #666666 (contraste WCAG AA)
+- index.html — preload Inter com onload fallback
+
+Resultado Lighthouse antes:
+- Performance: 96
+- Accessibility: 87
+- Best Practices: 100
+- SEO: 83
+
