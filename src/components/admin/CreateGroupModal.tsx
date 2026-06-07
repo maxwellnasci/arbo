@@ -11,6 +11,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
   const [goal, setGoal] = useState('10k')
   const [frequency, setFrequency] = useState('3x')
   const [planType, setPlanType] = useState('grupo')
+  const [mode, setMode] = useState('fixo')
   const [startsAt, setStartsAt] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -30,6 +31,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
       goal,
       frequency,
       plan_type: planType,
+      mode,
       starts_at: startsAt || null,
       is_active: true
     })
@@ -161,6 +163,27 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
               >
                 <option value="grupo">Grupo</option>
                 <option value="individual">Individual</option>
+              </select>
+            </div>
+
+            <div style={{ flex: '1 1 200px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>Modo</label>
+              <select 
+                value={mode}
+                onChange={e => setMode(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-default)',
+                  background: 'var(--bg-input)',
+                  color: 'var(--text-primary)',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <option value="fixo">Fixo (Semanal)</option>
+                <option value="flexivel">Flexível (Lista)</option>
               </select>
             </div>
 

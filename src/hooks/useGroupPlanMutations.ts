@@ -45,7 +45,7 @@ export function useGroupPlanMutations(
   const { user } = useAuth()
 
   const addTraining = useCallback(
-    async (weekNumber: number, dayOfWeek: number, trainingId: string) => {
+    async (weekNumber: number, dayOfWeek: number | null, trainingId: string) => {
       if (!user) throw new Error('Não autenticado')
       const planId = currentPlanId ?? await ensureGroupPlan(groupId, cycleStart, user.id)
       const { error } = await supabase
@@ -65,7 +65,7 @@ export function useGroupPlanMutations(
   }, [])
 
   const createAndAddTraining = useCallback(
-    async (weekNumber: number, dayOfWeek: number, input: NewTrainingInput) => {
+    async (weekNumber: number, dayOfWeek: number | null, input: NewTrainingInput) => {
       if (!user) throw new Error('Não autenticado')
       const { data: newTraining, error: tErr } = await supabase
         .from('trainings')

@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
 import { useWeeklyPlan, type DayTraining } from '../../hooks/useWeeklyPlan'
 import { useProgresso } from '../../hooks/useProgresso'
+import { useScheduling } from '../../hooks/useScheduling'
 import { supabase } from '../../lib/supabase'
 import type { TrainingType } from '../../lib/types'
 import { Home, TrendingUp, MessageSquare, User, Calendar, CheckCircle2, Medal, Flame } from 'lucide-react'
@@ -13,6 +14,8 @@ import AlunoProgresso from './AlunoProgresso'
 import AlunoPerfil from './AlunoPerfil'
 import CheckinSheet from '../../components/aluno/CheckinSheet'
 import LockedScreen from '../../components/aluno/LockedScreen'
+import FlexibleTrainingCard from '../../components/aluno/FlexibleTrainingCard'
+import type { DayOfWeek } from '../../components/aluno/DayPicker'
 import styles from './AlunoDashboard.module.css'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -152,7 +155,7 @@ function BottomNav({ activeTab, onTabChange }: { activeTab: NavTab; onTabChange:
 
 type TrainingCardProps = {
   dayTraining: DayTraining
-  planId: string
+  planId: string | null
   userId: string
   isToday: boolean
   onCheckinSuccess: () => void
@@ -181,7 +184,7 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
   function openNew()  { setEditMode(false); setShowSheet(true) }
   function openEdit() { setEditMode(true);  setShowSheet(true) }
 
-  const isFuture = !isToday && !checkin && dayOfWeek > new Date().getDay()
+  const isFuture = dayOfWeek !== null && !isToday && !checkin && dayOfWeek > new Date().getDay()
 
   const cardStateClass = checkin 
     ? styles.cardDone 
@@ -200,7 +203,7 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
     >
       <div className={`${styles.card} ${cardStateClass}`}>
         <div className={styles.cardHeader}>
-          <span className={styles.dayName}>{DAY_NAMES[dayOfWeek] ?? `Dia ${dayOfWeek}`}</span>
+          <span className={styles.dayName}>{dayOfWeek !== null ? (DAY_NAMES[dayOfWeek] ?? `Dia ${dayOfWeek}`) : '—'}</span>
           {checkin && <CheckCircle2 size={16} className={styles.checkIcon} />}
         </div>
 
@@ -293,16 +296,29 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
 
 export default function AlunoDashboard() {
   const { user } = useAuth()
-  const { profile, plan, trainings, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh } = useWeeklyPlan(user?.id)
-  
-  // Use progress for extra metrics
+  const { profile, plan, groupMode, trainings, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh } = useWeeklyPlan(user?.id)
   const { streak, recentCheckins, records } = useProgresso(user?.id ?? '')
 
+  const gptIds = trainings.map(t => t.weeklyPlanTrainingId)
+  const { scheduleTraining, rescheduleTraining } = useScheduling(gptIds)
+
   const [activeTab, setActiveTab] = useState<NavTab>('inicio')
+  const [activeCheckin, setActiveCheckin] = useState<DayTraining | null>(null)
 
   const todayDow    = new Date().getDay()
   const completed   = trainings.filter(t => t.checkin !== null).length
   const total       = trainings.length
+
+  async function handleScheduleUpdate(gptId: string, newDay: DayOfWeek) {
+    const dt = trainings.find(t => t.weeklyPlanTrainingId === gptId)
+    if (!user) return
+    if (dt?.scheduleId) {
+      await rescheduleTraining(dt.scheduleId, newDay)
+    } else {
+      await scheduleTraining(user.id, gptId, newDay)
+    }
+    refresh()
+  }
 
   function handleTabChange(tab: NavTab) {
     setActiveTab(tab)
@@ -327,7 +343,7 @@ export default function AlunoDashboard() {
   if (!user) return null
 
   const name = profile?.full_name || user.email?.split('@')[0] || 'Atleta'
-  const sorted = [...trainings].sort((a, b) => a.dayOfWeek - b.dayOfWeek)
+  const sorted = [...trainings].sort((a, b) => (a.dayOfWeek ?? 99) - (b.dayOfWeek ?? 99))
 
   const numRecords = Object.values(records).filter(Boolean).length
 
@@ -412,12 +428,29 @@ export default function AlunoDashboard() {
               lockedWeekNumber={lockedWeekNumber}
               lastWeekSummary={lastWeekSummary}
             />
-          ) : !plan ? (
+          ) : trainings.length === 0 ? (
             <EmptyState />
+          ) : groupMode === 'flexivel' ? (
+            <div className={styles.trainingList}>
+              {sorted.map((dt, i) => (
+                <motion.div
+                  key={dt.weeklyPlanTrainingId}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08, duration: 0.3 }}
+                >
+                  <FlexibleTrainingCard
+                    dayTraining={dt}
+                    onScheduleUpdate={handleScheduleUpdate}
+                    onCheckinClick={setActiveCheckin}
+                  />
+                </motion.div>
+              ))}
+            </div>
           ) : (
             <div className={styles.trainingList}>
               {sorted.map((dt, i) => (
-                <motion.div 
+                <motion.div
                   key={dt.weeklyPlanTrainingId}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -425,14 +458,26 @@ export default function AlunoDashboard() {
                 >
                   <TrainingCard
                     dayTraining={dt}
-                    planId={plan.id}
+                    planId={plan?.id ?? null}
                     userId={user.id}
-                    isToday={dt.dayOfWeek === todayDow}
+                    isToday={dt.dayOfWeek !== null && dt.dayOfWeek === todayDow}
                     onCheckinSuccess={refresh}
                   />
                 </motion.div>
               ))}
             </div>
+          )}
+
+          {activeCheckin && (
+            <CheckinSheet
+              dayTraining={activeCheckin}
+              planId={plan?.id ?? null}
+              scheduleId={activeCheckin.scheduleId}
+              userId={user.id}
+              existingCheckin={activeCheckin.checkin}
+              onClose={() => setActiveCheckin(null)}
+              onSuccess={() => { setActiveCheckin(null); refresh() }}
+            />
           )}
         </main>
       )}

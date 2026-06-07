@@ -9,6 +9,7 @@ import type { Tag, Training, TrainingCustomType } from '../../lib/types'
 import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS, insertTag, insertTrainingType } from '../../lib/trainingUtils'
 import { EditGroupModal } from '../../components/admin/EditGroupModal'
 import { Edit2 } from 'lucide-react'
+import { ProfessorStatusGrid } from '../../components/admin/ProfessorStatusGrid'
 
 // ─── Labels ────────────────────────────────────────────────────────────────
 
@@ -64,6 +65,7 @@ export default function AdminTurmaDetail() {
     useGroupPlanMutations(id ?? '', cycleStart, plan?.id ?? null)
   const { user } = useAuth()
 
+  const [activeTab, setActiveTab] = useState<'treinos' | 'status'>('treinos')
   const [view, setView] = useState<'week' | 'month'>('week')
   const [selectedWeek, setSelectedWeek] = useState(0)
   const [panel, setPanel] = useState<PanelState | null>(null)
@@ -108,7 +110,7 @@ export default function AdminTurmaDetail() {
 
   function openCard(entry: GroupDayTraining) {
     setMutationError(null)
-    setPanel({ weekNumber: entry.weekNumber, dayOfWeek: entry.dayOfWeek, mode: 'view', existing: entry })
+    setPanel({ weekNumber: entry.weekNumber, dayOfWeek: entry.dayOfWeek ?? 0, mode: 'view', existing: entry })
   }
 
   async function handleAddTraining(trainingId: string) {
@@ -228,23 +230,46 @@ export default function AdminTurmaDetail() {
             ← Turmas
           </button>
           
-          <div style={{ display: 'flex', background: 'var(--bg-input)', borderRadius: '8px', padding: '4px', border: '1px solid var(--border-subtle)', gap: '4px' }}>
-            {(['month', 'week'] as const).map(v => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                style={{
-                  padding: '6px 14px', borderRadius: '6px',
-                  border: view === v ? '1px solid var(--border-default)' : '1px solid transparent',
-                  fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                  background: view === v ? 'var(--bg-surface-hover)' : 'transparent',
-                  color: view === v ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {v === 'month' ? 'Mês' : 'Semana'}
-              </button>
-            ))}
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', background: 'var(--bg-input)', borderRadius: '8px', padding: '4px', border: '1px solid var(--border-subtle)', gap: '4px' }}>
+              {(['treinos', 'status'] as const).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setActiveTab(t)}
+                  style={{
+                    padding: '6px 14px', borderRadius: '6px',
+                    border: activeTab === t ? '1px solid var(--border-default)' : '1px solid transparent',
+                    fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                    background: activeTab === t ? 'var(--bg-surface-hover)' : 'transparent',
+                    color: activeTab === t ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {t === 'treinos' ? 'Treinos' : 'Status'}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === 'treinos' && group?.mode !== 'flexivel' && (
+              <div style={{ display: 'flex', background: 'var(--bg-input)', borderRadius: '8px', padding: '4px', border: '1px solid var(--border-subtle)', gap: '4px' }}>
+                {(['month', 'week'] as const).map(v => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    style={{
+                      padding: '6px 14px', borderRadius: '6px',
+                      border: view === v ? '1px solid var(--border-default)' : '1px solid transparent',
+                      fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                      background: view === v ? 'var(--bg-surface-hover)' : 'transparent',
+                      color: view === v ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {v === 'month' ? 'Mês' : 'Semana'}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -293,7 +318,42 @@ export default function AdminTurmaDetail() {
 
           {/* Main grid area */}
           <div style={{ flex: 1, minWidth: 0 }}>
-            {view === 'week' ? (
+            {activeTab === 'status' ? (
+              <ProfessorStatusGrid
+                groupId={group?.id || ''}
+                planId={plan?.id ?? null}
+                groupTrainings={trainings}
+              />
+            ) : group?.mode === 'flexivel' ? (
+              <div style={{ padding: '16px' }}>
+                <h3 style={{ margin: '0 0 16px', color: 'var(--text-primary)', fontSize: '16px' }}>Treinos da Turma (Flexível)</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {trainings.map(entry => (
+                    <div 
+                      key={entry.id} 
+                      onClick={() => openCard(entry)}
+                      style={{ background: panel?.existing?.id === entry.id ? 'var(--bg-card-orange)' : 'var(--bg-surface)', border: `1px solid ${panel?.existing?.id === entry.id ? 'var(--orange)' : 'var(--border-default)'}`, padding: '12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    >
+                      <div>
+                        <div style={{ fontSize: '10px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
+                          {TRAINING_TYPE_LABELS[entry.training.type] ?? entry.training.type}
+                        </div>
+                        <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 600 }}>{entry.training.title}</div>
+                      </div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                        {entry.training.distance_m ? `${(entry.training.distance_m/1000).toFixed(1)}km` : ''}
+                      </div>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={() => openSlot(1, 1)}
+                    style={{ border: '1px dashed var(--border-default)', background: 'transparent', color: 'var(--text-tertiary)', padding: '16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, textAlign: 'center' }}
+                  >
+                    + Adicionar Treino
+                  </button>
+                </div>
+              </div>
+            ) : view === 'week' ? (
               <WeekView
                 cycleStart={cycleStart}
                 selectedWeek={effectiveWeek}

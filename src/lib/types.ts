@@ -25,3 +25,11 @@ export type TrainingCustomType = Database['public']['Tables']['training_types'][
 export type TrainingType = 'corrida' | 'hiit' | 'recovery' | 'forca' | 'mobilidade' | (string & {})
 export type DistanceCategory = Database['public']['Enums']['distance_category']
 export type UserLevel        = Database['public']['Enums']['user_level']
+
+// Valores que correspondem exatamente ao que é armazenado no banco (coluna groups.mode)
+export type GroupMode = 'fixo' | 'flexivel'
+
+export type ScheduleStatus = 'pendente' | 'agendado' | 'concluido'
+
+// Espelha exatamente o schema da tabela schedules no Supabase
+export type Schedule = Database['public']['Tables']['schedules']['Row']

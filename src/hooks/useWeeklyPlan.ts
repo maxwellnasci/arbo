@@ -1,13 +1,14 @@
 // src/hooks/useWeeklyPlan.ts
 import { useReducer, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Profile, Training, WeeklyPlan, WeeklyPlanTraining, Checkin } from '../lib/types'
+import type { Profile, Training, WeeklyPlan, Checkin } from '../lib/types'
 
 export type DayTraining = {
   weeklyPlanTrainingId: string
-  dayOfWeek: number
+  dayOfWeek: number | null   // null = flexível sem agendamento ainda
   training: Training
   checkin: Checkin | null
+  scheduleId?: string        // preenchido apenas no modo flexível
 }
 
 export type LastWeekSummary = {
@@ -19,6 +20,7 @@ export type LastWeekSummary = {
 export type UseWeeklyPlanResult = {
   profile: Profile | null
   plan: WeeklyPlan | null
+  groupMode: string | null
   trainings: DayTraining[]
   checkins: Checkin[]
   isLocked: boolean
@@ -29,11 +31,23 @@ export type UseWeeklyPlanResult = {
   refresh: () => void
 }
 
-type RawPlanTraining = WeeklyPlanTraining & { trainings: Training }
+type RawPlanTraining = {
+  id: string
+  training_id: string
+  day_of_week: number | null
+  trainings: Training
+}
+
+type ScheduleRow = {
+  id: string
+  group_plan_training_id: string
+  scheduled_day_of_week: number
+}
 
 type State = {
   profile: Profile | null
   plan: WeeklyPlan | null
+  groupMode: string | null
   trainings: DayTraining[]
   checkins: Checkin[]
   isLocked: boolean
@@ -46,7 +60,7 @@ type State = {
 
 type Action =
   | { type: 'REFRESH' }
-  | { type: 'SUCCESS'; profile: Profile | null; plan: WeeklyPlan | null; trainings: DayTraining[]; checkins: Checkin[]; isLocked: boolean; lockedWeekNumber: number; lastWeekSummary: LastWeekSummary | null }
+  | { type: 'SUCCESS'; profile: Profile | null; plan: WeeklyPlan | null; groupMode: string | null; trainings: DayTraining[]; checkins: Checkin[]; isLocked: boolean; lockedWeekNumber: number; lastWeekSummary: LastWeekSummary | null }
   | { type: 'ERROR'; message: string }
   | { type: 'DONE' }
 
@@ -59,6 +73,7 @@ function reducer(state: State, action: Action): State {
         ...state,
         profile: action.profile,
         plan: action.plan,
+        groupMode: action.groupMode,
         trainings: action.trainings,
         checkins: action.checkins,
         isLocked: action.isLocked,
@@ -77,7 +92,7 @@ function reducer(state: State, action: Action): State {
 
 function getMonday(): string {
   const d = new Date()
-  const day = d.getDay() // 0=Dom, 1=Seg, ..., 6=Sáb
+  const day = d.getDay()
   const diff = day === 0 ? -6 : 1 - day
   d.setDate(d.getDate() + diff)
   const yyyy = d.getFullYear()
@@ -119,15 +134,19 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, attempt = 0): Promise<{
+type FetchResult = {
   profile: Profile | null
   plan: WeeklyPlan | null
+  groupMode: string | null
   rawTrainings: RawPlanTraining[]
+  schedByGptId: Map<string, ScheduleRow>
   checkins: Checkin[]
   isLocked: boolean
   lockedWeekNumber: number
   lastWeekSummary: LastWeekSummary | null
-}> {
+}
+
+async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, attempt = 0): Promise<FetchResult> {
   try {
     const weekStart = getMonday()
 
@@ -144,36 +163,45 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
     if (profileRes.error) throw profileRes.error
     if (planRes.error) throw planRes.error
 
+    const emptyResult: FetchResult = {
+      profile: profileRes.data,
+      plan: null,
+      groupMode: null,
+      rawTrainings: [],
+      schedByGptId: new Map(),
+      checkins: [],
+      isLocked: false,
+      lockedWeekNumber: 0,
+      lastWeekSummary: null,
+    }
+
     if (!planRes.data) {
-      // Fallback: busca plano de grupo se o aluno pertence a uma turma
       const groupId = profileRes.data?.group_id
-      if (!groupId) {
-        return { profile: profileRes.data, plan: null, rawTrainings: [], checkins: [], isLocked: false, lockedWeekNumber: 0, lastWeekSummary: null }
-      }
+      if (!groupId) return emptyResult
 
-      const { data: groupPlan } = await supabase
-        .from('group_plans')
-        .select('id, starts_at, released_through_week')
-        .eq('group_id', groupId)
-        .lte('starts_at', weekStart)
-        .order('starts_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+      const [groupPlanRes, groupRes] = await Promise.all([
+        supabase
+          .from('group_plans')
+          .select('id, starts_at, released_through_week')
+          .eq('group_id', groupId)
+          .lte('starts_at', weekStart)
+          .order('starts_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+        supabase.from('groups').select('mode').eq('id', groupId).single(),
+      ])
 
-      if (!groupPlan) {
-        return { profile: profileRes.data, plan: null, rawTrainings: [], checkins: [], isLocked: false, lockedWeekNumber: 0, lastWeekSummary: null }
-      }
+      const groupPlan = groupPlanRes.data
+      const groupMode: string = groupRes.data?.mode ?? 'fixo'
 
-      // Verificar que a semana cai dentro do ciclo de 4 semanas (28 dias)
+      if (!groupPlan) return emptyResult
+
       const cycleEnd = new Date(groupPlan.starts_at)
       cycleEnd.setDate(cycleEnd.getDate() + 28)
-      if (new Date(weekStart) >= cycleEnd) {
-        return { profile: profileRes.data, plan: null, rawTrainings: [], checkins: [], isLocked: false, lockedWeekNumber: 0, lastWeekSummary: null }
-      }
+      if (new Date(weekStart) >= cycleEnd) return emptyResult
 
       const weekNumber = getGroupPlanWeekNumber(groupPlan.starts_at, weekStart)
 
-      // Verificar se a semana está liberada
       if (weekNumber > (groupPlan.released_through_week ?? 0)) {
         let lastWeekSummary: LastWeekSummary | null = null
         if (weekNumber > 1) {
@@ -186,15 +214,7 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
             .lt('created_at', addOneDay(weekStart))
           lastWeekSummary = computeLastWeekSummary(prevCheckins ?? [])
         }
-        return {
-          profile: profileRes.data,
-          plan: null,
-          rawTrainings: [],
-          checkins: [],
-          isLocked: true,
-          lockedWeekNumber: weekNumber,
-          lastWeekSummary,
-        }
+        return { ...emptyResult, isLocked: true, lockedWeekNumber: weekNumber, lastWeekSummary, groupMode }
       }
 
       const { data: gptData, error: gptError } = await supabase
@@ -206,10 +226,26 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
 
       if (gptError) throw gptError
 
+      const rawTrainings = (gptData ?? []) as unknown as RawPlanTraining[]
+
+      // Para modo flexível, busca agendamentos do aluno para este ciclo
+      let schedByGptId: Map<string, ScheduleRow> = new Map()
+      if (groupMode === 'flexivel' && rawTrainings.length > 0) {
+        const gptIds = rawTrainings.map(r => r.id)
+        const { data: schedData } = await supabase
+          .from('schedules')
+          .select('id, group_plan_training_id, scheduled_day_of_week')
+          .eq('student_id', userId)
+          .in('group_plan_training_id', gptIds)
+        schedByGptId = new Map((schedData ?? []).map(s => [s.group_plan_training_id, s]))
+      }
+
       return {
         profile: profileRes.data,
         plan: null,
-        rawTrainings: (gptData ?? []) as unknown as RawPlanTraining[],
+        groupMode,
+        rawTrainings,
+        schedByGptId,
         checkins: [],
         isLocked: false,
         lockedWeekNumber: 0,
@@ -238,7 +274,9 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
     return {
       profile: profileRes.data,
       plan: planRes.data,
+      groupMode: null,
       rawTrainings: (trainingsRes.data ?? []) as unknown as RawPlanTraining[],
+      schedByGptId: new Map(),
       checkins: checkinsRes.data ?? [],
       isLocked: false,
       lockedWeekNumber: 0,
@@ -246,7 +284,7 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
     }
   } catch (err: unknown) {
     if (attempt < 2 && !signal.cancelled) {
-      await sleep(1000 * Math.pow(2, attempt)) // 1s, 2s
+      await sleep(1000 * Math.pow(2, attempt))
       if (signal.cancelled) throw err
       return fetchWithRetry(userId, signal, attempt + 1)
     }
@@ -257,6 +295,7 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
 const initialState: State = {
   profile: null,
   plan: null,
+  groupMode: null,
   trainings: [],
   checkins: [],
   isLocked: false,
@@ -276,31 +315,33 @@ export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
   const refresh = useCallback(() => dispatch({ type: 'REFRESH' }), [])
 
   useEffect(() => {
-    if (!userId) {
-      return
-    }
+    if (!userId) return
 
     const sig = { cancelled: false }
 
     fetchWithRetry(userId, sig)
-      .then(({ profile, plan, rawTrainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary }) => {
+      .then(({ profile, plan, groupMode, rawTrainings, schedByGptId, checkins, isLocked, lockedWeekNumber, lastWeekSummary }) => {
         if (sig.cancelled) return
         dispatch({
           type: 'SUCCESS',
           profile,
           plan,
+          groupMode,
           trainings: rawTrainings
-            .map(wpt => {
+            .flatMap(wpt => {
               const training = wpt.trainings
-              if (!training) return null
-              return {
+              if (!training) return []
+              const sched = schedByGptId.get(wpt.id)
+              const dt: DayTraining = {
                 weeklyPlanTrainingId: wpt.id,
-                dayOfWeek: wpt.day_of_week,
+                // Modo fixo: usa day_of_week do plano. Modo flexível: usa dia agendado pelo aluno (ou null)
+                dayOfWeek: sched?.scheduled_day_of_week ?? wpt.day_of_week ?? null,
                 training,
                 checkin: checkins.find(c => c.training_id === wpt.training_id) ?? null,
+                scheduleId: sched?.id,
               }
-            })
-            .filter((x): x is DayTraining => x !== null),
+              return [dt]
+            }),
           checkins,
           isLocked,
           lockedWeekNumber,
@@ -318,6 +359,6 @@ export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
     return () => { sig.cancelled = true }
   }, [userId, state.tick])
 
-  const { profile, plan, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error } = state
-  return { profile, plan, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh }
+  const { profile, plan, groupMode, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error } = state
+  return { profile, plan, groupMode, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh }
 }

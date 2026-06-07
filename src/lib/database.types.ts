@@ -181,7 +181,7 @@ export type Database = {
       }
       group_plan_trainings: {
         Row: {
-          day_of_week: number
+          day_of_week: number | null
           group_plan_id: string
           id: string
           sort_order: number
@@ -189,7 +189,7 @@ export type Database = {
           week_number: number
         }
         Insert: {
-          day_of_week: number
+          day_of_week?: number | null
           group_plan_id: string
           id?: string
           sort_order?: number
@@ -197,7 +197,7 @@ export type Database = {
           week_number: number
         }
         Update: {
-          day_of_week?: number
+          day_of_week?: number | null
           group_plan_id?: string
           id?: string
           sort_order?: number
@@ -276,6 +276,7 @@ export type Database = {
           goal: string
           id: string
           is_active: boolean
+          mode: string
           name: string
           plan_type: string
           starts_at: string | null
@@ -287,6 +288,7 @@ export type Database = {
           goal: string
           id?: string
           is_active?: boolean
+          mode?: string
           name: string
           plan_type?: string
           starts_at?: string | null
@@ -298,6 +300,7 @@ export type Database = {
           goal?: string
           id?: string
           is_active?: boolean
+          mode?: string
           name?: string
           plan_type?: string
           starts_at?: string | null
@@ -516,6 +519,61 @@ export type Database = {
           },
           {
             foreignKeyName: "records_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedules: {
+        Row: {
+          checkin_id: string | null
+          completed_at: string | null
+          created_at: string | null
+          group_plan_training_id: string
+          id: string
+          scheduled_day_of_week: number
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          checkin_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          group_plan_training_id: string
+          id?: string
+          scheduled_day_of_week: number
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          checkin_id?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          group_plan_training_id?: string
+          id?: string
+          scheduled_day_of_week?: number
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedules_checkin_id_fkey"
+            columns: ["checkin_id"]
+            isOneToOne: false
+            referencedRelation: "checkins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedules_group_plan_training_id_fkey"
+            columns: ["group_plan_training_id"]
+            isOneToOne: false
+            referencedRelation: "group_plan_trainings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedules_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"

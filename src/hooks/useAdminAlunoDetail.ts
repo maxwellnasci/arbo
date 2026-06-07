@@ -33,7 +33,7 @@ export function useAdminAlunoDetail(alunoId: string | undefined) {
         // 1. Profile & All Groups
         const [{ data: profData, error: profErr }, { data: groupsData }] = await Promise.all([
           supabase.from('profiles').select('id, full_name, avatar_url, birth_date, group_id, has_set_password, level, role, strava_athlete_id, created_at, updated_at').eq('id', alunoId).single(),
-          supabase.from('groups').select('id, name, is_active, frequency, goal, plan_type, starts_at, created_at, updated_at').eq('is_active', true).order('name')
+          supabase.from('groups').select('id, name, is_active, frequency, goal, plan_type, starts_at, created_at, updated_at, mode').eq('is_active', true).order('name')
         ])
 
         if (cancelled) return

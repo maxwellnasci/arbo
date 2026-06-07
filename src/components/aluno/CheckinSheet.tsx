@@ -11,14 +11,15 @@ const EFFORT_EMOJIS: Record<number, string> = {
 
 type CheckinSheetProps = {
   dayTraining: DayTraining
-  planId: string
+  planId: string | null
   userId: string
+  scheduleId?: string
   existingCheckin?: Checkin | null
   onClose: () => void
   onSuccess: () => void
 }
 
-export default function CheckinSheet({ dayTraining, planId, userId, existingCheckin, onClose, onSuccess }: CheckinSheetProps) {
+export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, existingCheckin, onClose, onSuccess }: CheckinSheetProps) {
   const [distance, setDistance] = useState(() =>
     existingCheckin?.actual_distance_m != null
       ? String(existingCheckin.actual_distance_m / 1000).replace('.', ',')
@@ -70,17 +71,38 @@ export default function CheckinSheet({ dayTraining, planId, userId, existingChec
       perceived_effort:           effort,
     }
 
-    const { error: err } = existingCheckin
-      ? await supabase.from('checkins').update(payload).eq('id', existingCheckin.id)
-      : await supabase.from('checkins').insert({
+    let checkinErr: string | null = null
+    let newCheckinId: string | null = null
+
+    if (existingCheckin) {
+      const { error } = await supabase.from('checkins').update(payload).eq('id', existingCheckin.id)
+      if (error) checkinErr = error.message
+    } else {
+      const { data, error } = await supabase
+        .from('checkins')
+        .insert({
           student_id:  userId,
           training_id: dayTraining.training.id,
-          plan_id:     planId,
+          plan_id:     planId || null,
           ...payload,
         })
+        .select('id')
+        .single()
+      if (error) checkinErr = error.message
+      newCheckinId = data?.id ?? null
+    }
+
+    // Vincula o agendamento ao checkin recém-criado (modo flexível)
+    if (!checkinErr && scheduleId && newCheckinId) {
+      const { error: schedErr } = await supabase
+        .from('schedules')
+        .update({ checkin_id: newCheckinId, completed_at: new Date().toISOString() })
+        .eq('id', scheduleId)
+      if (schedErr) console.error('Erro ao vincular agendamento:', schedErr.message)
+    }
 
     setSubmitting(false)
-    if (err) { setError(err.message); return }
+    if (checkinErr) { setError(checkinErr); return }
 
     setShowSuccess(true)
     timerRef.current = setTimeout(() => {

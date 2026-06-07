@@ -64,7 +64,7 @@ export function useAdminTurmaDetail(groupId: string): UseAdminTurmaDetailResult 
       
       const { data: groupData, error: groupErr } = await supabase
         .from('groups')
-        .select('id, name, is_active, starts_at, frequency, goal, plan_type, created_at, updated_at')
+        .select('id, name, is_active, starts_at, frequency, goal, plan_type, mode, created_at, updated_at')
         .eq('id', groupId)
         .single()
 
@@ -111,11 +111,11 @@ export function useAdminTurmaDetail(groupId: string): UseAdminTurmaDetailResult 
       setTrainings(
         (gptData as DBGroupPlanTraining[])
           .filter(r => r.trainings)
-          .sort((a, b) => a.week_number === b.week_number ? a.day_of_week - b.day_of_week : a.week_number - b.week_number)
+          .sort((a, b) => a.week_number === b.week_number ? (a.day_of_week ?? 0) - (b.day_of_week ?? 0) : a.week_number - b.week_number)
           .map(r => ({
             id: r.id,
             weekNumber: r.week_number,
-            dayOfWeek: r.day_of_week,
+            dayOfWeek: r.day_of_week ?? 0,
             training: r.trainings!,
           }))
       )
