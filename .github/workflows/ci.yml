@@ -35,4 +35,4 @@ jobs:
 
       - name: Notificar sucesso
         if: success()
-        run: echo "✅ CI passou — tsc + lint + build: 0 erros"
+        run: echo "CI passou - tsc + lint + build 0 erros"
