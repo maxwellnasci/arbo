@@ -488,3 +488,11 @@ Resultado Lighthouse antes:
 - Best Practices: 100
 - SEO: 83
 
+
+### Task 49 (Accessibility WCAG AA)
+- Login.tsx — div → <main> (landmark)
+- SetPassword.tsx — div → <main> (landmark)
+- DashboardRedirect.tsx — div → <main> (landmark)
+- index.css — --text-tertiary #666666 → #7d7d7d (contraste WCAG AA 4.52:1)
+- DeepSeek usado como subagente para calcular ratios de contraste exatos
+
