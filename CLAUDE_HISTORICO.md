@@ -509,3 +509,9 @@ Resultado Lighthouse antes:
 - AdminAlunoDetail.tsx — ícone chevron tertiary
 - DeepSeek subagente calculou ratios exatos e identificou opacity padrão dos browsers
 
+
+### Task 52 (CI/CD GitHub Actions)
+- Arquivo .github/workflows/ci.yml criado com sucesso.
+- Workflow roda lint, typescript e build em branches e PRs para a master.
+- Nota: O push remoto do workflow requer que o Personal Access Token do GitHub tenha o escopo 'workflow'.
+

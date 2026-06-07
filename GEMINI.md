@@ -704,7 +704,7 @@ npx supabase login
 - Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy configurados
 
 **Notas finais 2026-06-06:** Média geral 8.4/10 (Segurança 8.2 · Performance 8.6 · Qualidade 8.8 · UX 8.5 · Arquitetura 8.0 · PWA 8.3)
-**Próxima sessão:** Lighthouse audit · CI/CD GitHub Actions · Vitest · README.md
+**Próxima sessão:** Lighthouse audit GitHub Actions · Vitest · README.md
 
 
 ### Task 48 (Correções Lighthouse)
@@ -740,4 +740,10 @@ Resultado Lighthouse antes:
 - AdminTurmaDetail.tsx — ícones + tertiary
 - AdminAlunoDetail.tsx — ícone chevron tertiary
 - DeepSeek subagente calculou ratios exatos e identificou opacity padrão dos browsers
+
+
+### Task 52 (CI/CD GitHub Actions)
+- Arquivo .github/workflows/ci.yml criado com sucesso.
+- Workflow roda lint, typescript e build em branches e PRs para a master.
+- Nota: O push remoto do workflow requer que o Personal Access Token do GitHub tenha o escopo 'workflow'.
 
