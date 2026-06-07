@@ -30,6 +30,9 @@ jobs:
       - name: Lint — verificar padrões
         run: npm run lint
 
+      - name: Testes automatizados
+        run: npm test
+
       - name: Build — compilar para produção
         run: npm run build
 
