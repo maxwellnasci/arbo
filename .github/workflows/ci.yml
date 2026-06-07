@@ -1,0 +1,38 @@
+name: CI — Arbo
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  validate:
+    name: TypeScript + Lint + Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: TypeScript — verificar tipos
+        run: npx tsc --noEmit
+
+      - name: Lint — verificar padrões
+        run: npm run lint
+
+      - name: Build — compilar para produção
+        run: npm run build
+
+      - name: Notificar sucesso
+        if: success()
+        run: echo "✅ CI passou — tsc + lint + build: 0 erros"
