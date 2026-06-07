@@ -822,3 +822,22 @@ Criar quando o `CLAUDE.md` ultrapassar **40k caracteres**. Mover todo o históri
 
 *Documento criado com base no projeto Arbo (2026)*
 *Mantenha atualizado a cada projeto concluído*
+
+## Quando usar DeepSeek como subagente do Gemini
+
+O DeepSeek pode ser usado como subagente dentro do Gemini (configurado no ANTIGRAVITY.md) para tarefas que exigem raciocínio matemático ou análise profunda.
+
+### Casos de uso comprovados no Arbo:
+- **Cálculo de contraste WCAG** — calculou luminância relativa exata e encontrou o hex mínimo (#7d7d7d) para atingir 4.52:1 em vez de chutar
+- **Análise de acessibilidade** — identificou que browsers aplicam opacity: 0.54 em ::placeholder reduzindo o contraste efetivo
+- **Análise de performance** — varredura ampla de queries, índices e padrões em todo o codebase
+
+### Como acionar:
+No prompt para o Gemini, incluir:
+"Use o subagente DeepSeek para análise profunda antes de implementar."
+
+### Por que funciona:
+- DeepSeek V4 Pro tem raciocínio matemático superior para cálculos precisos
+- Gemini implementa com base no resultado — acerta na primeira tentativa
+- Evita múltiplas iterações de tentativa e erro
+
