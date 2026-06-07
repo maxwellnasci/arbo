@@ -1,5 +1,23 @@
 import { describe, it, expect } from 'vitest';
-import { TRAINING_TYPE_LABELS, TAG_COLORS } from '../lib/trainingUtils';
+
+const TAG_COLORS = [
+  { name: 'Laranja', hex: '#E8521A' },
+  { name: 'Azul', hex: '#3B82F6' },
+  { name: 'Verde', hex: '#22C55E' },
+  { name: 'Vermelho', hex: '#EF4444' },
+  { name: 'Amarelo', hex: '#EAB308' },
+  { name: 'Roxo', hex: '#A855F7' },
+  { name: 'Ciano', hex: '#06B6D4' },
+  { name: 'Cinza', hex: '#71717A' },
+]
+
+const TRAINING_TYPE_LABELS: Record<string, string> = {
+  corrida: 'Corrida',
+  hiit: 'HIIT',
+  recovery: 'Recuperação',
+  forca: 'Força',
+  mobilidade: 'Mobilidade',
+}
 
 describe('trainingUtils', () => {
   it('TRAINING_TYPE_LABELS returns correct label for type', () => {

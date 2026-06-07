@@ -32,6 +32,9 @@ jobs:
 
       - name: Testes automatizados
         run: npm test
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-key-for-testing
 
       - name: Build — compilar para produção
         run: npm run build
