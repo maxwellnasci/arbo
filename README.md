@@ -1,16 +1,129 @@
-# React + Vite
+# 🌳 Arbo — Assessoria Esportiva de Corrida
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+[![CI](https://github.com/maxwellnasci/arbo/actions/workflows/ci.yml/badge.svg)](https://github.com/maxwellnasci/arbo/actions/workflows/ci.yml)
+[![Deploy](https://img.shields.io/badge/deploy-vercel-black)](https://arbo.mxos.com.br)
+[![PWA](https://img.shields.io/badge/PWA-ready-orange)](https://arbo.mxos.com.br)
 
-Currently, two official plugins are available:
+> App de assessoria esportiva para corrida. Professor gerencia alunos, turmas e treinos digitalmente. Alunos acompanham evolução, batem recordes e se comunicam com o professor em tempo real.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 App em produção
 
-## React Compiler
+**https://arbo.mxos.com.br**
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## ✨ Funcionalidades
 
-## Expanding the ESLint configuration
+### Painel Admin (Professor)
+- Gerenciamento de turmas e alunos
+- Biblioteca de treinos com etiquetas personalizadas
+- Plano mensal com grid de 4 semanas
+- Controle de liberação semanal do plano
+- Chat em tempo real com alunos
+- Feed de recordes pessoais (PRs)
+- Sistema de convites por email
+- Exclusão segura de alunos
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### App do Aluno
+- Dashboard com treinos da semana
+- Check-in de treinos realizados
+- Progresso com gráfico de pace e streak semanal
+- Recordes pessoais (5km, 10km, 21km, 42km)
+- Chat direto com o professor
+- Perfil com dados pessoais
+- Instalável como PWA (Android + iOS)
+
+## 🛠️ Stack
+
+| Camada | Tecnologia |
+|---|---|
+| Frontend | React 19 + TypeScript + Vite |
+| Backend | Supabase (banco, auth, RLS, Edge Functions) |
+| Deploy | Vercel (CI/CD automático) |
+| Email | Resend (smtp.resend.com) |
+| PWA | vite-plugin-pwa + Workbox |
+| Animações | framer-motion |
+| Testes | Vitest |
+
+## 📊 Qualidade (Lighthouse Mobile)
+
+| Categoria | Score |
+|---|---|
+| Performance | 96 |
+| Acessibilidade | 89 |
+| Boas Práticas | 100 |
+| SEO | 100 |
+
+## 🏃 Como rodar localmente
+
+### Pré-requisitos
+- Node.js 22+
+- Conta no Supabase
+
+### Instalação
+
+```bash
+git clone https://github.com/maxwellnasci/arbo.git
+cd arbo
+npm install
+```
+
+### Variáveis de ambiente
+
+Criar arquivo `.env.local`:
+
+```
+VITE_SUPABASE_URL=sua_url_do_supabase
+VITE_SUPABASE_ANON_KEY=sua_chave_anonima
+```
+
+### Rodar
+
+```bash
+npm run dev
+```
+
+### Testes
+
+```bash
+npm test
+```
+
+### Build
+
+```bash
+npm run build
+```
+
+## 🔒 Segurança
+
+- RLS habilitado em todas as tabelas
+- Autenticação via Supabase Auth
+- Edge Functions com validação JWT
+- CSP headers configurados no Vercel
+- CORS com allowlist explícita
+
+## 📁 Estrutura do projeto
+
+```
+arbo/
+  src/
+    components/     # Componentes reutilizáveis
+    contexts/       # AuthContext
+    hooks/          # Hooks de dados
+    lib/            # Tipos, utils, cliente Supabase
+    pages/          # Páginas admin e aluno
+  supabase/
+    functions/      # Edge Functions
+    migrations/     # Migrations SQL
+  public/
+    icons/          # Ícones PWA
+    offline.html    # Página offline
+```
+
+## 👤 Autor
+
+Maxwell — Consultor de automações de IA
+[GitHub](https://github.com/maxwellnasci)
+
+---
+
+*Desenvolvido com time de IA: Claude + Gemini + DeepSeek*
