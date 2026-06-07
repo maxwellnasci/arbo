@@ -46,7 +46,7 @@ export default function Login() {
   }
 
   return (
-    <div className="login-page">
+    <main className="login-page">
       <div className="login-card">
         <div className="login-logo-container">
           <div className="login-logo-glow" />
@@ -115,6 +115,6 @@ export default function Login() {
           Entre em contato com seu professor.
         </p>
       </div>
-    </div>
+    </main>
   )
 }

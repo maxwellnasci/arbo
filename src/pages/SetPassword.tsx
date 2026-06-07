@@ -66,15 +66,15 @@ export default function SetPassword() {
 
   if (!ready) {
     return (
-      <div style={styles.page}>
+      <main style={styles.page}>
         <p style={styles.validating}>Validando convite...</p>
-      </div>
+      </main>
     )
   }
 
   if (isSuccess) {
     return (
-      <div style={styles.page}>
+      <main style={styles.page}>
         <div style={{ ...styles.card, textAlign: 'center', padding: '48px 28px' }}>
           <div style={{ background: 'var(--orange-subtle)', color: 'var(--orange)', width: '64px', height: '64px', borderRadius: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -97,12 +97,12 @@ export default function SetPassword() {
             Acessar meu Painel
           </button>
         </div>
-      </div>
+      </main>
     )
   }
 
   return (
-    <div style={styles.page}>
+    <main style={styles.page}>
       <div style={styles.card}>
         <h2 style={styles.title}>Defina sua senha</h2>
         <p style={styles.subtitle}>Escolha uma senha para acessar o Arbo.</p>
@@ -143,7 +143,7 @@ export default function SetPassword() {
           </button>
         </form>
       </div>
-    </div>
+    </main>
   )
 }
 

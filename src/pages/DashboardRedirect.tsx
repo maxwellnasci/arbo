@@ -40,7 +40,7 @@ export default function DashboardRedirect() {
 
   if (!anamnesisChecked) {
     return (
-      <div style={{
+      <main style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -51,7 +51,7 @@ export default function DashboardRedirect() {
         fontSize: '1rem',
       }}>
         Carregando...
-      </div>
+      </main>
     )
   }
 
