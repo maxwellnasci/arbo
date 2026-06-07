@@ -168,7 +168,7 @@ export default function AdminAlunoDetail() {
                   <option key={g.id} value={g.id}>{g.name}</option>
                 ))}
               </select>
-              <RefreshCw size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-disabled)' }} />
+              <RefreshCw size={14} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)' }} />
             </div>
             <button className={styles.btn} onClick={() => setIsChatOpen(true)}>
               <MessageSquare size={16} /> Mensagem

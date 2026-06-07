@@ -520,7 +520,7 @@ function WeekView({
                     style={{
                       border: `1px dashed ${isSelected ? 'var(--orange)' : 'var(--border-default)'}`,
                       borderRadius: '8px', minHeight: '52px', display: 'flex', alignItems: 'center',
-                      justifyContent: 'center', color: isSelected ? 'var(--orange)' : 'var(--text-disabled)',
+                      justifyContent: 'center', color: isSelected ? 'var(--orange)' : 'var(--text-tertiary)',
                       fontSize: '18px', cursor: 'pointer', background: isSelected ? 'var(--orange-subtle)' : 'transparent',
                       width: '100%',
                     }}
@@ -573,7 +573,7 @@ function MonthView({
                       {entry.training.title.length > 14 ? entry.training.title.slice(0, 13) + '…' : entry.training.title}
                     </div>
                   ) : (
-                    <div style={{ color: 'var(--text-disabled)', fontSize: '14px', textAlign: 'center' }}>+</div>
+                    <div style={{ color: 'var(--text-tertiary)', fontSize: '14px', textAlign: 'center' }}>+</div>
                   )}
                 </button>
               )

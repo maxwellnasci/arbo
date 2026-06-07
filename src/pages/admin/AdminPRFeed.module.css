@@ -90,7 +90,7 @@
 
 .recordBadge {
   font-size: 13px;
-  color: var(--text-disabled);
+  color: var(--text-tertiary);
 }
 
 .highlight {

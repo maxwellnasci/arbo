@@ -404,7 +404,7 @@
 }
 
 .emptyIcon {
-  color: var(--text-disabled);
+  color: var(--text-tertiary);
   margin-bottom: 16px;
 }
 
@@ -446,7 +446,7 @@
   align-items: center;
   gap: 4px;
   cursor: pointer;
-  color: var(--text-disabled);
+  color: var(--text-tertiary);
   padding: 8px 12px;
   position: relative;
   transition: all 0.2s ease;

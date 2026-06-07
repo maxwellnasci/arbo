@@ -123,6 +123,7 @@
 
 .login-field input::placeholder {
   color: var(--text-tertiary);
+  opacity: 1;
 }
 
 .login-field input:focus {

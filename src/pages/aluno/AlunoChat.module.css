@@ -191,7 +191,8 @@
 }
 
 .input::placeholder {
-  color: var(--text-disabled);
+  color: var(--text-tertiary);
+  opacity: 1;
 }
 
 .sendBtn {

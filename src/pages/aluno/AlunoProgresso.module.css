@@ -135,7 +135,7 @@
 .recordEmpty {
   font-size: 28px;
   font-weight: 800;
-  color: var(--text-disabled);
+  color: var(--text-tertiary);
   letter-spacing: -0.5px;
   line-height: 1.1;
 }
@@ -193,7 +193,7 @@
 }
 
 .emptyIcon {
-  color: var(--text-disabled);
+  color: var(--text-tertiary);
 }
 
 /* ── Histórico Recente ─────────────────────────────────────────────────────── */
