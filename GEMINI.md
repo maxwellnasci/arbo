@@ -757,3 +757,7 @@ Resultado Lighthouse antes:
 - ci.yml atualizado para rodar npm test automaticamente
 - npm test: 11 passed, 0 failed
 
+
+### Task 54 (README.md Profissional)
+- README.md criado com documentação atualizada do projeto Arbo, stack tecnológica, badges de status, setup local e métricas de qualidade Lighthouse.
+
