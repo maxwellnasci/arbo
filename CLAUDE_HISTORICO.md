@@ -49,6 +49,11 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 - Plano de impl: `docs/superpowers/plans/2026-05-30-turma-detail.md`
 
 **Repositório:** https://github.com/maxwellnasci/arbo  
+
+### Task 56 (Fix PWA Service Worker)
+- vite.config.ts — `skipWaiting: true` e `clientsClaim: true` adicionados no workbox.
+- Problema resolvido: após deploy, service worker assume imediatamente sem precisar fechar e reabrir o app.
+
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅
 
 ---

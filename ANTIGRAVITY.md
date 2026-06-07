@@ -385,6 +385,11 @@ Resultado Lighthouse antes:
 - CSS modules: `var(--surface)` → `var(--bg-surface)`, `#22c55e` → `var(--green-accent)`, etc.
 - `tsc + lint + build + test`: 0 erros, 22 testes passando
 
+
+### Task 56 (Fix PWA Service Worker)
+- vite.config.ts — `skipWaiting: true` e `clientsClaim: true` adicionados no workbox.
+- Problema resolvido: após deploy, service worker assume imediatamente sem precisar fechar e reabrir o app.
+
 **Notas Finais Sessão 2026-06-07:** Média geral 8.63/10 (Segurança 8.5 · Performance 8.7 · Qualidade 9.0 · UX 8.8 · Arquitetura 8.3 · PWA 8.5)
 **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 **Próximas tarefas:** 50+ testes Vitest · service layer `src/lib/api.ts` · Acessibilidade 89→95+ · security scan CI · Push notifications · Strava · Sentry

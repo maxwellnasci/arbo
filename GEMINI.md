@@ -803,3 +803,8 @@ Resultado Lighthouse antes:
 5. Push notifications (Web Push API)
 6. Integração Strava via Edge Function + n8n
 7. Sentry para monitoramento de erros em produção
+
+
+### Task 56 (Fix PWA Service Worker)
+- vite.config.ts — `skipWaiting: true` e `clientsClaim: true` adicionados no workbox.
+- Problema resolvido: após deploy, service worker assume imediatamente sem precisar fechar e reabrir o app.

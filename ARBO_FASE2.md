@@ -293,6 +293,11 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 
 ---
 
+
+### Task 56 (Fix PWA Service Worker)
+- vite.config.ts — `skipWaiting: true` e `clientsClaim: true` adicionados no workbox.
+- Problema resolvido: após deploy, service worker assume imediatamente sem precisar fechar e reabrir o app.
+
 ## Notas Finais da Sessão 2026-06-06
 - **Média geral: 8.4/10** (subiu de 7.9 para 8.4 ao longo da sessão)
   - Segurança: 8.2/10

@@ -470,6 +470,11 @@ Resultado Lighthouse antes:
 - `CreateGroupModal` + `EditGroupModal` — seletor modo fixo/flexível
 
 
+
+### Task 56 (Fix PWA Service Worker)
+- vite.config.ts — `skipWaiting: true` e `clientsClaim: true` adicionados no workbox.
+- Problema resolvido: após deploy, service worker assume imediatamente sem precisar fechar e reabrir o app.
+
 ## Notas Finais (Sessão 2026-06-07)
 **Média geral: 8.63/10**
 - Segurança: 8.5/10 ✅
