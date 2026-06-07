@@ -704,7 +704,7 @@ npx supabase login
 - Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy configurados
 
 **Notas finais 2026-06-06:** Média geral 8.4/10 (Segurança 8.2 · Performance 8.6 · Qualidade 8.8 · UX 8.5 · Arquitetura 8.0 · PWA 8.3)
-**Próxima sessão:** Lighthouse audit GitHub Actions · Vitest · README.md
+**Próxima sessão:** Lighthouse audit GitHub Actions · README.md
 
 
 ### Task 48 (Correções Lighthouse)
@@ -746,4 +746,14 @@ Resultado Lighthouse antes:
 - Arquivo .github/workflows/ci.yml criado com sucesso.
 - Workflow roda lint, typescript e build em branches e PRs para a master.
 - Nota: O push remoto do workflow requer que o Personal Access Token do GitHub tenha o escopo 'workflow'.
+
+
+### Task 53 (Vitest + Testes)
+- Vitest instalado e configurado
+- 3 arquivos de teste criados (11 testes no total)
+- auth.test.ts — 4 testes de role/autenticação
+- formatTime.test.ts — 4 testes de formatação de tempo
+- trainingUtils.test.ts — 3 testes de labels e cores
+- ci.yml atualizado para rodar npm test automaticamente
+- npm test: 11 passed, 0 failed
 

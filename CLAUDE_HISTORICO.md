@@ -515,3 +515,13 @@ Resultado Lighthouse antes:
 - Workflow roda lint, typescript e build em branches e PRs para a master.
 - Nota: O push remoto do workflow requer que o Personal Access Token do GitHub tenha o escopo 'workflow'.
 
+
+### Task 53 (Vitest + Testes)
+- Vitest instalado e configurado
+- 3 arquivos de teste criados (11 testes no total)
+- auth.test.ts — 4 testes de role/autenticação
+- formatTime.test.ts — 4 testes de formatação de tempo
+- trainingUtils.test.ts — 3 testes de labels e cores
+- ci.yml atualizado para rodar npm test automaticamente
+- npm test: 11 passed, 0 failed
+
