@@ -761,3 +761,27 @@ Resultado Lighthouse antes:
 ### Task 54 (README.md Profissional)
 - README.md criado com documentação atualizada do projeto Arbo, stack tecnológica, badges de status, setup local e métricas de qualidade Lighthouse.
 
+
+## Notas Finais (Sessão 2026-06-07)
+**Média geral: 8.63/10**
+- Segurança: 8.5/10 ✅
+- Performance: 8.7/10
+- Qualidade de código: 9.0/10 ✅
+- UX / Bugs: 8.8/10
+- Arquitetura: 8.3/10
+- PWA / Mobile: 8.5/10 ✅
+
+### Lighthouse Mobile:
+- Performance: 96
+- Accessibility: 89
+- Best Practices: 100
+- SEO: 100
+
+### Próximas tarefas para chegar em 9.0+
+1. Testes: expandir de 11 para 50+ testes (hooks, componentes, fluxos críticos)
+2. Service layer — abstrair chamadas Supabase dos hooks para src/lib/api.ts
+3. Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
+4. Security scanning no CI (npm audit)
+5. Push notifications (Web Push API)
+6. Integração Strava via Edge Function + n8n
+7. Sentry para monitoramento de erros em produção
