@@ -553,3 +553,54 @@ Resultado Lighthouse antes:
 5. Push notifications (Web Push API)
 6. Integração Strava via Edge Function + n8n
 7. Sentry para monitoramento de erros em produção
+
+---
+
+### Task 55 (Modo Flexível de Turmas — Gemini implementou, Claude Code revisou)
+
+**Contexto:** Turmas agora têm dois modos: `'fixo'` (plano semanal com dias fixos) e `'flexivel'` (aluno agenda o dia de cada treino).
+
+**Schema Supabase (aplicado no dashboard):**
+- Tabela `schedules`: `id uuid PK, student_id uuid FK profiles(id), group_plan_training_id uuid FK group_plan_trainings(id), scheduled_day_of_week smallint CHECK(scheduled_day_of_week >= 1 AND <= 6), checkin_id uuid FK checkins(id) NULL, completed_at timestamptz NULL, created_at timestamptz, updated_at timestamptz`
+  - RLS habilitada, policies: aluno SELECT/INSERT/UPDATE próprios; admin SELECT todos do grupo
+  - GRANT SELECT, INSERT, UPDATE, DELETE para `authenticated`
+  - Índices: `schedules(student_id)`, `schedules(group_plan_training_id)`
+- `groups.mode text NOT NULL DEFAULT 'fixo' CHECK (mode IN ('fixo', 'flexivel'))`
+- `group_plan_trainings.day_of_week` agora nullable (`integer | null`) — NULL em modo flexível
+
+**Tipos TypeScript:**
+- `GroupMode = 'fixo' | 'flexivel'` (CRÍTICO: em português, corresponde ao CHECK do DB — era `'fixed'`/`'flexible'` e causaria rejeição silenciosa)
+- `ScheduleStatus = 'pendente' | 'agendado' | 'concluido'`
+- `Schedule = Database['public']['Tables']['schedules']['Row']` (alias do DB, não interface manual)
+- `DayTraining.dayOfWeek: number | null` — null = flexível sem agendamento
+- `DayTraining.scheduleId?: string` — preenchido no modo flexível
+
+**Novos arquivos:**
+- `src/hooks/useScheduling.ts` — `fetchSchedules`, `scheduleTraining`, `rescheduleTraining`, `deleteSchedule`; sem `any`, sem `window.confirm`, Supabase error via `.error` property
+- `src/lib/scheduleUtils.ts` — `getScheduleStatus(schedule: unknown): 'pendente' | 'concluido' | 'agendado'`
+- `src/test/scheduleUtils.test.ts` — 11 testes (total Vitest: 22)
+- `src/components/aluno/DayPicker.tsx` + `DayPicker.module.css` — bottom sheet de seleção de dia
+- `src/components/aluno/FlexibleTrainingCard.tsx` + module — card de treino com DayPicker integrado
+- `src/components/admin/ProfessorStatusGrid.tsx` — grid alunos × treinos com badge de status (verde=concluído, laranja=agendado, cinza=pendente); `scheduleMap` com chave `${student_id}-${group_plan_training_id}`
+
+**Arquivos modificados:**
+- `src/hooks/useWeeklyPlan.ts` — bifurcação fixo/flexível; busca `groups.mode` em paralelo; fetch de schedules do aluno para modo flexível; `flatMap` para mapear `DayTraining` com `scheduleId`
+- `src/hooks/useAdminTurmaDetail.ts` — `mode` adicionado ao SELECT de `groups`
+- `src/components/aluno/CheckinSheet.tsx` — `planId: string | null`; captura `newCheckinId` no INSERT; atualiza `schedule.checkin_id + completed_at` atômicamente
+- `src/pages/aluno/AlunoDashboard.tsx` — renderiza `FlexibleTrainingCard` para modo 'flexivel'; sort null-safe `(a.dayOfWeek ?? 99) - (b.dayOfWeek ?? 99)`; `handleScheduleUpdate` chama `rescheduleTraining` ou `scheduleTraining`; null guard em `DAY_NAMES[dayOfWeek]`; `plan.id` → `plan?.id ?? null`
+- `src/pages/admin/AdminTurmaDetail.tsx` — tab "Status" (ProfessorStatusGrid) + tab "Treinos" (lista); modo flexível exibe lista simples sem grade por dia
+- `src/components/admin/CreateGroupModal.tsx` + `EditGroupModal.tsx` — seletor modo fixo/flexível
+
+**Correções críticas (Claude Code code review — 10 findings):**
+1. `GroupMode = 'fixed' | 'flexible'` → `'fixo' | 'flexivel'` em 6 arquivos (12 ocorrências) — evitava rejeição silenciosa do CHECK constraint
+2. `ProfessorStatusGrid` completamente reescrito — query correta, props `GroupTrainingEntry`, chave de scheduleMap correta
+3. `useScheduling` completamente reescrito — sem JOIN inválido `training:trainings`, sem `as any`, Supabase `.error` pattern
+4. `scheduleUtils.ts` — `any` → `unknown` com type guard
+5. CSS modules: `var(--surface)` → `var(--bg-surface)`, `var(--border)` → `var(--border-default)`, `#22c55e` → `var(--green-accent)`, `rgba(34,197,94,0.15)` → `var(--green-subtle)`
+6. `Student.full_name` → `string | null` (Supabase retorna nullable)
+7. `WeeklyPlanTraining` import removido (não usado)
+8. `.map().filter()` predicate → `.flatMap()` (TypeScript não estreita dentro de type predicates complexos)
+9. `DAY_NAMES[null]` → null guard com fallback `'—'`
+10. 9 erros de lint em 3 arquivos corrigidos (no-explicit-any, no-unused-vars)
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · `npm test` → 22 passed ✅

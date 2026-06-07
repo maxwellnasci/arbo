@@ -67,6 +67,7 @@ src/
 | `database.types.ts` | Tipos gerados pelo Supabase (não editar manualmente) |
 | `types.ts` | Atalhos de tipo para uso no app |
 | `trainingUtils.ts` | Constantes e helpers compartilhados: `TAG_COLORS`, `TRAINING_TYPE_OPTIONS`, `TRAINING_TYPE_LABELS`, `insertTag()`, `insertTrainingType()` |
+| `scheduleUtils.ts` | `getScheduleStatus(schedule: unknown)` — retorna `'pendente' | 'agendado' | 'concluido'` |
 
 Para regenerar `database.types.ts` após mudanças no schema:
 ```bash
@@ -75,11 +76,11 @@ npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/da
 
 ### Tipos disponíveis em `src/lib/types.ts`
 
-`Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record` — palavra reservada TS), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`, `GroupPlan`, `GroupPlanTraining`, `Tag`, `TrainingCustomType`, `TrainingType`, `DistanceCategory`, `UserLevel`.
+`Profile`, `Training`, `WeeklyPlan`, `WeeklyPlanTraining`, `Checkin`, `PersonalRecord` (não `Record` — palavra reservada TS), `Comment`, `Reaction`, `StravaActivity`, `Anamnesis`, `Group`, `GroupPlan`, `GroupPlanTraining`, `Tag`, `TrainingCustomType`, `TrainingType`, `DistanceCategory`, `UserLevel`, `Schedule`, `GroupMode`, `ScheduleStatus`.
 
 ### Banco de dados (Supabase — project: `jhfkflnixzivuichmkie`)
 
-**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `groups`, `group_plans`, `group_plan_trainings`, `messages`, `invites`, `tags`, `training_types`
+**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `groups`, `group_plans`, `group_plan_trainings`, `messages`, `invites`, `tags`, `training_types`, `schedules`
 
 **Enums:** `training_type` (enum legado — `trainings.type` migrado para `text`) · `distance_category` · `user_level`
 
@@ -121,6 +122,7 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `messages` | SELECT, INSERT, UPDATE |
 | `invites` | SELECT, INSERT |
 | `training_types` | SELECT, INSERT, DELETE |
+| `schedules` | SELECT, INSERT, UPDATE, DELETE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy correta.
 
@@ -214,6 +216,11 @@ catch (e: unknown) {
 - **`training_types`** — tabela de tipos personalizados: `id uuid PK`, `name text NOT NULL UNIQUE`, `is_custom boolean DEFAULT true`, `created_by uuid FK profiles(id)`. Sempre filtrar com `.eq('is_custom', true)` para distinguir dos embutidos.
 - **`trainingUtils.ts`** (`src/lib/`) — fonte única de verdade para `TAG_COLORS`, `TRAINING_TYPE_OPTIONS`, `TRAINING_TYPE_LABELS`, e helpers `insertTag(userId, name, color)` / `insertTrainingType(userId, name)`. Não duplicar em componentes.
 - **Mutations de etiqueta/tipo** devem ficar no componente pai (page), não em componentes presentacionais. `TreinoFormPanel` expõe `onCreateTag: (name, color) => Promise<Tag | null>` e `onCreateType: (name) => Promise<TrainingCustomType | null>` — a responsabilidade de chamar Supabase é do pai.
+- **`GroupMode = 'fixo' | 'flexivel'`** — valores em português, correspondem ao `CHECK (mode IN ('fixo', 'flexivel'))` no banco. Nunca usar `'fixed'` ou `'flexible'` (causaria rejeição silenciosa).
+- **Tabela `schedules`** — agendamentos de alunos em modo flexível: `student_id`, `group_plan_training_id`, `scheduled_day_of_week smallint CHECK(1-6)`, `checkin_id` (nullable, vinculado ao checar), `completed_at` (nullable). JOIN via `group_plan_training_id` — não há FK direto para `trainings`.
+- **`DayTraining.dayOfWeek`** pode ser `null` (modo flexível sem agendamento). Usar `?? 99` em sorts e `?? null` em acessos. Nunca indexar diretamente sem null guard.
+- **`useScheduling` hook** não inclui confirmação de exclusão — chamador deve usar `<ConfirmModal />`. `window.confirm` é proibido.
+- **Vitest** está configurado (`vitest.config.ts`). `npm test` roda os testes. Não há mais "Não há test runner" — era nota desatualizada.
 
 ## Autenticação (implementada)
 
@@ -266,15 +273,20 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-06-06)
+## Estado atual (2026-06-07)
 
-- **Média geral:** 8.4/10 — Segurança 8.2 · Performance 8.6 · Qualidade 8.8 · UX/Bugs 8.5 · Arquitetura 8.0 · PWA/Mobile 8.3
-- **Tasks 39-47 concluídas**
+- **Média geral:** 8.63/10 — Segurança 8.5 · Performance 8.7 · Qualidade 9.0 · UX/Bugs 8.8 · Arquitetura 8.3 · PWA/Mobile 8.5
+- **Tasks 39-55 concluídas**
+- **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
+- **Testes:** 22 testes passando (Vitest)
 - **Próxima sessão:**
-  - Auditoria Lighthouse no PWA (meta: score 90+).
-  - SMTP externo (Resend ou AWS SES) antes de produção.
-  - CI/CD GitHub Actions (`tsc + build + lint` a cada push).
-  - Vitest — primeiros testes unitários para hooks críticos.
+  - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos).
+  - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`.
+  - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader).
+  - Security scanning no CI (`npm audit`).
+  - Push notifications (Web Push API).
+  - Integração Strava via Edge Function + n8n.
+  - Sentry para monitoramento de erros em produção.
   - README.md público para o repositório.
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
@@ -319,12 +331,17 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 42:** Micro-residuais de Qualidade — Correção de hex em `ErrorBoundary.tsx` (#d14312 e sombra), `SetPassword.tsx` (#ff6b6b), `ConfirmModal.tsx` (background subtleMap e sombra) e `App.tsx` (sombra de erro); novas variáveis de sombra `--shadow-modal` e `--shadow-card` no `index.css` ✅
 - **Task 43:** Migração CSS Vars e Performance Server-side — Migração de hex hardcoded em 7 arquivos (`Login.css`, `AdminChatPanel.module.css`, `AlunoDashboard.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`); Adição de vars `--purple-accent/subtle` e `--yellow-accent/subtle` no `index.css`; Filtro server-side e remoção do Deep Join no `useAdminTurmaDetail`; `.limit()` adicionado no `useAdminAlunos`, `useChat` e `AdminConvites` ✅
 - **Task 44:** Limpeza de hardcoded residuais — Limpeza final de hexadecimais em `AdminConvites.tsx`, `AdminTurmas.tsx`, `AdminFeedbacks.tsx` e `AdminAlunoDetail.tsx` (cerca de 15 cores substituídas por variáveis semânticas como `--red-accent`, `--text-disabled`, `--text-tertiary`) ✅
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-06)
+- **Task 52:** CI/CD GitHub Actions — `.github/workflows/ci.yml` com lint + tsc + build + test em PRs/pushes para master ✅
+- **Task 53:** Vitest — 11 testes em 3 arquivos (auth, formatTime, trainingUtils); `ci.yml` atualizado ✅
+- **Task 54:** README.md profissional com badges, stack, setup local e métricas Lighthouse ✅
+- **Task 55:** Modo Flexível de Turmas — tabela `schedules`, `groups.mode`, `DayPicker`, `FlexibleTrainingCard`, `ProfessorStatusGrid`, bifurcação fixo/flexível no `useWeeklyPlan`, `GroupMode = 'fixo' | 'flexivel'` ✅
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-07)
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
+**Vitest:** 22 testes passando ✅
 
 ### Próximos passos
-- Auditoria Lighthouse no PWA (meta: score 90+)
+- Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos)
 - SMTP externo (Resend ou AWS SES) antes de produção
 - CI/CD GitHub Actions
 - Vitest — testes unitários para hooks críticos
@@ -434,6 +451,23 @@ Resultado Lighthouse antes:
 
 ### Task 54 (README.md Profissional)
 - README.md criado com documentação atualizada do projeto Arbo, stack tecnológica, badges de status, setup local e métricas de qualidade Lighthouse.
+
+
+### Task 55 (Modo Flexível de Turmas)
+- Tabela `schedules` criada no Supabase com RLS + policies + GRANT + índices
+- `groups.mode text DEFAULT 'fixo' CHECK (mode IN ('fixo', 'flexivel'))`
+- `group_plan_trainings.day_of_week` nullable
+- `GroupMode = 'fixo' | 'flexivel'` — valores em português (corresponde ao CHECK constraint do DB)
+- `useScheduling.ts` — CRUD de agendamentos sem `any`, sem `window.confirm`
+- `scheduleUtils.ts` + `scheduleUtils.test.ts` — 11 novos testes (total: 22)
+- `DayPicker.tsx` — bottom sheet de seleção de dia
+- `FlexibleTrainingCard.tsx` — card de treino modo flexível
+- `ProfessorStatusGrid.tsx` — grid alunos × treinos (verde/laranja/cinza)
+- `useWeeklyPlan.ts` — bifurcação fixo/flexível, `DayTraining.dayOfWeek` nullable, `scheduleId`
+- `AlunoDashboard.tsx` — FlexibleTrainingCard para modo 'flexivel', sort null-safe
+- `CheckinSheet.tsx` — planId `string | null`, vincula schedule ao checkin
+- `AdminTurmaDetail.tsx` — tabs Status/Treinos, ProfessorStatusGrid integrado
+- `CreateGroupModal` + `EditGroupModal` — seletor modo fixo/flexível
 
 
 ## Notas Finais (Sessão 2026-06-07)

@@ -86,13 +86,14 @@ comments          -- comentários em checkins e recordes (target_type + target_i
 reactions         -- reações em checkins e recordes
 strava_connections -- tokens OAuth Strava (sem acesso direto — Edge Function only)
 strava_activities  -- atividades importadas do Strava
-groups            -- turmas: name, goal, frequency, plan_type, starts_at, is_active
+groups            -- turmas: name, goal, frequency, plan_type, mode ('fixo'|'flexivel'), starts_at, is_active
 group_plans       -- planos de ciclo por turma (group_id, starts_at, notes, created_by, released_through_week smallint DEFAULT 0 — 0=bloqueado, 1–4=semanas liberadas até N)
 group_plan_trainings -- pivot: week_number (1–4) × day_of_week (1–6) × training_id
 messages          -- chat admin↔aluno: student_id, sender_id, admin_id, content, deleted_by_student, deleted_by_admin, read_at
 invites           -- log de convites enviados: email, role, status, invited_by, created_at
 tags              -- etiquetas coloridas para treinos: name, color (#hex), created_by
 training_types    -- tipos personalizados de treino: name text NOT NULL UNIQUE, is_custom boolean DEFAULT true, created_by
+schedules         -- agendamentos de treinos em modo flexível: student_id, group_plan_training_id, scheduled_day_of_week smallint CHECK(1-6), checkin_id nullable, completed_at nullable
 ```
 
 #### Convenções de schema
@@ -132,6 +133,7 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `invites` | SELECT, INSERT |
 | `tags` | SELECT, INSERT, UPDATE, DELETE |
 | `training_types` | SELECT, INSERT, DELETE |
+| `schedules` | SELECT, INSERT, UPDATE, DELETE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy RLS correta.
 
@@ -760,6 +762,22 @@ Resultado Lighthouse antes:
 
 ### Task 54 (README.md Profissional)
 - README.md criado com documentação atualizada do projeto Arbo, stack tecnológica, badges de status, setup local e métricas de qualidade Lighthouse.
+
+
+### Task 55 (Modo Flexível de Turmas — Gemini implementou, Claude Code revisou)
+- `groups.mode text DEFAULT 'fixo' CHECK (mode IN ('fixo', 'flexivel'))` — CRÍTICO: valores em português
+- `group_plan_trainings.day_of_week` agora nullable
+- Tabela `schedules` com RLS + GRANT SELECT/INSERT/UPDATE/DELETE
+- `GroupMode = 'fixo' | 'flexivel'` — NUNCA usar `'fixed'`/`'flexible'` (viola CHECK constraint)
+- `useScheduling.ts` — sem `any`, sem `window.confirm`, Supabase error via `.error`
+- `scheduleUtils.ts` + 11 testes (total: 22 no Vitest)
+- `DayPicker.tsx` — bottom sheet de seleção de dia
+- `FlexibleTrainingCard.tsx` — card de treino modo flexível
+- `ProfessorStatusGrid.tsx` — grid alunos × treinos com status
+- `useWeeklyPlan.ts` — bifurcação fixo/flexível, `DayTraining.dayOfWeek` nullable, `scheduleId`
+- `AlunoDashboard.tsx` — FlexibleTrainingCard para modo 'flexivel', sort null-safe
+- `CheckinSheet.tsx` — planId `string | null`, vincula schedule.checkin_id + completed_at
+- `AdminTurmaDetail.tsx` — tabs Status/Treinos, ProfessorStatusGrid integrado
 
 
 ## Notas Finais (Sessão 2026-06-07)
