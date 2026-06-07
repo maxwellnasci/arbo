@@ -340,15 +340,15 @@ export default function AlunoDashboard() {
       ) : activeTab === 'perfil' ? (
         <AlunoPerfil studentId={user.id} />
       ) : activeTab === 'calendario' ? (
-        <div className={styles.container}>
+        <main className={styles.container}>
           <div className={styles.emptyState}>
             <Calendar size={32} className={styles.emptyIcon} />
             <p className={styles.emptyTitle}>Calendário Completo</p>
             <p className={styles.emptySubtext}>Em breve você poderá ver todos os ciclos aqui.</p>
           </div>
-        </div>
+        </main>
       ) : (
-        <div className={styles.container}>
+        <main className={styles.container}>
 
           <header className={styles.hero}>
             <div className={styles.heroOrbs}>
@@ -434,7 +434,7 @@ export default function AlunoDashboard() {
               ))}
             </div>
           )}
-        </div>
+        </main>
       )}
 
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
