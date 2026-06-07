@@ -496,3 +496,16 @@ Resultado Lighthouse antes:
 - index.css — --text-tertiary #666666 → #7d7d7d (contraste WCAG AA 4.52:1)
 - DeepSeek usado como subagente para calcular ratios de contraste exatos
 
+
+### Task 50 (Contraste WCAG AA)
+- Login.css — placeholder opacity: 1 explícito
+- AlunoChat.module.css — placeholder cor tertiary + opacity: 1
+- AdminBottomNav.module.css — abas inativas tertiary
+- AlunoDashboard.module.css — empty states tertiary
+- AlunoProgresso.module.css — empty states tertiary
+- AdminPRFeed.module.css — badges tertiary
+- LockedScreen.module.css — labels S1-S4 tertiary
+- AdminTurmaDetail.tsx — ícones + tertiary
+- AdminAlunoDetail.tsx — ícone chevron tertiary
+- DeepSeek subagente calculou ratios exatos e identificou opacity padrão dos browsers
+
