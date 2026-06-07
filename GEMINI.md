@@ -704,7 +704,7 @@ npx supabase login
 - Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy configurados
 
 **Notas finais 2026-06-06:** Média geral 8.4/10 (Segurança 8.2 · Performance 8.6 · Qualidade 8.8 · UX 8.5 · Arquitetura 8.0 · PWA 8.3)
-**Próxima sessão:** Lighthouse audit · SMTP externo · CI/CD GitHub Actions · Vitest · README.md
+**Próxima sessão:** Lighthouse audit · CI/CD GitHub Actions · Vitest · README.md
 
 
 ### Task 48 (Correções Lighthouse)
