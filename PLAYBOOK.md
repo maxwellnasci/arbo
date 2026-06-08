@@ -841,3 +841,37 @@ No prompt para o Gemini, incluir:
 - Gemini implementa com base no resultado — acerta na primeira tentativa
 - Evita múltiplas iterações de tentativa e erro
 
+
+## 13. Lições aprendidas — Task 55 (Modo Flexível)
+
+### Features grandes com subagentes — o que aprendemos
+
+**O que funcionou:**
+- Gemini com subagentes paralelos implementa a base rapidamente
+- DeepSeek para análise técnica antes de implementar evita retrabalho
+- claude-deepseek como revisão quando Claude Code está com contexto limitado
+
+**O que melhorar:**
+- Gemini com subagentes deixa furos — revisão obrigatória antes de qualquer commit
+- "0 erros" do Gemini não é confiável em features grandes — sempre validar com Claude Code ou claude-deepseek
+- GroupMode e qualquer enum/check constraint do banco SEMPRE em português espelhando o valor exato do SQL
+- Em features grandes: Gemini apresenta plano → Maxwell aprova → subagentes implementam → revisão antes do commit
+
+**Erros comuns do Gemini com subagentes:**
+1. Componentes criados mas não integrados (FlexibleTrainingCard não estava no AlunoDashboard)
+2. Queries com campos errados (group_plan_training_id vs group_plan_id)
+3. Tipos divergindo do banco (GroupMode em inglês vs português no CHECK constraint)
+4. Erros de lint após limpeza apressada
+5. JOINs inválidos em hooks novos
+
+**Fluxo correto para features grandes:**
+DeepSeek → análise técnica completa antes de implementar
+Gemini + subagentes → implementa a base
+Claude Code (ou claude-deepseek se contexto limitado) → revisão obrigatória
+Gemini → corrige os furos encontrados
+tsc + lint + build + npm test → 0 erros
+Gemini → commit + atualiza .md
+
+**PWA após deploy:**
+- Adicionar skipWaiting: true + clientsClaim: true no workbox do vite.config.ts
+- Resolve erro de chunk na primeira abertura após novo deploy

@@ -1,0 +1,42 @@
+# Lições do Gemini — Arbo
+
+> Arquivo criado para registrar erros recorrentes e como evitá-los.
+> Leia sempre antes de implementar features grandes.
+
+## Erros cometidos e como evitar
+
+### 1. Componentes criados mas não integrados
+**O que aconteceu:** DayPicker e FlexibleTrainingCard foram criados mas não integrados no AlunoDashboard.
+**Como evitar:** Ao criar um componente novo, sempre verificar onde ele será usado e integrar no mesmo momento.
+
+### 2. Tipos divergindo do banco
+**O que aconteceu:** GroupMode foi implementado como 'fixed'|'flexible' mas o banco tem CHECK (mode IN ('fixo', 'flexivel')).
+**Como evitar:** Sempre espelhar EXATAMENTE o valor do CHECK constraint do banco. Se o banco tem 'fixo', o código tem 'fixo' — nunca traduzir ou renomear.
+
+### 3. Queries com campos errados
+**O que aconteceu:** useScheduling usou group_plan_training_id onde deveria usar group_plan_id.
+**Como evitar:** Antes de escrever qualquer query, verificar o database.types.ts para confirmar o nome exato das colunas.
+
+### 4. JOINs inválidos
+**O que aconteceu:** useScheduling tentou fazer JOIN em tabela que não tinha relação direta.
+**Como evitar:** Verificar as FKs no database.types.ts antes de qualquer JOIN no Supabase.
+
+### 5. Lint apressado introduz novos erros
+**O que aconteceu:** Tentativa de corrigir lint rapidamente introduziu erros de sintaxe no ProfessorStatusGrid.
+**Como evitar:** Nunca fazer limpeza de lint em múltiplos arquivos de uma vez sem testar cada um. Rodar npx tsc --noEmit após cada arquivo.
+
+### 6. "0 erros" não significa que está correto
+**O que aconteceu:** Gemini reportou "0 erros" mas o Claude Code encontrou 4 críticos.
+**Como evitar:** Sempre rodar npx tsc --noEmit && npm run lint && npm run build && npm test e mostrar o output completo. Nunca reportar "0 erros" sem mostrar o output real.
+
+### 7. Scripts temporários esquecidos na raiz
+**O que aconteceu:** patch2.py, patch3.py, patch_modals.py ficaram na raiz do projeto.
+**Como evitar:** Nunca criar scripts temporários na raiz. Se precisar, criar em /tmp/ ou deletar imediatamente após usar.
+
+## Regras de ouro
+
+1. **Espelhar o banco** — tipos, enums e valores sempre iguais ao SQL
+2. **Integrar imediatamente** — componente criado = componente integrado no mesmo commit
+3. **Mostrar output real** — nunca reportar sucesso sem colar o output dos comandos
+4. **Não criar arquivos temporários** na raiz do projeto
+5. **Verificar database.types.ts** antes de qualquer query ou JOIN
