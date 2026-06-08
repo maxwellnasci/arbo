@@ -22,8 +22,8 @@ export default function FlexibleTrainingCard({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   
-  const scheduledDay = dayTraining.dayOfWeek as DayOfWeek;
-  const isScheduled = scheduledDay > 0;
+  const scheduledDay = dayTraining.dayOfWeek ?? 0;
+  const isScheduled = dayTraining.dayOfWeek != null && dayTraining.dayOfWeek >= 1;
   const { training, checkin } = dayTraining;
   
   const handleDaySelect = async (day: DayOfWeek) => {
@@ -89,7 +89,7 @@ export default function FlexibleTrainingCard({
       <DayPicker
         isOpen={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        selectedDay={isScheduled ? scheduledDay : undefined}
+        selectedDay={isScheduled ? (scheduledDay as DayOfWeek) : undefined}
         onSelect={handleDaySelect}
       />
     </>

@@ -68,6 +68,7 @@ export function ProfessorStatusGrid({ groupId, planId, groupTrainings }: Profess
   const [students, setStudents]   = useState<Student[]>([])
   const [schedules, setSchedules] = useState<ScheduleRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError]         = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -86,17 +87,20 @@ export function ProfessorStatusGrid({ groupId, planId, groupTrainings }: Profess
           .from('profiles')
           .select('id, full_name')
           .eq('group_id', groupId)
-          .order('full_name'),
+          .order('full_name')
+          .limit(200),
         supabase
           .from('schedules')
           .select('id, student_id, group_plan_training_id, scheduled_day_of_week, checkin_id, completed_at, created_at, updated_at')
-          .in('group_plan_training_id', gptIds),
+          .in('group_plan_training_id', gptIds)
+          .limit(200),
       ])
 
       if (cancelled) return
 
-      if (profilesRes.error) console.error('Erro ao buscar alunos:', profilesRes.error.message)
-      if (schedulesRes.error) console.error('Erro ao buscar agendamentos:', schedulesRes.error.message)
+      if (profilesRes.error || schedulesRes.error) {
+        setError(profilesRes.error?.message || schedulesRes.error?.message || 'Erro desconhecido')
+      }
 
       setStudents(profilesRes.data ?? [])
       setSchedules(schedulesRes.data ?? [])
@@ -117,6 +121,7 @@ export function ProfessorStatusGrid({ groupId, planId, groupTrainings }: Profess
   }, [schedules])
 
   if (isLoading) return <div style={{ color: 'var(--text-secondary)', padding: '16px' }}>Carregando grid...</div>
+  if (error) return <div style={{ color: 'var(--red-accent)', padding: '16px' }}>Erro ao carregar dados: {error}</div>
 
   if (!planId) {
     return (

@@ -313,9 +313,11 @@ export default function AlunoDashboard() {
     const dt = trainings.find(t => t.weeklyPlanTrainingId === gptId)
     if (!user) return
     if (dt?.scheduleId) {
-      await rescheduleTraining(dt.scheduleId, newDay)
+      const result = await rescheduleTraining(dt.scheduleId, newDay)
+      if (!result) { toast.error('Erro ao reagendar treino. Tente novamente.'); return }
     } else {
-      await scheduleTraining(user.id, gptId, newDay)
+      const result = await scheduleTraining(user.id, gptId, newDay)
+      if (!result) { toast.error('Erro ao agendar treino. Tente novamente.'); return }
     }
     refresh()
   }

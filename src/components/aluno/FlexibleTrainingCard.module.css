@@ -102,7 +102,7 @@
   background: var(--orange);
   border: none;
   border-radius: 10px;
-  color: #fff;
+  color: var(--text-on-brand);
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s;
