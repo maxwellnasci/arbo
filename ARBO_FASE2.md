@@ -298,6 +298,15 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 - vite.config.ts — `skipWaiting: true` e `clientsClaim: true` adicionados no workbox.
 - Problema resolvido: após deploy, service worker assume imediatamente sem precisar fechar e reabrir o app.
 
+
+### Task 57 (Corrigir findings pós Task 55)
+- AlunoDashboard.tsx — toast.error adicionado quando agendamento falha.
+- ProfessorStatusGrid.tsx — error state implementado e .limit(200) nas queries.
+- index.css — --text-on-brand adicionada.
+- DayPicker.module.css — #fff substituído por var(--text-on-brand).
+- FlexibleTrainingCard.module.css — #fff substituído por var(--text-on-brand).
+- FlexibleTrainingCard.tsx — cast DayOfWeek removido da lógica, mantido só na prop.
+
 ## Notas Finais da Sessão 2026-06-06
 - **Média geral: 8.4/10** (subiu de 7.9 para 8.4 ao longo da sessão)
   - Segurança: 8.2/10
@@ -421,7 +430,7 @@ Resultado Lighthouse antes:
 - `CreateGroupModal` + `EditGroupModal` — seletor modo fixo/flexível
 
 **Notas Finais Sessão 2026-06-07:**
-- Média geral 8.63/10
+- Média geral 8.75/10
 - Lighthouse Mobile: Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 - 22 testes passando (Vitest)
 - Próximas tasks: 50+ testes · service layer · Acessibilidade 89→95+ · Push notifications · Strava · Sentry

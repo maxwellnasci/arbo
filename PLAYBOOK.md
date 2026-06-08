@@ -875,3 +875,12 @@ Gemini → commit + atualiza .md
 **PWA após deploy:**
 - Adicionar skipWaiting: true + clientsClaim: true no workbox do vite.config.ts
 - Resolve erro de chunk na primeira abertura após novo deploy
+
+
+### Task 57 (Corrigir findings pós Task 55)
+- AlunoDashboard.tsx — toast.error adicionado quando agendamento falha.
+- ProfessorStatusGrid.tsx — error state implementado e .limit(200) nas queries.
+- index.css — --text-on-brand adicionada.
+- DayPicker.module.css — #fff substituído por var(--text-on-brand).
+- FlexibleTrainingCard.module.css — #fff substituído por var(--text-on-brand).
+- FlexibleTrainingCard.tsx — cast DayOfWeek removido da lógica, mantido só na prop.

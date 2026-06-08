@@ -390,7 +390,16 @@ Resultado Lighthouse antes:
 - vite.config.ts — `skipWaiting: true` e `clientsClaim: true` adicionados no workbox.
 - Problema resolvido: após deploy, service worker assume imediatamente sem precisar fechar e reabrir o app.
 
-**Notas Finais Sessão 2026-06-07:** Média geral 8.63/10 (Segurança 8.5 · Performance 8.7 · Qualidade 9.0 · UX 8.8 · Arquitetura 8.3 · PWA 8.5)
+
+### Task 57 (Corrigir findings pós Task 55)
+- AlunoDashboard.tsx — toast.error adicionado quando agendamento falha.
+- ProfessorStatusGrid.tsx — error state implementado e .limit(200) nas queries.
+- index.css — --text-on-brand adicionada.
+- DayPicker.module.css — #fff substituído por var(--text-on-brand).
+- FlexibleTrainingCard.module.css — #fff substituído por var(--text-on-brand).
+- FlexibleTrainingCard.tsx — cast DayOfWeek removido da lógica, mantido só na prop.
+
+**Notas Finais Sessão 2026-06-07:** Média geral 8.75/10 (Segurança 8.5 · Performance 8.7 · Qualidade 9.0 · UX 8.8 · Arquitetura 8.3 · PWA 8.5)
 **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 **Próximas tarefas:** 50+ testes Vitest · service layer `src/lib/api.ts` · Acessibilidade 89→95+ · security scan CI · Push notifications · Strava · Sentry
 

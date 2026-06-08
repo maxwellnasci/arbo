@@ -808,3 +808,12 @@ Resultado Lighthouse antes:
 ### Task 56 (Fix PWA Service Worker)
 - vite.config.ts — `skipWaiting: true` e `clientsClaim: true` adicionados no workbox.
 - Problema resolvido: após deploy, service worker assume imediatamente sem precisar fechar e reabrir o app.
+
+
+### Task 57 (Corrigir findings pós Task 55)
+- AlunoDashboard.tsx — toast.error adicionado quando agendamento falha.
+- ProfessorStatusGrid.tsx — error state implementado e .limit(200) nas queries.
+- index.css — --text-on-brand adicionada.
+- DayPicker.module.css — #fff substituído por var(--text-on-brand).
+- FlexibleTrainingCard.module.css — #fff substituído por var(--text-on-brand).
+- FlexibleTrainingCard.tsx — cast DayOfWeek removido da lógica, mantido só na prop.

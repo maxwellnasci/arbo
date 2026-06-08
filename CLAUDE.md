@@ -275,7 +275,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 ## Estado atual (2026-06-07)
 
-- **Média geral:** 8.63/10 — Segurança 8.5 · Performance 8.7 · Qualidade 9.0 · UX/Bugs 8.8 · Arquitetura 8.3 · PWA/Mobile 8.5
+- **Média geral:** 8.75/10 — Segurança 8.5 · Performance 8.7 · Qualidade 9.0 · UX/Bugs 8.8 · Arquitetura 8.3 · PWA/Mobile 8.5
 - **Tasks 39-55 concluídas**
 - **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 - **Testes:** 22 testes passando (Vitest)
@@ -475,8 +475,17 @@ Resultado Lighthouse antes:
 - vite.config.ts — `skipWaiting: true` e `clientsClaim: true` adicionados no workbox.
 - Problema resolvido: após deploy, service worker assume imediatamente sem precisar fechar e reabrir o app.
 
+
+### Task 57 (Corrigir findings pós Task 55)
+- AlunoDashboard.tsx — toast.error adicionado quando agendamento falha.
+- ProfessorStatusGrid.tsx — error state implementado e .limit(200) nas queries.
+- index.css — --text-on-brand adicionada.
+- DayPicker.module.css — #fff substituído por var(--text-on-brand).
+- FlexibleTrainingCard.module.css — #fff substituído por var(--text-on-brand).
+- FlexibleTrainingCard.tsx — cast DayOfWeek removido da lógica, mantido só na prop.
+
 ## Notas Finais (Sessão 2026-06-07)
-**Média geral: 8.63/10**
+**Média geral: 8.75/10**
 - Segurança: 8.5/10 ✅
 - Performance: 8.7/10
 - Qualidade de código: 9.0/10 ✅
