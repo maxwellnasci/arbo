@@ -386,7 +386,7 @@ export default function AdminAlunoDetail() {
                 onClick={handleDeleteAluno}
                 disabled={isDeleting}
                 style={{
-                  flex: 1, background: 'var(--red-accent)', color: '#fff',
+                  flex: 1, background: 'var(--red-accent)', color: 'var(--text-on-brand)',
                   border: 'none', borderRadius: '12px',
                   padding: '12px', fontWeight: 700, fontSize: '14px',
                   cursor: isDeleting ? 'not-allowed' : 'pointer',

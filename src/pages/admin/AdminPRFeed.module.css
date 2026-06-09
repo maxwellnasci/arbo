@@ -55,7 +55,7 @@
   width: 100%;
   height: 100%;
   background: var(--orange);
-  color: #fff;
+  color: var(--text-on-brand);
   display: flex;
   align-items: center;
   justify-content: center;

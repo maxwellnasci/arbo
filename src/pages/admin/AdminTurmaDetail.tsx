@@ -511,7 +511,7 @@ function WeekView({
               onClick={() => onRelease(selectedWeek as 1 | 2 | 3 | 4)}
               disabled={releasing}
               style={{
-                background: 'var(--orange)', color: '#fff', border: 'none',
+                background: 'var(--orange)', color: 'var(--text-on-brand)', border: 'none',
                 borderRadius: '6px', padding: '6px 12px', fontSize: '10px',
                 fontWeight: 700, cursor: releasing ? 'not-allowed' : 'pointer',
                 opacity: releasing ? 0.6 : 1,
@@ -945,7 +945,7 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
             )}
             <div style={{ display: 'flex', gap: '6px' }}>
               <button type="button" onClick={() => { setShowNewType(false); setTypeError(null) }} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1, padding: '6px' }}>Cancelar</button>
-              <button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim()} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+              <button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim()} style={{ flex: 1, background: 'var(--orange)', color: 'var(--text-on-brand)', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                 {creatingType ? '...' : 'Criar'}
               </button>
             </div>
@@ -1011,7 +1011,7 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
                   type="button"
                   onClick={() => setNewTagColor(c.hex)}
                   style={{
-                    width: 20, height: 20, borderRadius: '50%', border: newTagColor === c.hex ? '2px solid #fff' : '2px solid transparent',
+                    width: 20, height: 20, borderRadius: '50%', border: newTagColor === c.hex ? '2px solid var(--text-on-brand)' : '2px solid transparent',
                     background: c.hex, cursor: 'pointer', padding: 0,
                   }}
                   title={c.name}
@@ -1025,7 +1025,7 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
             )}
             <div style={{ display: 'flex', gap: '6px' }}>
               <button type="button" onClick={() => { setShowNewTag(false); setTagError(null) }} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1 }}>Cancelar</button>
-              <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+              <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: 'var(--orange)', color: 'var(--text-on-brand)', border: 'none', borderRadius: '7px', padding: '6px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                 {creatingTag ? '...' : 'Criar'}
               </button>
             </div>
@@ -1044,7 +1044,7 @@ function CreateTrainingForm({ mutating, allTags, allCustomTypes, onBack, onSubmi
       <button
         onClick={handleSubmit}
         disabled={mutating || !title.trim()}
-        style={{ background: mutating || !title.trim() ? 'var(--bg-surface)' : 'var(--orange)', color: mutating || !title.trim() ? 'var(--text-secondary)' : '#fff', borderRadius: '8px', padding: '9px', textAlign: 'center', fontSize: '11px', fontWeight: 700, cursor: mutating || !title.trim() ? 'not-allowed' : 'pointer', border: '1px solid var(--border-default)', marginTop: '4px' }}
+        style={{ background: mutating || !title.trim() ? 'var(--bg-surface)' : 'var(--orange)', color: mutating || !title.trim() ? 'var(--text-secondary)' : 'var(--text-on-brand)', borderRadius: '8px', padding: '9px', textAlign: 'center', fontSize: '11px', fontWeight: 700, cursor: mutating || !title.trim() ? 'not-allowed' : 'pointer', border: '1px solid var(--border-default)', marginTop: '4px' }}
       >
         {mutating ? 'Salvando…' : 'Salvar e adicionar ao dia'}
       </button>

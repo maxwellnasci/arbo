@@ -140,7 +140,7 @@
 /* ── Botão Entrar ── */
 .login-button {
   background: var(--orange);
-  color: #ffffff;
+  color: var(--text-on-brand);
   border: none;
   border-radius: 16px;
   font-size: 15px;

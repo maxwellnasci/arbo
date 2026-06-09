@@ -172,7 +172,7 @@ export function AdminTreinos() {
           onClick={() => { setTreinoToEdit(null); setIsFormOpen(true) }}
           style={{
             background: 'var(--orange)',
-            color: '#fff',
+            color: 'var(--text-on-brand)',
             border: 'none',
             padding: '10px 20px',
             borderRadius: '12px',

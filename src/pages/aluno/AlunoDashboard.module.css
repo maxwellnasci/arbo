@@ -277,7 +277,7 @@
 
 .checkinBtn {
   background: var(--orange);
-  color: #fff;
+  color: var(--text-on-brand);
   border: none;
   border-radius: 12px;
   padding: 12px;
@@ -351,7 +351,7 @@
   flex: 1;
   background: var(--orange);
   border: none;
-  color: #fff;
+  color: var(--text-on-brand);
   border-radius: 8px;
   padding: 8px;
   font-size: 12px;
@@ -382,7 +382,7 @@
 
 .retryBtn {
   background: var(--orange);
-  color: #fff;
+  color: var(--text-on-brand);
   border: none;
   border-radius: 12px;
   padding: 10px 24px;

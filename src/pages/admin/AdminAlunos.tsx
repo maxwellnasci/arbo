@@ -52,7 +52,7 @@ export default function AdminAlunos() {
         <h1 style={{ fontFamily: 'var(--heading)', margin: 0 }}>Alunos</h1>
         <button
           onClick={() => navigate('/admin/convites')}
-          style={{ background: 'var(--orange)', color: '#fff', border: 'none', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}
+          style={{ background: 'var(--orange)', color: 'var(--text-on-brand)', border: 'none', padding: '10px 20px', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, fontSize: '13px' }}
         >
           + Convidar
         </button>

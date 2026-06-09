@@ -39,7 +39,7 @@
   font-family: var(--sans);
   font-size: 32px;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-on-brand);
 }
 
 .name {

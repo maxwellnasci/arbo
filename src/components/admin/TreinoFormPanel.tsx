@@ -259,7 +259,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                       />
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <button type="button" onClick={() => setShowNewType(false)} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1, padding: '6px' }}>Cancelar</button>
-                        <button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim()} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                        <button type="button" onClick={handleCreateType} disabled={creatingType || !newTypeName.trim()} style={{ flex: 1, background: 'var(--orange)', color: 'var(--text-on-brand)', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                           {creatingType ? '...' : 'Criar'}
                         </button>
                       </div>
@@ -316,7 +316,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <button type="button" onClick={() => setShowNewTag(false)} style={{ ...inputStyle, textAlign: 'center', cursor: 'pointer', flex: 1, padding: '6px' }}>Cancelar</button>
-                        <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: 'var(--orange)', color: '#fff', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                        <button type="button" onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()} style={{ flex: 1, background: 'var(--orange)', color: 'var(--text-on-brand)', border: 'none', borderRadius: '7px', padding: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
                           {creatingTag ? '...' : 'Criar'}
                         </button>
                       </div>
@@ -430,7 +430,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                     border: 'none',
                     borderRadius: '8px',
                     padding: '10px 24px',
-                    color: '#fff',
+                    color: 'var(--text-on-brand)',
                     fontSize: '14px',
                     fontWeight: 600,
                     cursor: 'pointer',

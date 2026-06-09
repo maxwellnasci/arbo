@@ -140,7 +140,7 @@ export default function AdminConvites() {
                 style={{
                   flex: '0 1 auto',
                   background: 'var(--orange)',
-                  color: '#fff',
+                  color: 'var(--text-on-brand)',
                   border: 'none',
                   padding: '14px 28px',
                   borderRadius: '12px',

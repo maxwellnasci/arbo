@@ -137,7 +137,7 @@ export function ConfirmModal({
                 style={{
                   background: getButtonColor(),
                   border: 'none',
-                  color: '#ffffff',
+                  color: 'var(--text-on-brand)',
                   padding: '10px 16px',
                   borderRadius: '8px',
                   fontSize: '14px',
