@@ -1,19 +1,19 @@
 {
   "rewrites": [
     {
-      "source": "/(assets|icons)/(.*)",
-      "destination": "/$1/$2"
+      "source": "/assets/:path*",
+      "destination": "/assets/:path*"
     },
     {
-      "source": "/(sw\\.js|manifest\\.webmanifest|offline\\.html|registerSW\\.js|icon\\.svg)",
+      "source": "/(.*\\.js)",
       "destination": "/$1"
     },
     {
-      "source": "/workbox-(.*)",
-      "destination": "/workbox-$1"
+      "source": "/(.*\\.css)",
+      "destination": "/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets|icons|sw\\.js|workbox|registerSW|manifest\\.webmanifest|offline\\.html|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ],
