@@ -307,6 +307,12 @@ Identificação visível no card do treino tanto no admin quanto no app do aluno
 - FlexibleTrainingCard.module.css — #fff substituído por var(--text-on-brand).
 - FlexibleTrainingCard.tsx — cast DayOfWeek removido da lógica, mantido só na prop.
 
+
+### Fix pós Task 57
+- vercel.json — rewrites condicionais para evitar MIME type error ('text/html is not a valid JavaScript MIME type').
+- Assets /assets/*, *.js, *.css servidos diretamente.
+- Apenas rotas SPA redirecionam para index.html.
+
 ## Notas Finais da Sessão 2026-06-06
 - **Média geral: 8.4/10** (subiu de 7.9 para 8.4 ao longo da sessão)
   - Segurança: 8.2/10

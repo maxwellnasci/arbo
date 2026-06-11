@@ -484,6 +484,12 @@ Resultado Lighthouse antes:
 - FlexibleTrainingCard.module.css — #fff substituído por var(--text-on-brand).
 - FlexibleTrainingCard.tsx — cast DayOfWeek removido da lógica, mantido só na prop.
 
+
+### Fix pós Task 57
+- vercel.json — rewrites condicionais para evitar MIME type error ('text/html is not a valid JavaScript MIME type').
+- Assets /assets/*, *.js, *.css servidos diretamente.
+- Apenas rotas SPA redirecionam para index.html.
+
 ## Notas Finais (Sessão 2026-06-07)
 **Média geral: 8.75/10**
 - Segurança: 8.5/10 ✅
