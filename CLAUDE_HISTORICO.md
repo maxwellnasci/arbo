@@ -69,6 +69,47 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 - Assets /assets/*, *.js, *.css servidos diretamente.
 - Apenas rotas SPA redirecionam para index.html.
 
+
+### Task 59 (Bugs visuais — sessão anterior)
+- 23 ocorrências de `#fff`/`#ffffff` migradas para `var(--text-on-brand)` em 8 arquivos.
+- `AdminLayout.tsx` — `AnimatePresence mode="wait"` + `willChange` + `overflow-y: scroll` adicionados (tentativa de animar transição de abas — causou regressão de 2s na troca de aba → corrigido em Task 59c).
+
+
+### Task 59c (Fix navegação admin — 2026-06-11)
+
+**Problema:** Troca de aba no admin travava ~2s; piscada de fundo transparente no mount; React.lazy causava delay na primeira visita; hooks sem try/catch travavam em loading infinito em erros de rede.
+
+**Diagnóstico Task 59b:**
+- `AnimatePresence mode="wait"` força exit animation completa antes do enter → com React.lazy, sequência era: exit (0.12s) → aguarda exit → carrega chunk JS → PageLoader → enter (0.12s) = ~2s no pior caso
+- `overflow-y: scroll` força scrollbar sempre visível = layout shift
+- `willChange: 'opacity, transform'` cria compositor layers desnecessários
+
+**Fixes implementados:**
+
+1. **Background flash (AdminLayout.module.css):**
+   - `background-color: var(--bg-primary)` adicionado ao `.main` — sem essa propriedade o `.main` montava transparente por alguns ms antes do CSS aplicar
+   - `overflow-y: scroll` → `overflow-y: auto` — scrollbar só aparece quando necessário
+   - `@keyframes pageFadeIn 0.08s ease-out` — fade suave de entrada, sem bloqueio de exit
+
+2. **AnimatePresence removido (AdminLayout.tsx):**
+   - `import { motion, AnimatePresence }` removido
+   - `import { useLocation }` removido (só servia de key para `motion.div`)
+   - `<AnimatePresence mode="wait"><motion.div ...>` → `<Outlet />` direto
+   - Troca de aba agora é instantânea — sem sequência exit→enter
+
+3. **Prefetch das rotas admin (AdminLayout.tsx):**
+   - `useEffect(() => { import('./AdminAlunos'); import('./AdminTreinos'); import('./AdminTurmas'); import('./AdminFeedbacks'); import('./AdminConvites') }, [])` no mount do layout
+   - Após primeira visita ao admin, todos os chunks JS das abas já estão em cache do browser
+   - Navegação subsequente sem delay de carregamento de chunk
+
+4. **Fix trava loading (useAdminAlunos.ts + useAdminTurmas.ts):**
+   - `useAdminAlunos` não tinha try/catch — erros de rede deixavam `isLoading: true` para sempre
+   - Ambos reestruturados com `try/catch/finally`; `finally { if (!cancelled) setIsLoading(false) }` garante que `isLoading` sempre resolve
+   - Padrão igual ao `useAdminTreinos` que já estava correto
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
+**Status:** Aguardando teste no celular para confirmar se tremida residual foi eliminada
+
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅
 
 ---

@@ -358,6 +358,17 @@ Resultado Lighthouse antes:
 ### Task 54 (README.md Profissional)
 - `README.md` criado com descrição do Arbo, stack tecnológica, badges de status, setup local e métricas Lighthouse
 
+### Task 59c (Fix navegação admin — 2026-06-11)
+- `AnimatePresence mode="wait"` removido do `AdminLayout.tsx` — era a causa do delay de ~2s na troca de abas (exit animation bloqueava mount do novo componente + lazy load do chunk)
+- `background-color: var(--bg-primary)` adicionado ao `.main` — elimina flash de fundo transparente no mount
+- `overflow-y: scroll` → `auto` — elimina layout shift de scrollbar fantasma
+- `@keyframes pageFadeIn 0.08s` — transição suave sem custo de exit
+- Prefetch silencioso das 5 rotas admin no `useEffect` do `AdminLayout` — chunks JS baixados em background na primeira visita
+- `useAdminAlunos.ts` + `useAdminTurmas.ts` — try/catch/finally adicionado; `isLoading` nunca trava em `true`
+
+**Lição:** `AnimatePresence mode="wait"` + React.lazy é combinação perigosa — o "wait" força exit completa antes de o novo módulo sequer começar a montar/carregar. Para SPAs com code splitting, prefira CSS keyframes unidirecionais (só enter, sem exit).
+
+
 ### Task 55 (Modo Flexível de Turmas — Gemini + revisão Claude Code)
 **Schema Supabase:**
 - Tabela `schedules`: `id uuid PK, student_id uuid FK profiles, group_plan_training_id uuid FK group_plan_trainings, scheduled_day_of_week smallint CHECK(1-6), checkin_id uuid FK checkins NULL, completed_at timestamptz NULL, created_at, updated_at`

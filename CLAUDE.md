@@ -273,13 +273,14 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-06-07)
+## Estado atual (2026-06-11)
 
 - **Média geral:** 8.75/10 — Segurança 8.5 · Performance 8.7 · Qualidade 9.0 · UX/Bugs 8.8 · Arquitetura 8.3 · PWA/Mobile 8.5
-- **Tasks 39-55 concluídas**
+- **Tasks 39-55, 56, 57, 59, 59c concluídas**
 - **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 - **Testes:** 22 testes passando (Vitest)
 - **Próxima sessão:**
+  - Continuar investigação de tremida/flash na navegação admin (testar 59c no celular).
   - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos).
   - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`.
   - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader).
@@ -287,7 +288,6 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
   - Push notifications (Web Push API).
   - Integração Strava via Edge Function + n8n.
   - Sentry para monitoramento de erros em produção.
-  - README.md público para o repositório.
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
@@ -335,6 +335,10 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 53:** Vitest — 11 testes em 3 arquivos (auth, formatTime, trainingUtils); `ci.yml` atualizado ✅
 - **Task 54:** README.md profissional com badges, stack, setup local e métricas Lighthouse ✅
 - **Task 55:** Modo Flexível de Turmas — tabela `schedules`, `groups.mode`, `DayPicker`, `FlexibleTrainingCard`, `ProfessorStatusGrid`, bifurcação fixo/flexível no `useWeeklyPlan`, `GroupMode = 'fixo' | 'flexivel'` ✅
+- **Task 56:** Fix PWA Service Worker — `skipWaiting: true` + `clientsClaim: true` no workbox ✅
+- **Task 57:** Corrigir findings pós Task 55 — toast.error agendamento, error state ProfessorStatusGrid, `--text-on-brand`, CSS vars `#fff` → CSS vars ✅
+- **Task 59:** Bugs visuais AdminConvites + AdminLayout — migração 23× `#fff` → `var(--text-on-brand)` ✅
+- **Task 59c:** Navegação admin — AnimatePresence removido, `background-color` no `.main`, prefetch 5 rotas, try/catch/finally em hooks ✅
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-07)
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
@@ -490,12 +494,25 @@ Resultado Lighthouse antes:
 - Assets /assets/*, *.js, *.css servidos diretamente.
 - Apenas rotas SPA redirecionam para index.html.
 
-## Notas Finais (Sessão 2026-06-07)
+
+### Task 59 (Bugs visuais AdminConvites e AdminLayout)
+- 23 ocorrências de `#fff`/`#ffffff` migradas para `var(--text-on-brand)` em 8 arquivos.
+- AnimatePresence `mode="wait"` + `willChange` + `overflow-y: scroll` adicionados ao AdminLayout (causou regressão de 2s na troca de aba — corrigido em Task 59c).
+
+
+### Task 59c (Fix navegação admin — 2026-06-11)
+- `AdminLayout.tsx` — `AnimatePresence` + `motion.div` + import `framer-motion` removidos; `useLocation` removido (só servia de key para motion.div).
+- `AdminLayout.module.css` — `background-color: var(--bg-primary)` adicionado ao `.main` (evita flash de fundo transparente no mount); `overflow-y: scroll` → `overflow-y: auto` (elimina layout shift de scrollbar fantasma); `@keyframes pageFadeIn 0.08s` (fade suave sem bloquear exit).
+- `AdminLayout.tsx` — `useEffect` com prefetch das 5 rotas admin (`AdminAlunos`, `AdminTreinos`, `AdminTurmas`, `AdminFeedbacks`, `AdminConvites`) no mount do layout — chunks carregados silenciosamente, navegação sem delay após primeira visita.
+- `useAdminAlunos.ts` — try/catch/finally adicionado (padrão igual ao `useAdminTreinos`); `isLoading` nunca fica preso em `true` em erros de rede.
+- `useAdminTurmas.ts` — try/catch/finally adicionado; `setIsLoading(false)` consolidado no `finally` (antes havia `setIsLoading` duplicado em dois branches).
+
+## Notas Finais (Sessão 2026-06-11)
 **Média geral: 8.75/10**
 - Segurança: 8.5/10 ✅
 - Performance: 8.7/10
 - Qualidade de código: 9.0/10 ✅
-- UX / Bugs: 8.8/10
+- UX / Bugs: 8.8/10 (navegação admin melhorada — testar no celular)
 - Arquitetura: 8.3/10
 - PWA / Mobile: 8.5/10 ✅
 
@@ -506,10 +523,11 @@ Resultado Lighthouse antes:
 - SEO: 100
 
 ### Próximas tarefas para chegar em 9.0+
-1. Testes: expandir de 11 para 50+ testes (hooks, componentes, fluxos críticos)
-2. Service layer — abstrair chamadas Supabase dos hooks para src/lib/api.ts
-3. Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
-4. Security scanning no CI (npm audit)
-5. Push notifications (Web Push API)
-6. Integração Strava via Edge Function + n8n
-7. Sentry para monitoramento de erros em produção
+1. Verificar se tremida/flash na navegação admin foi resolvida (testar Task 59c no celular)
+2. Testes: expandir de 22 para 50+ testes (hooks, componentes, fluxos críticos)
+3. Service layer — abstrair chamadas Supabase dos hooks para src/lib/api.ts
+4. Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
+5. Security scanning no CI (npm audit)
+6. Push notifications (Web Push API)
+7. Integração Strava via Edge Function + n8n
+8. Sentry para monitoramento de erros em produção

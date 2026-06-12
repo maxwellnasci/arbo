@@ -441,3 +441,22 @@ Resultado Lighthouse antes:
 - 22 testes passando (Vitest)
 - Próximas tasks: 50+ testes · service layer · Acessibilidade 89→95+ · Push notifications · Strava · Sentry
 
+
+### Task 59 (Bugs visuais — sessão 2026-06-11)
+- 23× `#fff`/`#ffffff` → `var(--text-on-brand)`
+
+
+### Task 59c (Fix navegação admin — 2026-06-11)
+- `AnimatePresence mode="wait"` + `motion.div` removidos do `AdminLayout` (causavam delay ~2s)
+- `background-color: var(--bg-primary)` no `.main` (fix flash de fundo)
+- `overflow-y: scroll` → `auto` (fix layout shift de scrollbar)
+- `@keyframes pageFadeIn 0.08s` (fade suave de entrada)
+- Prefetch das 5 rotas admin no mount do layout (chunks em cache após primeira visita)
+- `useAdminAlunos` + `useAdminTurmas` — try/catch/finally (fix loading infinito em erros de rede)
+
+**Notas Finais Sessão 2026-06-11:**
+- Média geral 8.75/10
+- Lighthouse Mobile: Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
+- 22 testes passando (Vitest)
+- Próximas tasks: testar 59c no celular · 50+ testes · service layer · Acessibilidade 89→95+ · Push notifications · Strava · Sentry
+

@@ -819,6 +819,18 @@ Resultado Lighthouse antes:
 - FlexibleTrainingCard.tsx — cast DayOfWeek removido da lógica, mantido só na prop.
 
 
+### Task 59 (Bugs visuais AdminConvites e AdminLayout)
+- 23 ocorrências de `#fff`/`#ffffff` migradas para `var(--text-on-brand)` em 8 arquivos.
+
+
+### Task 59c (Fix navegação admin — 2026-06-11)
+- `AdminLayout.tsx` — `AnimatePresence` + `motion.div` + `useLocation` removidos; troca de aba agora instantânea.
+- `AdminLayout.module.css` — `background-color: var(--bg-primary)` no `.main`; `overflow-y: scroll` → `auto`; `@keyframes pageFadeIn 0.08s`.
+- `AdminLayout.tsx` — prefetch silencioso das 5 rotas admin no mount (`AdminAlunos`, `AdminTreinos`, `AdminTurmas`, `AdminFeedbacks`, `AdminConvites`).
+- `useAdminAlunos.ts` + `useAdminTurmas.ts` — try/catch/finally adicionado; `isLoading` nunca trava em `true` por erro de rede.
+- **Status:** aguardando teste no celular.
+
+
 ### Fix pós Task 57
 - vercel.json — rewrites condicionais para evitar MIME type error ('text/html is not a valid JavaScript MIME type').
 - Assets /assets/*, *.js, *.css servidos diretamente.
