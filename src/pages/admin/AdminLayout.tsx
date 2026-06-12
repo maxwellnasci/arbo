@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Outlet, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Outlet } from 'react-router-dom'
 import { AdminSidebar } from './AdminSidebar'
 import AdminBottomNav from '../../components/AdminBottomNav'
 import styles from './AdminLayout.module.css'
@@ -12,12 +11,10 @@ import arboLogo from '../../assets/arbo-logo.png'
 export function AdminLayout() {
   const { user } = useAuth()
   const logout = useLogout()
-  const location = useLocation()
   const name = user?.user_metadata?.full_name || user?.email || 'A'
   const initials = name.substring(0, 2).toUpperCase()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark')
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -34,6 +31,14 @@ export function AdminLayout() {
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    import('./AdminAlunos')
+    import('./AdminTreinos')
+    import('./AdminTurmas')
+    import('./AdminFeedbacks')
+    import('./AdminConvites')
   }, [])
 
   return (
@@ -89,17 +94,7 @@ export function AdminLayout() {
           onClose={() => setSidebarOpen(false)} 
         />
         <main className={styles.main}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+          <Outlet />
         </main>
       </div>
 

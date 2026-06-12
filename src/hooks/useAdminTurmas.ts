@@ -15,40 +15,44 @@ export function useAdminTurmas() {
     let cancelled = false
 
     async function fetchTurmas() {
-      const [
-        { data: groups, error: groupsError },
-        { data: members, error: membersError },
-      ] = await Promise.all([
-        supabase.from('groups').select('id, name, is_active, frequency, goal, plan_type, starts_at, created_at, updated_at, mode').order('name'),
-        supabase
-          .from('profiles')
-          .select('group_id')
-          .eq('role', 'aluno')
-          .not('group_id', 'is', null),
-      ])
+      try {
+        const [
+          { data: groups, error: groupsError },
+          { data: members, error: membersError },
+        ] = await Promise.all([
+          supabase.from('groups').select('id, name, is_active, frequency, goal, plan_type, starts_at, created_at, updated_at, mode').order('name'),
+          supabase
+            .from('profiles')
+            .select('group_id')
+            .eq('role', 'aluno')
+            .not('group_id', 'is', null),
+        ])
 
-      if (cancelled) return
+        if (cancelled) return
 
-      if (groupsError || membersError) {
-        setError(groupsError?.message ?? membersError?.message ?? 'Erro desconhecido')
-        setIsLoading(false)
-        return
-      }
-
-      const countMap = new Map<string, number>()
-      for (const m of members ?? []) {
-        if (m.group_id) {
-          countMap.set(m.group_id, (countMap.get(m.group_id) ?? 0) + 1)
+        if (groupsError || membersError) {
+          setError(groupsError?.message ?? membersError?.message ?? 'Erro desconhecido')
+          return
         }
+
+        const countMap = new Map<string, number>()
+        for (const m of members ?? []) {
+          if (m.group_id) {
+            countMap.set(m.group_id, (countMap.get(m.group_id) ?? 0) + 1)
+          }
+        }
+
+        const result: GroupWithCount[] = (groups ?? []).map(g => ({
+          ...g,
+          studentCount: countMap.get(g.id) ?? 0,
+        }))
+
+        setTurmas(result)
+      } catch (e: unknown) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Erro desconhecido')
+      } finally {
+        if (!cancelled) setIsLoading(false)
       }
-
-      const result: GroupWithCount[] = (groups ?? []).map(g => ({
-        ...g,
-        studentCount: countMap.get(g.id) ?? 0,
-      }))
-
-      setTurmas(result)
-      setIsLoading(false)
     }
 
     fetchTurmas()
