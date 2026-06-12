@@ -95,7 +95,7 @@ export default function AdminConvites() {
             <label style={{ display: 'block', fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px', fontWeight: 600 }}>
               Tipo de convite
             </label>
-            <div style={{ display: 'flex', gap: '8px', background: 'var(--bg-input)', borderRadius: '12px', padding: '6px', border: '1px solid var(--border-subtle)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: 'var(--bg-input)', borderRadius: '12px', padding: '6px', border: '1px solid var(--border-subtle)' }}>
               <button type="button" onClick={() => setRole('aluno')} style={toggleStyle(role === 'aluno')}>
                 🏃 Aluno
               </button>

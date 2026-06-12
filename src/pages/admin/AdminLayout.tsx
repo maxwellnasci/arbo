@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { AdminSidebar } from './AdminSidebar'
 import AdminBottomNav from '../../components/AdminBottomNav'
 import styles from './AdminLayout.module.css'
@@ -11,6 +12,7 @@ import arboLogo from '../../assets/arbo-logo.png'
 export function AdminLayout() {
   const { user } = useAuth()
   const logout = useLogout()
+  const location = useLocation()
   const name = user?.user_metadata?.full_name || user?.email || 'A'
   const initials = name.substring(0, 2).toUpperCase()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -87,7 +89,17 @@ export function AdminLayout() {
           onClose={() => setSidebarOpen(false)} 
         />
         <main className={styles.main}>
-          <Outlet />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 
