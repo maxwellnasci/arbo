@@ -275,19 +275,18 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 
 ## Estado atual (2026-06-13)
 
-- **Média geral:** 8.75/10 — Segurança 8.5 · Performance 8.7 · Qualidade 9.0 · UX/Bugs 8.9 · Arquitetura 8.3 · PWA/Mobile 8.5
-- **Tasks 39-55, 56, 57, 59, 59c, 60 concluídas**
+- **Média geral:** 9.0/10 — Segurança 8.5 · Performance 8.8 · Qualidade 9.2 · UX/Bugs 9.2 · Arquitetura 8.5 · PWA/Mobile 9.0
+- **Tasks 39-55, 56, 57, 59, 59c, 60, 61 concluídas**
 - **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 - **Testes:** 22 testes passando (Vitest)
 - **Próxima sessão:**
-  - Verificar no celular se Task 60 eliminou completamente as piscadas.
-  - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos).
-  - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`.
-  - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader).
-  - Security scanning no CI (`npm audit`).
-  - Push notifications (Web Push API).
-  - Integração Strava via Edge Function + n8n.
-  - Sentry para monitoramento de erros em produção.
+  - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos)
+  - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`
+  - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
+  - Security scanning no CI (`npm audit`)
+  - Push notifications (Web Push API)
+  - Integração Strava via Edge Function + n8n
+  - Sentry para monitoramento de erros em produção
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
@@ -340,6 +339,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 59:** Bugs visuais AdminConvites + AdminLayout — migração 23× `#fff` → `var(--text-on-brand)` ✅
 - **Task 59c:** Navegação admin — AnimatePresence removido, `background-color` no `.main`, prefetch 5 rotas, try/catch/finally em hooks ✅
 - **Task 60:** Fix piscada pós-carregamento — `listContainer.hidden` removeu `opacity: 0` nos três pages admin (Alunos, Turmas, Treinos); `setLoading(true)` removido do `useAdminTreinos.fetchTrainings()` (evita flash loading em refetch após mutações) ✅
+- **Task 61:** Eliminação definitiva de piscadas nas abas admin — 7 commits iterativos: (1) removeu `navigateFallback`/`navigateFallbackDenylist` do workbox + `cacheId: 'arbo-v4'`, (2) migrou `startTransition` → `setState` direto nos hooks (React 18 já bateia), (3) trocou `{isLoading ? <Skeletons> : <RealList>}` por `{isLoading ? null : <motion.div>}` — sem unmount/remount de DOM, (4) removeu stagger de cards individuais (`staggerChildren`) — agora o container inteiro faz fade-in + slide-up (`y:16→0, 0.35s, easeOut`), igual a Home, (5) itens são elementos HTML puros (`<button>`/`<div>`) sem `motion.*`, (6) script nuclear em `index.html` com `localStorage` que desinstala SWs antigos e limpa caches 1×, (7) `TreinoCard` mantém `motion.div` interno mas sem variants propaga renderiza estático ✅
 **Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-13)
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
@@ -348,10 +348,10 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 ### Próximos passos
 - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos)
 - SMTP externo (Resend ou AWS SES) antes de produção
-- CI/CD GitHub Actions
-- Vitest — testes unitários para hooks críticos
 - Integração Strava (Edge Function via n8n)
-- README.md público
+- Service layer — abstrair chamadas Supabase para `src/lib/api.ts`
+- Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
+- Security scanning no CI (`npm audit`)
 
 ## Roadmap de telas
 

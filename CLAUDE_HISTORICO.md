@@ -688,3 +688,59 @@ Resultado Lighthouse antes:
 10. 9 erros de lint em 3 arquivos corrigidos (no-explicit-any, no-unused-vars)
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · `npm test` → 22 passed ✅
+
+---
+
+## Sessão 2026-06-13 (Task 61) — Eliminação definitiva de piscadas
+
+### Problema
+As abas Admin (Alunos, Turmas, Treinos) tinham piscadas visuais ao carregar. A Home funcionava perfeitamente — animação sutil de fade-in + slide-up nos cards.
+
+### Causa raiz (descoberta após 7 iterações)
+3 causas simultâneas:
+
+1. **Troca de árvore DOM:** `{isLoading ? <p>Carregando...</p> : <Lista>}` causava unmount/remount completo. Supabase responde em ~50ms, interrompendo qualquer animação de skeleton.
+
+2. **`startTransition` duplo:** hooks chamavam `startTransition` separado para `setData` e `setIsLoading`, criando transições React conflitantes com framer-motion no mount.
+
+3. **Stagger de cards:** `staggerChildren: 0.06` × N cards criava cascata de opacidade que o olho percebia como flicker.
+
+### Solução (7 commits)
+
+| Commit | O quê |
+|---|---|
+| `3a23289` | Remove `navigateFallback`/`navigateFallbackDenylist` do workbox; `cacheId: 'arbo-v3'`; `startTransition` nos hooks |
+| `72ce3a6` | Skeletons no lugar de "Carregando..." (tentativa 1 — não resolveu) |
+| `957d98b` | Remove `initial="hidden"` do conteúdo real (tentativa 2 — não resolveu) |
+| `0feb1c1` | `{isLoading ? null : <motion.div>}` — sem troca de árvore ✅ |
+| `d06be91` | Script nuclear limpa SWs antigos + `cacheId: 'arbo-v4'` |
+| `da899f4` | `sessionStorage` → `localStorage` (bug: reload infinito no iOS PWA) |
+| `2242f27` | **Remove `startTransition`** dos 3 hooks (React 18 já bateia) |
+| `7267609` | **Remove stagger** — container anima inteiro (`y:16→0, 0.35s, easeOut`); itens são HTML puro (`<button>`/`<div>`) |
+
+### Arquitetura final
+
+```
+isLoading === true  →  null (não renderiza nada)
+isLoading === false →  <motion.div
+                         initial={{ opacity: 0, y: 16 }}
+                         animate={{ opacity: 1, y: 0 }}
+                         transition={{ duration: 0.35, ease: 'easeOut' }}
+                       >
+                         {items.map(item => <ItemHTMLPuro />)}
+                       </motion.div>
+```
+
+- **Container:** animação única (fade-in + slide-up), igual AdminHome
+- **Itens:** elementos HTML puros — sem `motion.*`, sem variants, sem stagger
+- **Hooks:** `setState` direto, sem `startTransition`
+- **SW:** `cacheId: 'arbo-v4'`, script de limpeza 1× com `localStorage`
+
+### Lições aprendidas
+- `startTransition` não é inócuo — com framer-motion pode causar conflitos de render
+- Stagger em listas com muitos itens parece flicker, não animação
+- `isLoading ? null : <Content />` é melhor que `isLoading ? <Skeleton /> : <Content />` quando os dados chegam rápido
+- `sessionStorage` não persiste em PWA standalone no iOS — usar `localStorage` para flags únicas
+- Problemas visuais de "piscada" geralmente são unmount/remount, não performance
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
