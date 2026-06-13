@@ -15,6 +15,51 @@ const listItem = {
   show: { opacity: 1, x: 0 }
 }
 
+const shimmer = `
+@keyframes shimmer {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.65; }
+}
+`
+
+const SKELETON_COUNT = 5
+
+function SkeletonRow() {
+  return (
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        borderRadius: '16px',
+        padding: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        border: '1px solid var(--border-default)',
+      }}
+    >
+      <div style={{
+        width: 42, height: 42, borderRadius: '50%',
+        background: 'var(--bg-input)',
+        animation: 'shimmer 1.6s ease-in-out infinite',
+      }} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={{
+          width: '60%', height: 14, borderRadius: '6px',
+          background: 'var(--bg-input)',
+          animation: 'shimmer 1.6s ease-in-out infinite',
+        }} />
+        <div style={{
+          width: '35%', height: 10, borderRadius: '5px',
+          background: 'var(--bg-input)',
+          animation: 'shimmer 1.6s ease-in-out infinite',
+          animationDelay: '0.15s',
+        }} />
+      </div>
+      <ChevronRight size={18} color="var(--text-disabled)" />
+    </div>
+  )
+}
+
 export default function AdminAlunos() {
   const { alunos, isLoading, error } = useAdminAlunos()
   const navigate = useNavigate()
@@ -48,6 +93,7 @@ export default function AdminAlunos() {
 
   return (
     <div>
+      <style>{shimmer}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <h1 style={{ fontFamily: 'var(--heading)', margin: 0 }}>Alunos</h1>
         <button
@@ -122,7 +168,13 @@ export default function AdminAlunos() {
       {error && <p style={{ color: 'var(--red-accent)', marginBottom: '16px' }}>{error}</p>}
 
       {isLoading ? (
-        <p style={{ color: 'var(--text-secondary)' }}>Carregando...</p>
+        <motion.div variants={listContainer} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+            <motion.div key={i} variants={listItem}>
+              <SkeletonRow />
+            </motion.div>
+          ))}
+        </motion.div>
       ) : alunos.length === 0 ? (
         <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '40px 24px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
           <p style={{ color: 'var(--text-secondary)' }}>Nenhum aluno ainda. Convide o primeiro!</p>
@@ -152,19 +204,19 @@ function AlunoRow({ aluno, levelLabel }: { aluno: Profile; levelLabel: Record<st
     .toUpperCase()
 
   return (
-    <motion.button 
+    <motion.button
       variants={listItem}
       onClick={() => navigate(`/admin/alunos/${aluno.id}`)}
-      style={{ 
-        width: '100%', 
-        textAlign: 'left', 
-        background: 'var(--bg-surface)', 
-        borderRadius: '16px', 
-        padding: '16px', 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '16px', 
-        border: '1px solid var(--border-default)', 
+      style={{
+        width: '100%',
+        textAlign: 'left',
+        background: 'var(--bg-surface)',
+        borderRadius: '16px',
+        padding: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        border: '1px solid var(--border-default)',
         cursor: 'pointer',
         transition: 'all 0.2s ease-out'
       }}

@@ -15,6 +15,59 @@ const listItem = {
   show: { opacity: 1, x: 0 }
 }
 
+const shimmer = `
+@keyframes shimmer {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.65; }
+}
+`
+
+const SKELETON_COUNT = 4
+
+function SkeletonRow() {
+  return (
+    <div
+      style={{
+        background: 'var(--bg-surface)',
+        borderRadius: '16px',
+        padding: '16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        border: '1px solid var(--border-default)',
+        gap: '12px',
+      }}
+    >
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={{
+          width: '55%', height: 15, borderRadius: '7px',
+          background: 'var(--bg-input)',
+          animation: 'shimmer 1.6s ease-in-out infinite',
+        }} />
+        <div style={{
+          width: '75%', height: 11, borderRadius: '5px',
+          background: 'var(--bg-input)',
+          animation: 'shimmer 1.6s ease-in-out infinite',
+          animationDelay: '0.15s',
+        }} />
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
+        <div style={{
+          width: 48, height: 11, borderRadius: '5px',
+          background: 'var(--bg-input)',
+          animation: 'shimmer 1.6s ease-in-out infinite',
+        }} />
+        <div style={{
+          width: 52, height: 20, borderRadius: '20px',
+          background: 'var(--bg-input)',
+          animation: 'shimmer 1.6s ease-in-out infinite',
+        }} />
+        <ChevronRight size={18} color="var(--text-disabled)" />
+      </div>
+    </div>
+  )
+}
+
 const goalLabel: Record<string, string> = {
   '5k': '5K',
   '10k': '10K',
@@ -39,6 +92,7 @@ export default function AdminTurmas() {
 
   return (
     <div>
+      <style>{shimmer}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <h1 style={{ fontFamily: 'var(--heading)', margin: 0 }}>Turmas</h1>
         <button
@@ -64,7 +118,13 @@ export default function AdminTurmas() {
       {error && <p style={{ color: 'var(--red-accent)', marginBottom: '16px' }}>{error}</p>}
 
       {isLoading ? (
-        <p style={{ color: 'var(--text-secondary)' }}>Carregando...</p>
+        <motion.div variants={listContainer} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+            <motion.div key={i} variants={listItem}>
+              <SkeletonRow />
+            </motion.div>
+          ))}
+        </motion.div>
       ) : turmas.length === 0 ? (
         <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '40px 24px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
           <p style={{ color: 'var(--text-secondary)' }}>Nenhuma turma cadastrada ainda.</p>
