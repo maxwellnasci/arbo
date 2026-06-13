@@ -15,6 +15,30 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // arbo-v4: limpeza nuclear de todos os SWs e caches antigos
+      (function() {
+        var VERSION = 'arbo-v4';
+        if (sessionStorage.getItem('arbo_sw_ver') === VERSION) return;
+        sessionStorage.setItem('arbo_sw_ver', VERSION);
+        setTimeout(function() {
+          var done = function() { window.location.reload(); };
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              return Promise.all(regs.map(function(r) { return r.unregister(); }));
+            }).then(function() {
+              if ('caches' in window) {
+                return caches.keys().then(function(names) {
+                  return Promise.all(names.map(function(n) { return caches.delete(n); }));
+                });
+              }
+            }).then(done).catch(done);
+          } else {
+            done();
+          }
+        }, 50);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
