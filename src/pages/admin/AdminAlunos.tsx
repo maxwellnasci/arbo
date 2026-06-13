@@ -5,16 +5,6 @@ import type { Profile } from '../../lib/types'
 import { motion } from 'framer-motion'
 import { ChevronRight, Search, Filter } from 'lucide-react'
 
-const listContainer = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } }
-}
-
-const listItem = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' as const } }
-}
-
 export default function AdminAlunos() {
   const { alunos, isLoading, error } = useAdminAlunos()
   const navigate = useNavigate()
@@ -130,7 +120,12 @@ export default function AdminAlunos() {
           <p style={{ color: 'var(--text-secondary)' }}>Nenhum aluno encontrado para os filtros selecionados.</p>
         </div>
       ) : (
-        <motion.div variants={listContainer} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' as const }}
+          style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+        >
           {filteredAlunos.map((aluno: Profile) => (
             <AlunoRow key={aluno.id} aluno={aluno} levelLabel={levelLabel} />
           ))}
@@ -150,8 +145,7 @@ function AlunoRow({ aluno, levelLabel }: { aluno: Profile; levelLabel: Record<st
     .toUpperCase()
 
   return (
-    <motion.button
-      variants={listItem}
+    <button
       onClick={() => navigate(`/admin/alunos/${aluno.id}`)}
       style={{
         width: '100%',
@@ -164,6 +158,7 @@ function AlunoRow({ aluno, levelLabel }: { aluno: Profile; levelLabel: Record<st
         gap: '16px',
         border: '1px solid var(--border-default)',
         cursor: 'pointer',
+        fontFamily: 'inherit',
         transition: 'all 0.2s ease-out'
       }}
       onMouseEnter={e => {
@@ -187,6 +182,6 @@ function AlunoRow({ aluno, levelLabel }: { aluno: Profile; levelLabel: Record<st
         </p>
       </div>
       <ChevronRight size={18} color="var(--text-tertiary)" />
-    </motion.button>
+    </button>
   )
 }

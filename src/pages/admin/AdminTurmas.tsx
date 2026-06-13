@@ -5,16 +5,6 @@ import { CreateGroupModal } from '../../components/admin/CreateGroupModal'
 import { motion } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
 
-const listContainer = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.06 } }
-}
-
-const listItem = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' as const } }
-}
-
 const goalLabel: Record<string, string> = {
   '5k': '5K',
   '10k': '10K',
@@ -68,7 +58,12 @@ export default function AdminTurmas() {
           <p style={{ color: 'var(--text-secondary)' }}>Nenhuma turma cadastrada ainda.</p>
         </div>
       ) : (
-        <motion.div variants={listContainer} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' as const }}
+          style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+        >
           {turmas.map((turma: GroupWithCount) => (
             <TurmaRow key={turma.id} turma={turma} />
           ))}
@@ -92,8 +87,7 @@ function TurmaRow({ turma }: { turma: GroupWithCount }) {
   const navigate = useNavigate()
 
   return (
-    <motion.div
-      variants={listItem}
+    <div
       onClick={() => navigate(`/admin/turmas/${turma.id}`)}
       role="button"
       tabIndex={0}
@@ -164,6 +158,6 @@ function TurmaRow({ turma }: { turma: GroupWithCount }) {
         </span>
         <ChevronRight size={18} color="var(--text-tertiary)" />
       </div>
-    </motion.div>
+    </div>
   )
 }

@@ -16,11 +16,6 @@ import { Search, ChevronDown, Trash2 } from 'lucide-react'
 
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
 
-const listContainer = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.05 } }
-}
-
 export function AdminTreinos() {
   const { treinos, loading, error, refetch } = useAdminTreinos()
   const { createTraining, updateTraining, deleteTraining } = useTreinoMutations()
@@ -290,9 +285,9 @@ export function AdminTreinos() {
         </div>
       ) : (
         <motion.div
-          variants={listContainer}
-          initial="hidden"
-          animate="show"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' as const }}
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
