@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, startTransition } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Profile } from '../lib/types'
 
@@ -21,12 +21,21 @@ export function useAdminAlunos() {
           .limit(200)
 
         if (cancelled) return
-        if (fetchError) setError(fetchError.message)
-        else setAlunos((data as unknown as Profile[]) ?? [])
+        if (fetchError) {
+          setError(fetchError.message)
+        } else {
+          startTransition(() => {
+            setAlunos((data as unknown as Profile[]) ?? [])
+          })
+        }
       } catch (e: unknown) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Erro desconhecido')
       } finally {
-        if (!cancelled) setIsLoading(false)
+        if (!cancelled) {
+          startTransition(() => {
+            setIsLoading(false)
+          })
+        }
       }
     }
 

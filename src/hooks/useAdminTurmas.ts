@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, startTransition } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Group } from '../lib/types'
 
@@ -47,11 +47,17 @@ export function useAdminTurmas() {
           studentCount: countMap.get(g.id) ?? 0,
         }))
 
-        setTurmas(result)
+        startTransition(() => {
+          setTurmas(result)
+        })
       } catch (e: unknown) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Erro desconhecido')
       } finally {
-        if (!cancelled) setIsLoading(false)
+        if (!cancelled) {
+          startTransition(() => {
+            setIsLoading(false)
+          })
+        }
       }
     }
 

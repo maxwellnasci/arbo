@@ -54,21 +54,9 @@ export default defineConfig({
         ]
       },
       workbox: {
+        cacheId: 'arbo-v3',
         skipWaiting: true,
         clientsClaim: true,
-        // offline.html só aparece quando genuinamente sem rede
-        navigateFallback: '/offline.html',
-        // Nunca redirecionar para offline.html em rotas de API ou assets estáticos
-        navigateFallbackDenylist: [
-          /^\/assets\//,
-          /^\/icons\//,
-          /^\/sw\.js/,
-          /^\/workbox-/,
-          /^\/registerSW\.js/,
-          /^\/manifest\.webmanifest/,
-          /^\/robots\.txt/,
-          /^https?:\/\/.*\.supabase\.co\//,
-        ],
         runtimeCaching: [
           // Supabase REST API — NetworkFirst, timeout 30s (era 10s — muito baixo)
           {

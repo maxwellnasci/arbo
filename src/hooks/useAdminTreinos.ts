@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, startTransition } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Training, Tag } from '../lib/types';
 
@@ -45,14 +45,18 @@ export function useAdminTreinos(): UseAdminTreinosReturn {
           throw fetchError;
         }
 
-        setTreinos((data as TrainingWithTag[]) || []);
+        startTransition(() => {
+          setTreinos((data as TrainingWithTag[]) || []);
+        });
       } catch (err: unknown) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Erro ao carregar treinos');
         }
       } finally {
         if (!cancelled) {
-          setLoading(false);
+          startTransition(() => {
+            setLoading(false);
+          });
         }
       }
     }
