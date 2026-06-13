@@ -33,13 +33,6 @@ export function AdminLayout() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  useEffect(() => {
-    import('./AdminAlunos')
-    import('./AdminTreinos')
-    import('./AdminTurmas')
-    import('./AdminFeedbacks')
-    import('./AdminConvites')
-  }, [])
 
   return (
     <div className={styles.container}>

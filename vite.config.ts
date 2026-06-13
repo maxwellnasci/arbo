@@ -56,23 +56,58 @@ export default defineConfig({
       workbox: {
         skipWaiting: true,
         clientsClaim: true,
+        // offline.html só aparece quando genuinamente sem rede
         navigateFallback: '/offline.html',
+        // Nunca redirecionar para offline.html em rotas de API ou assets estáticos
+        navigateFallbackDenylist: [
+          /^\/assets\//,
+          /^\/icons\//,
+          /^\/sw\.js/,
+          /^\/workbox-/,
+          /^\/registerSW\.js/,
+          /^\/manifest\.webmanifest/,
+          /^\/robots\.txt/,
+          /^https?:\/\/.*\.supabase\.co\//,
+        ],
         runtimeCaching: [
+          // Supabase REST API — NetworkFirst, timeout 30s (era 10s — muito baixo)
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api-cache',
-              networkTimeoutSeconds: 10,
+              networkTimeoutSeconds: 30,
               expiration: {
                 maxEntries: 100,
-                maxAgeSeconds: 24 * 60 * 60 // 1 day
+                maxAgeSeconds: 24 * 60 * 60, // 1 dia
               },
               cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
+                statuses: [0, 200],
+              },
+            },
           },
+          // Supabase Auth e Storage — NetworkFirst, timeout 30s
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/(auth|storage)\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-auth-storage-cache',
+              networkTimeoutSeconds: 30,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60, // 1 hora
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          // Supabase Edge Functions — NetworkOnly (sem cache, sempre rede)
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/functions\/.*/i,
+            handler: 'NetworkOnly',
+          },
+          // Imagens — CacheFirst (seguro, não interferem com navegação)
           {
             urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
             handler: 'CacheFirst',
@@ -80,11 +115,11 @@ export default defineConfig({
               cacheName: 'images-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 30 * 24 * 60 * 60 // 30 days
-              }
-            }
-          }
-        ]
+                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 dias
+              },
+            },
+          },
+        ],
       }
     })
   ],
