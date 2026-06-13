@@ -291,15 +291,16 @@ npx supabase login
 
 **Project ID:** `jhfkflnixzivuichmkie`
 
-## Estado Atual (2026-06-06)
+## Estado Atual (2026-06-13)
 
-- **Nota final do projeto:** 7.9/10 (subiu de 6.9 para 7.9 na sessão) — Meta: 8.5+ de média geral.
-- **Tasks 39-42 concluídas**
+- **Nota geral:** 8.75/10 — Meta: 9.0+
+- **Tasks 39-60 concluídas** (incluindo 52-57, 59, 59c, 60)
 - **Próxima sessão:**
-  - Migrar CSS Modules restantes (`Login.css`, `AdminChatPanel.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`, `AlunoDashboard.module.css`).
-  - Otimizar filtro server-side no Deep Join (`useAdminTurmaDetail.ts`).
-  - Adicionar `limit()` nas queries sem paginação.
-  - Executar auditoria Lighthouse no PWA.
+  - Verificar no celular se Task 60 eliminou as piscadas admin.
+  - Expandir testes de 22 para 50+.
+  - Service layer — `src/lib/api.ts`.
+  - Acessibilidade 89 → 95+.
+- **Task 60 (2026-06-13):** Fix piscada pós-carregamento — `listContainer.hidden = {}` nos três pages admin (container monta visível imediatamente, stagger dos filhos preservado); `setLoading(true)` removido de `useAdminTreinos.fetchTrainings()` (sem flash loading em refetch após mutações).
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 

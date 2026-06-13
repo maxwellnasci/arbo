@@ -57,6 +57,7 @@
 | **Fix "Unexpected Application Error!" (Task 38)** | ✅ `RouterErrorElement` como `errorElement` na rota raiz do `createBrowserRouter` — chunk errors → auto-reload com guard `sessionStorage`; outros erros → tela amigável. Root cause: data router API captava erros antes do `ErrorBoundary` externo (2026-06-06) |
 | **5 Melhorias DeepSeek (Task 39)** | ✅ RLS messages, remoção de select(*), paralelizar turmaDetail com Deep Joins, ConfirmModal premium em AdminTreinos, Workbox runtimeCaching + offline.html (2026-06-06) |
 | **Limpeza Perf/Qualidade (Task 40)** | ✅ Mais 10 `select('*')` removidos, mitigação N+1 no `changeGroup` (resolução em RAM), ConfirmModal adaptado ao Design System com `--red-accent` nativo e PWA Manifest limpo de falsas imagens (2026-06-06) |
+| **Fix piscada pós-carregamento (Task 60)** | ✅ `listContainer.hidden = {}` em AdminAlunos/AdminTurmas/AdminTreinos (container monta visível, stagger dos filhos preservado); `setLoading(true)` removido do `useAdminTreinos.fetchTrainings()` (sem flash loading em refetch) (2026-06-13) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 

@@ -112,6 +112,29 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅
 
+
+### Task 60 (Fix piscada pós-carregamento — 2026-06-13)
+
+**Problema:** Nas páginas AdminAlunos, AdminTurmas e AdminTreinos, após os dados chegarem, o conteúdo "piscava" brevemente antes de estabilizar.
+
+**Diagnóstico (causa raiz):**
+- `listContainer.hidden = { opacity: 0 }` fazia o container da lista montar com `opacity: 0`. Existe 1-2 frames onde o container já ocupa o layout (loading text sumiu) mas está transparente — o fundo do app aparece brevemente. Isso era a "piscada".
+- Em `useAdminTreinos.ts`, `setLoading(true)` era chamado dentro de `fetchTrainings()` a cada run. No refetch (após salvar/deletar treino), a sequência era: lista desaparece → "Carregando..." aparece → motion.div desmonta → dados chegam → motion.div remonta em opacity:0 → segunda piscada. `useAdminAlunos` e `useAdminTurmas` nunca tinham esse comportamento.
+
+**Fixes implementados:**
+
+1. **`AdminAlunos.tsx`, `AdminTurmas.tsx`, `AdminTreinos.tsx`:**
+   - `listContainer.hidden` alterado de `{ opacity: 0 }` para `{}` (objeto vazio)
+   - Container monta imediatamente visível (opacity 1 natural)
+   - Propagação de variant string `"hidden"` para filhos continua funcionando — `motion.button`/`motion.div` com `variants={listItem}` ainda recebem `initial="hidden"` do pai, stagger preservado
+
+2. **`useAdminTreinos.ts`:**
+   - `setLoading(true)` removido de dentro de `fetchTrainings()`
+   - `loading` começa como `true` via `useState(true)` — carregamento inicial funciona igual
+   - Refetch agora mantém dados anteriores visíveis enquanto busca novos (padrão consistente com `useAdminAlunos` e `useAdminTurmas`)
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅
+
 ---
 
 ## O que foi feito em 2026-05-31

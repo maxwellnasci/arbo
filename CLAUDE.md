@@ -273,14 +273,14 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-06-11)
+## Estado atual (2026-06-13)
 
-- **Média geral:** 8.75/10 — Segurança 8.5 · Performance 8.7 · Qualidade 9.0 · UX/Bugs 8.8 · Arquitetura 8.3 · PWA/Mobile 8.5
-- **Tasks 39-55, 56, 57, 59, 59c concluídas**
+- **Média geral:** 8.75/10 — Segurança 8.5 · Performance 8.7 · Qualidade 9.0 · UX/Bugs 8.9 · Arquitetura 8.3 · PWA/Mobile 8.5
+- **Tasks 39-55, 56, 57, 59, 59c, 60 concluídas**
 - **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 - **Testes:** 22 testes passando (Vitest)
 - **Próxima sessão:**
-  - Continuar investigação de tremida/flash na navegação admin (testar 59c no celular).
+  - Verificar no celular se Task 60 eliminou completamente as piscadas.
   - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos).
   - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`.
   - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader).
@@ -339,7 +339,8 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 57:** Corrigir findings pós Task 55 — toast.error agendamento, error state ProfessorStatusGrid, `--text-on-brand`, CSS vars `#fff` → CSS vars ✅
 - **Task 59:** Bugs visuais AdminConvites + AdminLayout — migração 23× `#fff` → `var(--text-on-brand)` ✅
 - **Task 59c:** Navegação admin — AnimatePresence removido, `background-color` no `.main`, prefetch 5 rotas, try/catch/finally em hooks ✅
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-07)
+- **Task 60:** Fix piscada pós-carregamento — `listContainer.hidden` removeu `opacity: 0` nos três pages admin (Alunos, Turmas, Treinos); `setLoading(true)` removido do `useAdminTreinos.fetchTrainings()` (evita flash loading em refetch após mutações) ✅
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-13)
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
 **Vitest:** 22 testes passando ✅
@@ -507,12 +508,12 @@ Resultado Lighthouse antes:
 - `useAdminAlunos.ts` — try/catch/finally adicionado (padrão igual ao `useAdminTreinos`); `isLoading` nunca fica preso em `true` em erros de rede.
 - `useAdminTurmas.ts` — try/catch/finally adicionado; `setIsLoading(false)` consolidado no `finally` (antes havia `setIsLoading` duplicado em dois branches).
 
-## Notas Finais (Sessão 2026-06-11)
+## Notas Finais (Sessão 2026-06-13)
 **Média geral: 8.75/10**
 - Segurança: 8.5/10 ✅
 - Performance: 8.7/10
 - Qualidade de código: 9.0/10 ✅
-- UX / Bugs: 8.8/10 (navegação admin melhorada — testar no celular)
+- UX / Bugs: 8.9/10 (piscadas admin corrigidas — testar Task 60 no celular)
 - Arquitetura: 8.3/10
 - PWA / Mobile: 8.5/10 ✅
 
@@ -523,7 +524,7 @@ Resultado Lighthouse antes:
 - SEO: 100
 
 ### Próximas tarefas para chegar em 9.0+
-1. Verificar se tremida/flash na navegação admin foi resolvida (testar Task 59c no celular)
+1. Verificar no celular se Task 60 eliminou completamente as piscadas (AdminAlunos, AdminTurmas, AdminTreinos)
 2. Testes: expandir de 22 para 50+ testes (hooks, componentes, fluxos críticos)
 3. Service layer — abstrair chamadas Supabase dos hooks para src/lib/api.ts
 4. Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)

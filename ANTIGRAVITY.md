@@ -46,14 +46,14 @@ Somos um **time de 3**:
 - **sonner** — Toasts/notificações estilo Apple
 - **date-fns** — Formatação de datas em PT-BR
 
-### Estado atual (2026-06-06)
-- **Nota final do projeto:** 7.9/10 (subiu de 6.9 para 7.9 na sessão) — Meta: 8.5+ de média geral.
-- **Tasks 39-42 concluídas**
+### Estado atual (2026-06-13)
+- **Nota geral do projeto:** 8.75/10 — Meta: 9.0+
+- **Tasks 39-60 concluídas** (incluindo Tasks 52-57, 59, 59c, 60)
 - **Próxima sessão:**
-  - Migrar CSS Modules restantes (`Login.css`, `AdminChatPanel.module.css`, `CreateGroupModal.tsx`, `EditGroupModal.tsx`, `AnamnesisForm.tsx`, `TreinoCard.tsx`, `AlunoDashboard.module.css`).
-  - Otimizar filtro server-side no Deep Join (`useAdminTurmaDetail.ts`).
-  - Adicionar `limit()` nas queries sem paginação.
-  - Executar auditoria Lighthouse no PWA.
+  - Verificar no celular se Task 60 eliminou completamente as piscadas admin.
+  - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos).
+  - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`.
+  - Acessibilidade 89 → 95+.
 - **App publicado:** **https://arbo.mxos.com.br** (Vercel, SPA routing)
 - **23+ telas/features implementadas**, build e lint passando (`tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅ — 0 erros)
 - Fase 1 (Auth + Schema + UI base): ✅ 100%
@@ -62,9 +62,11 @@ Somos um **time de 3**:
 - Fase 5 (Redesign Premium Admin + Aluno + Dark/Light Mode + 10 bugs pós-redesign corrigidos): ✅ **100%**
 - Task 38: Fix "Unexpected Application Error!" em produção (RouterErrorElement + sessionStorage guard) ✅
 - Task 39: 5 Melhorias DeepSeek (RLS messages, sem select(*), paralelizar turmaDetail com joins, ConfirmModal premium, Workbox runtimeCaching + offline.html) ✅
-- Task 40: Qualidade & Perfomance (N+1 mitigado no changeGroup em memória, eliminação restritiva de `select('*')` em mais 8 arquivos, correção das variáveis CSS de temas no ConfirmModal) ✅
-- Task 41: Refatoração de Qualidade (remoção de select wildcard em `useAdminTreinos`/`useTreinoMutations`, novas variáveis CSS orange-subtle/red-subtle/blue-accent/backdrop-bg no index.css, 25+ cores hex hardcoded eliminadas em `AdminTurmaDetail.tsx`, modal de confirmação padronizado, suporte a Light Mode estendido para ErrorBoundary/ProtectedRoute/PageLoader/RouterErrorElement/SetPassword, e tipos explícitos `DBGroupPlan`/`DBGroupPlanTraining` em `useAdminTurmaDetail.ts`) ✅
-- Task 42: Micro-residuais de Qualidade (ErrorBoundary hover e sombra, SetPassword cor de erro, ConfirmModal subtleMap de backgrounds e sombra, RouterErrorElement sombra, shadows centralizadas no index.css) ✅
+- Task 40: Qualidade & Performance (N+1 mitigado no changeGroup em memória, eliminação de `select('*')` em mais 8 arquivos, correção das variáveis CSS de temas no ConfirmModal) ✅
+- Task 41: Refatoração de Qualidade (select wildcard, 25+ hex hardcoded, novas CSS vars, Light Mode estendido, tipos explícitos DBGroupPlan/DBGroupPlanTraining) ✅
+- Task 42: Micro-residuais de Qualidade (shadows centralizadas, hex residuais) ✅
+- Task 59c: Navegação admin — AnimatePresence removido, background-color no .main, prefetch 5 rotas, try/catch/finally em hooks ✅
+- Task 60: Fix piscada pós-carregamento — `listContainer.hidden = {}` (container visível imediatamente, stagger preservado), `setLoading(true)` removido do refetch em `useAdminTreinos` ✅
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.
