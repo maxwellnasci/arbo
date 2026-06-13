@@ -27,7 +27,6 @@ export function useAdminTreinos(): UseAdminTreinosReturn {
     let cancelled = false;
 
     async function fetchTrainings() {
-      setLoading(true);
       setError(null);
 
       try {

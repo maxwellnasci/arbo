@@ -17,8 +17,8 @@ import { Search, ChevronDown, Trash2 } from 'lucide-react'
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
 
 const listContainer = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  hidden: {},
+  show: { transition: { staggerChildren: 0.05 } }
 }
 
 export function AdminTreinos() {
