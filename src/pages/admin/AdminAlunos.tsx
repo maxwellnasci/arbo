@@ -184,11 +184,11 @@ export default function AdminAlunos() {
           <p style={{ color: 'var(--text-secondary)' }}>Nenhum aluno encontrado para os filtros selecionados.</p>
         </div>
       ) : (
-        <motion.div variants={listContainer} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {filteredAlunos.map((aluno: Profile) => (
             <AlunoRow key={aluno.id} aluno={aluno} levelLabel={levelLabel} />
           ))}
-        </motion.div>
+        </div>
       )}
     </div>
   )

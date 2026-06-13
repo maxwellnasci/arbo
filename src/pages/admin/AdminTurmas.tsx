@@ -130,11 +130,11 @@ export default function AdminTurmas() {
           <p style={{ color: 'var(--text-secondary)' }}>Nenhuma turma cadastrada ainda.</p>
         </div>
       ) : (
-        <motion.div variants={listContainer} initial="hidden" animate="show" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {turmas.map((turma: GroupWithCount) => (
             <TurmaRow key={turma.id} turma={turma} />
           ))}
-        </motion.div>
+        </div>
       )}
 
       {isModalOpen && (

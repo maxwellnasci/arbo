@@ -416,10 +416,7 @@ export function AdminTreinos() {
           </p>
         </div>
       ) : (
-        <motion.div
-          variants={listContainer}
-          initial="hidden"
-          animate="show"
+        <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
@@ -434,7 +431,7 @@ export function AdminTreinos() {
               onClickDelete={() => handleDelete(treino.id)}
             />
           ))}
-        </motion.div>
+        </div>
       )}
 
       <TreinoFormPanel
