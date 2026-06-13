@@ -21,115 +21,6 @@ const listContainer = {
   show: { transition: { staggerChildren: 0.05 } }
 }
 
-const shimmer = `
-@keyframes shimmer {
-  0%, 100% { opacity: 0.35; }
-  50% { opacity: 0.65; }
-}
-`
-
-const SKELETON_COUNT = 6
-
-function SkeletonCard() {
-  return (
-    <div
-      style={{
-        background: 'var(--bg-surface)',
-        borderRadius: '16px',
-        border: '1px solid var(--border-default)',
-        padding: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-      }}
-    >
-      {/* Pills */}
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <div style={{
-          width: 60, height: 22, borderRadius: '20px',
-          background: 'var(--bg-input)',
-          animation: 'shimmer 1.6s ease-in-out infinite',
-        }} />
-        <div style={{
-          width: 48, height: 22, borderRadius: '20px',
-          background: 'var(--bg-input)',
-          animation: 'shimmer 1.6s ease-in-out infinite',
-          animationDelay: '0.12s',
-        }} />
-      </div>
-
-      {/* Title + description */}
-      <div>
-        <div style={{
-          width: '80%', height: 16, borderRadius: '7px', marginBottom: '8px',
-          background: 'var(--bg-input)',
-          animation: 'shimmer 1.6s ease-in-out infinite',
-        }} />
-        <div style={{
-          width: '100%', height: 11, borderRadius: '5px', marginBottom: '4px',
-          background: 'var(--bg-input)',
-          animation: 'shimmer 1.6s ease-in-out infinite',
-          animationDelay: '0.15s',
-        }} />
-        <div style={{
-          width: '55%', height: 11, borderRadius: '5px',
-          background: 'var(--bg-input)',
-          animation: 'shimmer 1.6s ease-in-out infinite',
-          animationDelay: '0.2s',
-        }} />
-      </div>
-
-      {/* 2×2 stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} style={{
-            background: 'var(--bg-input)',
-            borderRadius: '10px',
-            padding: '10px 12px',
-            border: '1px solid var(--border-default)',
-          }}>
-            <div style={{
-              width: '50%', height: 9, borderRadius: '4px', marginBottom: '4px',
-              background: 'var(--bg-surface-hover)',
-              animation: 'shimmer 1.6s ease-in-out infinite',
-              animationDelay: `${0.1 * i}s`,
-            }} />
-            <div style={{
-              width: '70%', height: 13, borderRadius: '5px',
-              background: 'var(--bg-surface-hover)',
-              animation: 'shimmer 1.6s ease-in-out infinite',
-              animationDelay: `${0.1 * i + 0.08}s`,
-            }} />
-          </div>
-        ))}
-      </div>
-
-      {/* Actions bar */}
-      <div style={{
-        display: 'flex', justifyContent: 'flex-end', gap: '16px',
-        borderTop: '1px solid var(--border-subtle)', paddingTop: '16px',
-      }}>
-        <div style={{
-          width: 40, height: 13, borderRadius: '5px',
-          background: 'var(--bg-input)',
-          animation: 'shimmer 1.6s ease-in-out infinite',
-        }} />
-        <div style={{
-          width: 40, height: 13, borderRadius: '5px',
-          background: 'var(--bg-input)',
-          animation: 'shimmer 1.6s ease-in-out infinite',
-          animationDelay: '0.1s',
-        }} />
-      </div>
-    </div>
-  )
-}
-
-const listItem = {
-  hidden: { opacity: 0, scale: 0.95 },
-  show: { opacity: 1, scale: 1 }
-}
-
 export function AdminTreinos() {
   const { treinos, loading, error, refetch } = useAdminTreinos()
   const { createTraining, updateTraining, deleteTraining } = useTreinoMutations()
@@ -275,7 +166,6 @@ export function AdminTreinos() {
 
   return (
     <div>
-      <style>{shimmer}</style>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <h1 style={{ fontFamily: 'var(--heading)', margin: 0 }}>Treinos</h1>
         <button
@@ -382,24 +272,7 @@ export function AdminTreinos() {
         </AnimatePresence>
       </div>
 
-      {loading ? (
-        <motion.div
-          variants={listContainer}
-          initial="hidden"
-          animate="show"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: '12px',
-          }}
-        >
-          {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-            <motion.div key={i} variants={listItem}>
-              <SkeletonCard />
-            </motion.div>
-          ))}
-        </motion.div>
-      ) : filteredTreinos.length === 0 ? (
+      {loading ? null : filteredTreinos.length === 0 ? (
         <div
           style={{
             background: 'var(--bg-surface)',
@@ -416,7 +289,10 @@ export function AdminTreinos() {
           </p>
         </div>
       ) : (
-        <div
+        <motion.div
+          variants={listContainer}
+          initial="hidden"
+          animate="show"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
@@ -431,7 +307,7 @@ export function AdminTreinos() {
               onClickDelete={() => handleDelete(treino.id)}
             />
           ))}
-        </div>
+        </motion.div>
       )}
 
       <TreinoFormPanel
