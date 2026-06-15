@@ -890,3 +890,44 @@ Gemini → commit + atualiza .md
 - vercel.json — rewrites condicionais para evitar MIME type error ('text/html is not a valid JavaScript MIME type').
 - Assets /assets/*, *.js, *.css servidos diretamente.
 - Apenas rotas SPA redirecionam para index.html.
+
+### Lições das Tasks 59-60 (Navegação e Piscadas)
+
+**Problema de navegação — o que não funciona:**
+- AnimatePresence mode="wait" com React.lazy() cria 3 fases sequenciais — exit animation + carregar chunk + enter animation = 2 segundos de delay
+- navigateFallback no Workbox serve offline.html mesmo com internet ativa
+- startTransition conflita com framer-motion e cria renders duplos
+- sessionStorage no cleanup não persiste em PWA no iOS — causa reload infinito
+- Prefetch agressivo de rotas confunde o service worker
+
+**O que realmente funciona:**
+- Não desmonte e remonte o DOM para trocar loading por conteúdo — mantenha a mesma estrutura e só preencha os dados
+- {isLoading ? null : <Lista/>} em vez de {isLoading ? <Spinner/> : <Lista/>}
+- Animação no container inteiro, não nos cards individuais — sem stagger com 10+ itens
+- Remover navigateFallback do Workbox — RouterErrorElement já trata erros de chunk
+- cacheId versionado (arbo-v2, arbo-v3) para forçar atualização do service worker em todos os dispositivos
+
+**Quando um problema volta após múltiplas tentativas:**
+- Para tudo — não tente mais ajustes incrementais
+- Manda pro claude-deepseek analisar do zero sem contexto do problema anterior
+- O claude-deepseek sem viés resolve mais rápido que 10 tentativas incrementais
+
+### Lição do Sonnet 4.6 no Antigravity
+- Sonnet 4.6 é mais cirúrgico que Gemini para correções específicas
+- Executa sem pedir permissão — mais autônomo
+- Não usa subagentes paralelos mas acerta mais na primeira tentativa
+- Melhor para: correções de service worker, configurações técnicas específicas
+- Gemini é melhor para: features grandes que precisam de paralelismo
+
+### Análise comparativa — Mox vs Arbo (navegação)
+O app Mox (AI Studio) não tem piscada porque:
+- Usa navegação por estado (useState) em vez de React Router
+- Dados ficam no componente pai (State Hoisting) e são passados via props
+- Filhos montam já com dados prontos — zero re-fetch ao trocar aba
+- Lição: para apps com muitas abas, State Hoisting é superior ao React Router
+
+### Fable 5 — uso estratégico
+- Fable 5 foi desabilitado pelo governo americano em 12/06/2026 (export control)
+- Enquanto disponível: excelente para estratégia de negócio, não para código
+- Prompt ideal: pedir análise brutal e honesta sem respostas politicamente corretas
+- Lição principal do Fable 5: "Escolha entre produto ou portfólio — o meio-termo mata"
