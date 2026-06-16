@@ -10,6 +10,12 @@
 
 **https://arbo.mxos.com.br**
 
+## 📱 Screenshots
+
+| Login | Painel Admin | Biblioteca de Treinos |
+|-------|-------------|----------------------|
+| ![Login](public/screenshots/login.png) | ![Admin](public/screenshots/admin.png) | ![Treinos](public/screenshots/treinos.png) |
+
 ## ✨ Funcionalidades
 
 ### Painel Admin (Professor)
@@ -119,11 +125,13 @@ arbo/
     offline.html    # Página offline
 ```
 
-## 👤 Autor
+## 👤 Sobre o projeto
 
-Maxwell — Consultor de automações de IA
-[GitHub](https://github.com/maxwellnasci)
+Desenvolvido por **Maxwell** — Consultor de automações de IA em Curitiba.
 
----
+Este projeto foi construído utilizando um **time de IA orquestrado**:
+- **Claude** — estratégia, arquitetura e revisão
+- **Gemini** — implementação principal com subagentes paralelos
+- **DeepSeek** — análise técnica e cálculos matemáticos
 
-*Desenvolvido com time de IA: Claude + Gemini + DeepSeek*
+O resultado: app completo do zero ao ar em ~30 dias, com qualidade de código 8.75/10.
