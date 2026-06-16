@@ -422,3 +422,13 @@ Resultado Lighthouse antes:
 **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 **Próximas tarefas:** 50+ testes Vitest · service layer `src/lib/api.ts` · Acessibilidade 89→95+ · security scan CI · Push notifications · Strava · Sentry
 
+
+
+### Sessão 2026-06-16 (Atualizações e Consultoria)
+- **README.md:** Atualizado com screenshots reais do app (login, admin, treinos) e nova seção "Sobre o projeto" destacando o time de IA orquestrado.
+- **STRATEGY.md:** Criado com plano estratégico de consultoria (nichada para assessorias esportivas) e parceria CrossFit/Hyrox.
+- **PLAYBOOK.md:** Atualizado com lições das Tasks 59-60 (Navegação/Piscadas resolvidas sem AnimatePresence/wait), eficácia do Sonnet 4.6 (cirúrgico), State Hoisting vs React Router (Mox vs Arbo), e uso estratégico do Fable 5.
+- **Notas Técnicas:** Fable 5 foi desabilitado pelo governo americano em 12/06/2026 (export control nacional).
+- **Validação:** App testado no celular — navegação 100% fluida, "piscadas" e tela offline indesejada resolvidas.
+- **Próximos passos:** Testar com professor esta semana; conversa sobre parceria CrossFit/Hyrox; implementar multi-admin caso o modelo se confirme.
+
