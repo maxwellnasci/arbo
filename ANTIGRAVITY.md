@@ -48,7 +48,7 @@ Somos um **time de 3**:
 
 ### Estado atual (2026-06-13)
 - **Nota geral do projeto:** 8.75/10 — Meta: 9.0+
-- **Tasks 39-60 concluídas** (incluindo Tasks 52-57, 59, 59c, 60)
+- **Tasks 39-61 concluídas** (incluindo Tasks 52-57, 59, 59c, 60, 61)
 - **Próxima sessão:**
   - Verificar no celular se Task 60 eliminou completamente as piscadas admin.
   - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos).
@@ -67,6 +67,7 @@ Somos um **time de 3**:
 - Task 42: Micro-residuais de Qualidade (shadows centralizadas, hex residuais) ✅
 - Task 59c: Navegação admin — AnimatePresence removido, background-color no .main, prefetch 5 rotas, try/catch/finally em hooks ✅
 - Task 60: Fix piscada pós-carregamento — `listContainer.hidden = {}` (container visível imediatamente, stagger preservado), `setLoading(true)` removido do refetch em `useAdminTreinos` ✅
+- Task 61: Feature de vídeo YouTube nos treinos — Coluna `video_url` criada, `VideoPlayer.tsx` implementado para YouTube, formulário `TreinoFormPanel` e cards de treino (`TrainingCard`, `FlexibleTrainingCard`) atualizados ✅
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.

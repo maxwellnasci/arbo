@@ -112,7 +112,26 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 **Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅
 
+### Task 61 (Feature de vídeo YouTube nos treinos — 2026-06-29)
 
+**Problema:** Professores precisavam vincular vídeos do YouTube (técnicas, instruções) diretamente nos treinos diários para visualização in-app pelos alunos.
+
+**Implementação:**
+1. **Banco de Dados & Tipos:**
+   - Adicionada coluna `video_url text` na tabela `trainings`.
+   - Modificados os tipos (`database.types.ts`) para suportar a nova coluna no `Row`, `Insert` e `Update`.
+2. **Hook de Admin (`useAdminTreinos.ts`):**
+   - Atualizado o método `.select()` para buscar o campo `video_url`.
+3. **Novo Componente (`VideoPlayer.tsx`):**
+   - Criado componente flexível para extrair dinamicamente o ID do YouTube das URLs (`watch?v=`, `youtu.be/`, `embed/`).
+   - Usa iframe com `aspect-ratio: 16/9` e responsividade 100% de largura seguindo o design system.
+4. **Formulário de Treinos (`TreinoFormPanel.tsx`):**
+   - Inclusão do campo opcional "URL do Vídeo".
+   - Adicionada validação de regex; previne submissão se a string preenchida não contiver um ID válido do YouTube.
+5. **Dashboard do Aluno (`TrainingCard` & `FlexibleTrainingCard`):**
+   - Player incorporado sob as métricas de treinos fixos e flexíveis, renderizado se `video_url` for não nulo.
+
+**Validação:** `tsc --noEmit` ✅ · `npm run build` ✅ · `npm run lint` ✅
 ### Task 60 (Fix piscada pós-carregamento — 2026-06-13)
 
 **Problema:** Nas páginas AdminAlunos, AdminTurmas e AdminTreinos, após os dados chegarem, o conteúdo "piscava" brevemente antes de estabilizar.

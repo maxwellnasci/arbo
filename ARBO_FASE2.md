@@ -58,6 +58,7 @@
 | **5 Melhorias DeepSeek (Task 39)** | ✅ RLS messages, remoção de select(*), paralelizar turmaDetail com Deep Joins, ConfirmModal premium em AdminTreinos, Workbox runtimeCaching + offline.html (2026-06-06) |
 | **Limpeza Perf/Qualidade (Task 40)** | ✅ Mais 10 `select('*')` removidos, mitigação N+1 no `changeGroup` (resolução em RAM), ConfirmModal adaptado ao Design System com `--red-accent` nativo e PWA Manifest limpo de falsas imagens (2026-06-06) |
 | **Fix piscada pós-carregamento (Task 60)** | ✅ `listContainer.hidden = {}` em AdminAlunos/AdminTurmas/AdminTreinos (container monta visível, stagger dos filhos preservado); `setLoading(true)` removido do `useAdminTreinos.fetchTrainings()` (sem flash loading em refetch) (2026-06-13) |
+| **Feature de vídeo YouTube (Task 61)** | ✅ Coluna `video_url` criada, `VideoPlayer.tsx` implementado para links do YouTube, formulário `TreinoFormPanel` e cards de treino (`TrainingCard`, `FlexibleTrainingCard`) exibindo os vídeos in-app (2026-06-29) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 

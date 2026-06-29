@@ -294,13 +294,14 @@ npx supabase login
 ## Estado Atual (2026-06-13)
 
 - **Nota geral:** 8.75/10 — Meta: 9.0+
-- **Tasks 39-60 concluídas** (incluindo 52-57, 59, 59c, 60)
+- **Tasks 39-61 concluídas** (incluindo 52-57, 59, 59c, 60, 61)
 - **Próxima sessão:**
   - Verificar no celular se Task 60 eliminou as piscadas admin.
   - Expandir testes de 22 para 50+.
   - Service layer — `src/lib/api.ts`.
   - Acessibilidade 89 → 95+.
 - **Task 60 (2026-06-13):** Fix piscada pós-carregamento — `listContainer.hidden = {}` nos três pages admin (container monta visível imediatamente, stagger dos filhos preservado); `setLoading(true)` removido de `useAdminTreinos.fetchTrainings()` (sem flash loading em refetch após mutações).
+- **Task 61 (2026-06-29):** Feature de vídeo YouTube nos treinos — Coluna `video_url` (banco), `VideoPlayer.tsx` com regex para extração de ID, validação de URL no `TreinoFormPanel`, e player incorporado responsivamente no `TrainingCard` e `FlexibleTrainingCard`.
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
