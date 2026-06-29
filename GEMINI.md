@@ -302,6 +302,7 @@ npx supabase login
   - Acessibilidade 89 → 95+.
 - **Task 60 (2026-06-13):** Fix piscada pós-carregamento — `listContainer.hidden = {}` nos três pages admin (container monta visível imediatamente, stagger dos filhos preservado); `setLoading(true)` removido de `useAdminTreinos.fetchTrainings()` (sem flash loading em refetch após mutações).
 - **Task 61 (2026-06-29):** Feature de vídeo YouTube nos treinos — Coluna `video_url` (banco), `VideoPlayer.tsx` com regex para extração de ID, validação de URL no `TreinoFormPanel`, e player incorporado responsivamente no `TrainingCard` e `FlexibleTrainingCard`.
+- **Task 62 (2026-06-29):** Fix visibilidade de alunos recém-convidados — Adicionada opção de filtro "Sem Turma" e badge visual vermelho no `AdminAlunos` para destacar alunos que completaram o cadastro mas ainda não possuem turma vinculada.
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 

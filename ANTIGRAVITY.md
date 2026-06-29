@@ -68,6 +68,7 @@ Somos um **time de 3**:
 - Task 59c: Navegação admin — AnimatePresence removido, background-color no .main, prefetch 5 rotas, try/catch/finally em hooks ✅
 - Task 60: Fix piscada pós-carregamento — `listContainer.hidden = {}` (container visível imediatamente, stagger preservado), `setLoading(true)` removido do refetch em `useAdminTreinos` ✅
 - Task 61: Feature de vídeo YouTube nos treinos — Coluna `video_url` criada, `VideoPlayer.tsx` implementado para YouTube, formulário `TreinoFormPanel` e cards de treino (`TrainingCard`, `FlexibleTrainingCard`) atualizados ✅
+- Task 62: Fix visibilidade de alunos recém-convidados — Adicionada opção de filtro "Sem Turma" e badge visual vermelho no `AdminAlunos` para destacar alunos que completaram o cadastro mas ainda não possuem turma vinculada ✅
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.

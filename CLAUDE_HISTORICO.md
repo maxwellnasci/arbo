@@ -5,6 +5,22 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-06-29
+
+**Task 61: Feature de vídeo YouTube nos treinos**
+- Coluna `video_url text` adicionada na tabela `trainings` no Supabase.
+- Componente `VideoPlayer.tsx` criado, utilizando regex extrair o ID de diferentes formatos de link do YouTube.
+- Formulário do admin (`TreinoFormPanel.tsx`) atualizado com o campo URL opcional e validação de formato.
+- Componentes do Aluno (`TrainingCard` e `FlexibleTrainingCard`) ajustados para exibir os vídeos.
+- Bugfix na exibição: Corrigido o hook `useWeeklyPlan.ts` (faltava o `video_url` no `.select()` nos joins de `trainings`) e no `useTreinoMutations.ts`.
+
+**Task 62: Fix visibilidade de alunos recém-convidados no Admin**
+- Diagnóstico revelou que alunos sem `group_id` ou `full_name` não recebiam tratamento visual adequado e desapareciam ao buscar ou filtrar turmas.
+- O componente `AdminAlunos.tsx` foi atualizado com a opção `"Sem Turma"` (mapeada para `group:null`) na dropdown de filtros.
+- O `AlunoRow` foi aprimorado com fallback no nome (`Novo Aluno (sem nome)`) e um badge visual vermelho `<span style={{ background: 'var(--red-accent)', ...}}>SEM TURMA</span>`.
+
+---
+
 ## O que foi feito em 2026-05-21
 - `useWeeklyPlan.ts` — join N→1 retorna objeto, não array: `wpt.trainings[0]` → `wpt.trainings`
 - `AlunoDashboard` redesign premium v2 (Bebas Neue, glow animado, bottom sheet, skeleton, PR tracking)
