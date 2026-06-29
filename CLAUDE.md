@@ -273,10 +273,10 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-06-13)
+## Estado atual (2026-06-29)
 
 - **Média geral:** 9.0/10 — Segurança 8.5 · Performance 8.8 · Qualidade 9.2 · UX/Bugs 9.2 · Arquitetura 8.5 · PWA/Mobile 9.0
-- **Tasks 39-55, 56, 57, 59, 59c, 60, 61 concluídas**
+- **Tasks 39-55, 56, 57, 59, 59c, 60, 61, 62, 63, 64 concluídas**
 - **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 - **Testes:** 22 testes passando (Vitest)
 - **Próxima sessão:**
@@ -552,3 +552,10 @@ Resultado Lighthouse antes:
 - **Transparência e Crop:** Fundo original removido do logo do app (transparente). Ícones PWA gerados perfeitamente através de crop direto do miolo da imagem original (sem zoom artificial que criava franjas e dois tons de preto).
 - **Ícones PWA:** Atualizados `icon-192.png`, `icon-512.png`, `icon-512-maskable.png`.
 - **Nome do App:** Atualizado para "Arbo Run" em todo o projeto, incluindo `index.html`, `offline.html` e `vite.config.ts`.
+
+### Sessão 2026-06-29 (Tasks 63 e 64 + Bugfix Produção)
+- **Task 63:** Adicionado campo de nome obrigatório no `SetPassword.tsx` para novos alunos; criado a RPC `get_user_email` e exibido o e-mail no `AdminAlunoDetail.tsx`; implementado o `VideoPlayer` no `AdminTreinos.tsx` e `AdminTurmaDetail.tsx`.
+- **Task 64:** Implementado edição inline de nome no `AdminAlunoDetail.tsx` (mutação no Supabase e atualização imutável no state do React via custom hook, resolvendo erro do ESLint).
+- **Fix Vercel CSP (Tela Branca do YouTube):** Corrigido o `vercel.json` adicionando a diretiva `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;` ao header `Content-Security-Policy`. Sem isso, o app bloqueava iframes de vídeos.
+- **Fix Regex do VideoPlayer:** Ampliada a regex no `VideoPlayer.tsx` para reconhecer links de YouTube Shorts (`shorts/`) e URLs contendo parâmetros extras ignorados (`?si=`).
+- **Documentação de Portfólio:** Criado o artefato `docs/PORTFOLIO_DEBUG_CASES.md` registrando a proficiência e detalhamento do debug nos casos de Tipagem RPC (TS), CSP de Infra (Vercel) e React Immutability (Linter).

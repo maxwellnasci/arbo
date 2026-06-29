@@ -291,10 +291,10 @@ npx supabase login
 
 **Project ID:** `jhfkflnixzivuichmkie`
 
-## Estado Atual (2026-06-13)
+## Estado Atual (2026-06-29)
 
-- **Nota geral:** 8.75/10 — Meta: 9.0+
-- **Tasks 39-61 concluídas** (incluindo 52-57, 59, 59c, 60, 61)
+- **Nota geral:** 9.0/10 — Meta: 9.0+
+- **Tasks 39-64 concluídas** (incluindo 52-57, 59, 59c, 60, 61, 62, 63, 64)
 - **Próxima sessão:**
   - Verificar no celular se Task 60 eliminou as piscadas admin.
   - Expandir testes de 22 para 50+.
@@ -305,6 +305,7 @@ npx supabase login
 - **Task 62 (2026-06-29):** Fix visibilidade de alunos recém-convidados — Adicionada opção de filtro "Sem Turma" e badge visual vermelho no `AdminAlunos` para destacar alunos que completaram o cadastro mas ainda não possuem turma vinculada.
 - **Task 63 (2026-06-29):** 3 Melhorias Admin — Adicionado campo obrigatório de nome na configuração de senha (`SetPassword.tsx`), reprodução de vídeos incorporada e expansível no card de treinos e no side panel de turmas.
 - **Task 64 (2026-06-29):** Edição de perfil no admin e correção de RPC — Implementado fluxo para editar nome de aluno no painel admin, e e-mail via auth recuperado através da RPC (`get_user_email`) corrigida (com cast completo do client no código).
+- **Bugfixes Produção (2026-06-29):** Correção do CSP do Vercel (`frame-src`) resolvendo o bloqueio silencioso do YouTube, ampliação da regex do `VideoPlayer` para suportar Shorts e parâmetros extras. Criação do artefato `docs/PORTFOLIO_DEBUG_CASES.md` para portfólio.
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
