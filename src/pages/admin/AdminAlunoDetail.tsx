@@ -56,7 +56,7 @@ function formatTimeRecord(seconds: number | null): string {
 export default function AdminAlunoDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { profile, group, checkins, records, anamnesis, allGroups, metrics, isLoading, error, changeGroup, email } = useAdminAlunoDetail(id)
+  const { profile, group, checkins, records, anamnesis, allGroups, metrics, isLoading, error, changeGroup, updateName, email } = useAdminAlunoDetail(id)
   
   const [activeTab, setActiveTab] = useState<'checkins' | 'records' | 'anamnesis'>('checkins')
   const [isChangingGroup, setIsChangingGroup] = useState(false)
@@ -73,9 +73,7 @@ export default function AdminAlunoDetail() {
     if (!id || !newName.trim()) return
     setIsSavingName(true)
     try {
-      const { error } = await supabase.from('profiles').update({ full_name: newName.trim() }).eq('id', id)
-      if (error) throw error
-      if (profile) profile.full_name = newName.trim()
+      await updateName(newName.trim())
       setIsEditingName(false)
       toast.success('Nome atualizado!')
     } catch (e: unknown) {

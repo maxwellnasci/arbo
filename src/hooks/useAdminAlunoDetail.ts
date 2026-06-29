@@ -114,6 +114,13 @@ export function useAdminAlunoDetail(alunoId: string | undefined) {
     }
   }
 
+  const updateName = async (newName: string) => {
+    if (!alunoId) return
+    const { error: updErr } = await supabase.from('profiles').update({ full_name: newName }).eq('id', alunoId)
+    if (updErr) throw updErr
+    setProfile(p => p ? { ...p, full_name: newName } : null)
+  }
+
   return {
     profile,
     group,
@@ -125,6 +132,7 @@ export function useAdminAlunoDetail(alunoId: string | undefined) {
     isLoading,
     error,
     changeGroup,
+    updateName,
     email
   }
 }
