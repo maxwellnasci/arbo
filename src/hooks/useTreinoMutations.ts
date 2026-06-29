@@ -22,7 +22,7 @@ export function useTreinoMutations(): UseTreinoMutationsReturn {
       const { data, error } = await supabase
         .from('trainings')
         .insert(training)
-        .select('id, title, type, description, distance_m, duration_minutes, sets, target_pace_seconds_per_km, tag_id, created_at')
+        .select('id, title, type, description, distance_m, duration_minutes, sets, target_pace_seconds_per_km, tag_id, video_url, created_at')
         .single();
 
       if (error) throw error;
@@ -42,7 +42,7 @@ export function useTreinoMutations(): UseTreinoMutationsReturn {
         .from('trainings')
         .update(updates)
         .eq('id', id)
-        .select('id, title, type, description, distance_m, duration_minutes, sets, target_pace_seconds_per_km, tag_id, created_at')
+        .select('id, title, type, description, distance_m, duration_minutes, sets, target_pace_seconds_per_km, tag_id, video_url, created_at')
         .single();
 
       if (error) throw error;
