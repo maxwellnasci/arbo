@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { MessageSquare, RefreshCw, ChevronLeft, Trash2 } from 'lucide-react'
+import { MessageSquare, RefreshCw, ChevronLeft, Trash2, Pencil } from 'lucide-react'
 import styles from './AdminAlunoDetail.module.css'
 import AdminChatPanel from '../../components/admin/AdminChatPanel'
 import { supabase } from '../../lib/supabase'
@@ -64,6 +64,26 @@ export default function AdminAlunoDetail() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [isSavingName, setIsSavingName] = useState(false)
+
+  async function handleSaveName() {
+    if (!id || !newName.trim()) return
+    setIsSavingName(true)
+    try {
+      const { error } = await supabase.from('profiles').update({ full_name: newName.trim() }).eq('id', id)
+      if (error) throw error
+      if (profile) profile.full_name = newName.trim()
+      setIsEditingName(false)
+      toast.success('Nome atualizado!')
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao salvar nome.')
+    } finally {
+      setIsSavingName(false)
+    }
+  }
 
   async function handleDeleteAluno() {
     if (!id) return
@@ -146,7 +166,79 @@ export default function AdminAlunoDetail() {
       <div className={styles.header}>
         <div className={styles.avatar}>{initials}</div>
         <div className={styles.info}>
-          <h1 className={styles.name}>{profile.full_name || 'Novo Aluno (sem nome)'}</h1>
+          {isEditingName ? (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+              <input 
+                value={newName} 
+                onChange={e => setNewName(e.target.value)}
+                style={{ 
+                  background: 'var(--bg-card)', 
+                  border: '1px solid var(--border-color)', 
+                  color: 'var(--text-primary)', 
+                  padding: '6px 12px', 
+                  borderRadius: 'var(--border-radius-sm)', 
+                  outline: 'none',
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  width: '100%',
+                  maxWidth: '300px'
+                }}
+                disabled={isSavingName}
+                autoFocus
+              />
+              <button 
+                onClick={handleSaveName}
+                disabled={isSavingName}
+                style={{ 
+                  background: 'var(--orange)', 
+                  color: '#fff', 
+                  border: 'none', 
+                  padding: '6px 12px', 
+                  borderRadius: 'var(--border-radius-sm)', 
+                  cursor: 'pointer', 
+                  fontWeight: 600, 
+                  fontSize: 13 
+                }}
+              >
+                Salvar
+              </button>
+              <button 
+                onClick={() => setIsEditingName(false)}
+                disabled={isSavingName}
+                style={{ 
+                  background: 'transparent', 
+                  color: 'var(--text-secondary)', 
+                  border: 'none', 
+                  padding: '6px 12px', 
+                  cursor: 'pointer', 
+                  fontWeight: 600, 
+                  fontSize: 13 
+                }}
+              >
+                Cancelar
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+              <h1 className={styles.name} style={{ marginBottom: 0 }}>
+                {profile.full_name || 'Novo Aluno (sem nome)'}
+              </h1>
+              <button 
+                onClick={() => { setNewName(profile.full_name || ''); setIsEditingName(true) }} 
+                style={{ 
+                  background: 'transparent', 
+                  border: 'none', 
+                  color: 'var(--text-secondary)', 
+                  cursor: 'pointer', 
+                  display: 'flex',
+                  padding: 4
+                }}
+                title="Editar Nome"
+              >
+                <Pencil size={16} />
+              </button>
+            </div>
+          )}
           {email && (
             <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '8px' }}>
               <span style={{ fontWeight: 600 }}>Email:</span> {email}
