@@ -54,21 +54,24 @@ export function useAdminAlunoDetail(alunoId: string | undefined) {
         const [
           { data: chkData },
           { data: recData },
-          { data: anaData },
-          { data: emailData }
+          { data: anaData }
         ] = await Promise.all([
           supabase.from('checkins').select('id, created_at, actual_pace_seconds_per_km, student_id, training_id, perceived_effort, actual_distance_m, actual_duration_seconds, approved, approved_by, completed_at, notes, plan_id, strava_activity_id, trainings(id, type, title, duration_minutes, distance_m, description, sets, target_pace_seconds_per_km, tags(id, name, color, created_at, created_by, updated_at))').eq('student_id', alunoId).order('created_at', { ascending: false }).limit(100),
           supabase.from('records').select('id, distance_category, time_seconds, achieved_at, checkin_id, created_at, strava_activity_id, student_id').eq('student_id', alunoId).order('distance_category').limit(50),
           supabase.from('anamnesis').select('id, user_id, updated_at, created_at, experience_years, height_cm, max_heart_rate, objectives, physical_limitations, weekly_frequency, weight_kg').eq('user_id', alunoId).maybeSingle(),
-          supabase.rpc('get_user_email' as any, { user_id: alunoId })
         ])
+
+        // RPC chamado separadamente pois get_user_email não está em database.types.ts
+        // (função criada manualmente, não via supabase gen types)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: emailData } = await (supabase as any).rpc('get_user_email', { user_id: alunoId })
 
         if (cancelled) return
 
         setCheckins((chkData as unknown as CheckinWithTraining[]) ?? [])
         setRecords((recData as PersonalRecord[]) ?? [])
         setAnamnesis(anaData as Anamnesis)
-        setEmail((emailData as unknown as string) ?? null)
+        setEmail(typeof emailData === 'string' ? emailData : null)
 
         let bestPace: number | null = null
         chkData?.forEach(c => {
