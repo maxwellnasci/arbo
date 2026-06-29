@@ -50,7 +50,7 @@ export default function Login() {
       <div className="login-card">
         <div className="login-logo-container">
           <div className="login-logo-glow" />
-          <img src={arboLogo} alt="Arbo CrossFit" width="120" height="120" className="login-logo-img" />
+          <img src={arboLogo} alt="Arbo CrossFit" width="160" height="160" className="login-logo-img" />
         </div>
         
         <div className="login-header-text">
