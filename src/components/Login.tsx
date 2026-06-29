@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Mail, Lock } from 'lucide-react'
-import arboLogo from '../assets/arbo-logo.png'
+import arboLogo from '../assets/arbo-run-logo.png'
 import './Login.css'
 
 export default function Login() {
@@ -54,7 +54,7 @@ export default function Login() {
         </div>
         
         <div className="login-header-text">
-          <h1 className="login-title">ARBO</h1>
+          <h1 className="login-title">ARBO RUN</h1>
           <p className="login-subtitle">A sua evolução começa aqui.</p>
         </div>
 
