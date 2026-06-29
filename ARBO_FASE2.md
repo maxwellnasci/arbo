@@ -471,3 +471,9 @@ Resultado Lighthouse antes:
 - **Validação:** App testado no celular — navegação 100% fluida, "piscadas" e tela offline indesejada resolvidas.
 - **Próximos passos:** Testar com professor esta semana; conversa sobre parceria CrossFit/Hyrox; implementar multi-admin caso o modelo se confirme.
 
+
+### Sessão 2026-06-29 (Rebranding para Arbo Run)
+- **Logo atualizado:** Substituição do logo antigo pelo novo logo Arbo Run em `Login.tsx` e `AdminLayout.tsx`.
+- **Transparência e Crop:** Fundo original removido do logo do app (transparente). Ícones PWA gerados perfeitamente através de crop direto do miolo da imagem original (sem zoom artificial que criava franjas e dois tons de preto).
+- **Ícones PWA:** Atualizados `icon-192.png`, `icon-512.png`, `icon-512-maskable.png`.
+- **Nome do App:** Atualizado para "Arbo Run" em todo o projeto, incluindo `index.html`, `offline.html` e `vite.config.ts`.
