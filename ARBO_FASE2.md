@@ -60,6 +60,7 @@
 | **Fix piscada pós-carregamento (Task 60)** | ✅ `listContainer.hidden = {}` em AdminAlunos/AdminTurmas/AdminTreinos (container monta visível, stagger dos filhos preservado); `setLoading(true)` removido do `useAdminTreinos.fetchTrainings()` (sem flash loading em refetch) (2026-06-13) |
 | **Feature de vídeo YouTube (Task 61)** | ✅ Coluna `video_url` criada, `VideoPlayer.tsx` implementado para links do YouTube, formulário `TreinoFormPanel` e cards de treino (`TrainingCard`, `FlexibleTrainingCard`) exibindo os vídeos in-app (2026-06-29) |
 | **Fix Alunos sem Turma (Task 62)** | ✅ Correção no filtro de `AdminAlunos.tsx` adicionando opção "Sem Turma" (`group:null`) e badge vermelho `SEM TURMA` no card do aluno para facilitar a visualização de novos convidados (2026-06-29) |
+| **Melhorias de Fluxo (Task 63)** | ✅ Campo de nome incluído na tela de cadastro (`SetPassword.tsx`), email extraído de `auth.users` via RPC e exibido no perfil admin, reprodução de vídeo expansível (inline) adicionada na biblioteca de treinos (`TreinoCard`) e painel lateral de turma (`SidePanel`) (2026-06-29) |
 
 **Repositório:** https://github.com/maxwellnasci/arbo
 

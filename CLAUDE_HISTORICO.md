@@ -19,6 +19,11 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 - O componente `AdminAlunos.tsx` foi atualizado com a opção `"Sem Turma"` (mapeada para `group:null`) na dropdown de filtros.
 - O `AlunoRow` foi aprimorado com fallback no nome (`Novo Aluno (sem nome)`) e um badge visual vermelho `<span style={{ background: 'var(--red-accent)', ...}}>SEM TURMA</span>`.
 
+**Task 63: 3 Melhorias de fluxo no painel Admin**
+- **Cadastro (SetPassword.tsx):** Inserido campo obrigatório "Seu nome completo". Nome agora é capturado e gravado junto da senha via `update()` no Supabase. Isso resolve o problema de alunos fantasmas que ficavam sem nome no painel admin.
+- **Visualização de Email:** Criada uma RPC segura `get_user_email` (`SECURITY DEFINER`) para contornar a limitação de não termos o e-mail na tabela `profiles`. `useAdminAlunoDetail.ts` e `AdminAlunoDetail.tsx` atualizados para exibir o email recuperado de `auth.users` apenas para usuários com role de admin.
+- **Vídeo Player no Admin:** Importado botão de play iterativo (`PlayCircle`) da lucide-react para o `TreinoCard.tsx`, que agora inclui expansão inline animada do iframe de YouTube. Também acoplado no `SidePanel` do `AdminTurmaDetail.tsx`, deixando a biblioteca de treinos e turmas plenamente equipadas.
+
 ---
 
 ## O que foi feito em 2026-05-21
