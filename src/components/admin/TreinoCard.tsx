@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { PlayCircle } from 'lucide-react'
+import { VideoPlayer } from '../ui/VideoPlayer'
 
 interface TreinoCardProps {
   treino: TrainingWithTag
@@ -58,6 +61,7 @@ function formatDistance(meters: number | null): string {
 }
 
 export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardProps) {
+  const [isVideoExpanded, setIsVideoExpanded] = useState(false)
   const color = typeColor[treino.type] ?? 'var(--text-secondary)'
   const bgColor = typeBgColor[treino.type] ?? 'var(--bg-surface-hover)'
   const borderColor = typeBorderColor[treino.type] ?? 'var(--border-default)'
@@ -124,9 +128,32 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
 
       {/* Título e descrição */}
       <div>
-        <p style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 700, margin: '0 0 4px', lineHeight: 1.3 }}>
-          {treino.title}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+          <p style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 700, margin: '0 0 4px', lineHeight: 1.3 }}>
+            {treino.title}
+          </p>
+          {treino.video_url && (
+            <button
+              onClick={() => setIsVideoExpanded(!isVideoExpanded)}
+              style={{
+                background: 'none',
+                border: 'none',
+                padding: '2px',
+                cursor: 'pointer',
+                color: isVideoExpanded ? 'var(--orange)' : 'var(--text-tertiary)',
+                transition: 'color 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onMouseOver={e => e.currentTarget.style.color = 'var(--orange)'}
+              onMouseOut={e => e.currentTarget.style.color = isVideoExpanded ? 'var(--orange)' : 'var(--text-tertiary)'}
+              title={isVideoExpanded ? "Ocultar vídeo" : "Ver vídeo"}
+            >
+              <PlayCircle size={20} />
+            </button>
+          )}
+        </div>
         {treino.description && (
           <p
             style={{
@@ -144,6 +171,21 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
           </p>
         )}
       </div>
+
+      <AnimatePresence>
+        {isVideoExpanded && treino.video_url && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ marginTop: '4px' }}>
+              <VideoPlayer videoUrl={treino.video_url} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>

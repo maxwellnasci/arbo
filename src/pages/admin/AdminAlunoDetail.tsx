@@ -56,7 +56,7 @@ function formatTimeRecord(seconds: number | null): string {
 export default function AdminAlunoDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { profile, group, checkins, records, anamnesis, allGroups, metrics, isLoading, error, changeGroup } = useAdminAlunoDetail(id)
+  const { profile, group, checkins, records, anamnesis, allGroups, metrics, isLoading, error, changeGroup, email } = useAdminAlunoDetail(id)
   
   const [activeTab, setActiveTab] = useState<'checkins' | 'records' | 'anamnesis'>('checkins')
   const [isChangingGroup, setIsChangingGroup] = useState(false)
@@ -146,7 +146,12 @@ export default function AdminAlunoDetail() {
       <div className={styles.header}>
         <div className={styles.avatar}>{initials}</div>
         <div className={styles.info}>
-          <h1 className={styles.name}>{profile.full_name || '(sem nome)'}</h1>
+          <h1 className={styles.name}>{profile.full_name || 'Novo Aluno (sem nome)'}</h1>
+          {email && (
+            <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '8px' }}>
+              <span style={{ fontWeight: 600 }}>Email:</span> {email}
+            </div>
+          )}
           <div className={styles.subtitle}>
             <span>{profile.level ? levelLabel[profile.level] ?? profile.level : 'Nível não definido'}</span>
             <span>·</span>

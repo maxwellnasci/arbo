@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 export default function SetPassword() {
+  const [nome, setNome] = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +32,11 @@ export default function SetPassword() {
     e.preventDefault()
     setError(null)
 
+    if (!nome.trim()) {
+      setError('Por favor, informe seu nome completo.')
+      return
+    }
+
     if (password.length < 8) {
       setError('A senha deve ter no mínimo 8 caracteres.')
       return
@@ -51,12 +57,12 @@ export default function SetPassword() {
       return
     }
 
-    // Marca que o aluno já definiu sua senha
+    // Marca que o aluno já definiu sua senha e salva o nome
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       await supabase
         .from('profiles')
-        .update({ has_set_password: true })
+        .update({ has_set_password: true, full_name: nome.trim() })
         .eq('id', user.id)
     }
 
@@ -108,6 +114,19 @@ export default function SetPassword() {
         <p style={styles.subtitle}>Escolha uma senha para acessar o Arbo.</p>
 
         <form onSubmit={handleSubmit} style={styles.form}>
+          <div style={styles.field}>
+            <label style={styles.label}>Seu nome completo</label>
+            <input
+              type="text"
+              placeholder="Ex: João da Silva"
+              value={nome}
+              onChange={e => setNome(e.target.value)}
+              required
+              style={styles.input}
+              autoComplete="name"
+            />
+          </div>
+
           <div style={styles.field}>
             <label style={styles.label}>Nova senha</label>
             <input

@@ -10,6 +10,7 @@ import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS, insertTag, ins
 import { EditGroupModal } from '../../components/admin/EditGroupModal'
 import { Edit2 } from 'lucide-react'
 import { ProfessorStatusGrid } from '../../components/admin/ProfessorStatusGrid'
+import { VideoPlayer } from '../../components/ui/VideoPlayer'
 
 // ─── Labels ────────────────────────────────────────────────────────────────
 
@@ -739,6 +740,11 @@ function SidePanel({
           )}
           {existing.training.description && (
             <div style={{ fontSize: '11px', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{existing.training.description}</div>
+          )}
+          {existing.training.video_url && (
+            <div style={{ marginTop: '4px' }}>
+              <VideoPlayer videoUrl={existing.training.video_url} />
+            </div>
           )}
           <button
             onClick={onRemoveTraining}
