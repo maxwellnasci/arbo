@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Calendar, CheckCircle2, Clock } from 'lucide-react';
 import type { DayTraining } from '../../hooks/useWeeklyPlan';
 import DayPicker, { DayOfWeek } from './DayPicker';
+import { VideoPlayer } from '../ui/VideoPlayer';
 import styles from './FlexibleTrainingCard.module.css';
 
 interface FlexibleTrainingCardProps {
@@ -64,6 +65,8 @@ export default function FlexibleTrainingCard({
             </div>
           )}
         </div>
+
+        {training.video_url && <VideoPlayer videoUrl={training.video_url} />}
 
         <div className={styles.actions}>
           {!checkin && (

@@ -15,6 +15,7 @@ import AlunoPerfil from './AlunoPerfil'
 import CheckinSheet from '../../components/aluno/CheckinSheet'
 import LockedScreen from '../../components/aluno/LockedScreen'
 import FlexibleTrainingCard from '../../components/aluno/FlexibleTrainingCard'
+import { VideoPlayer } from '../../components/ui/VideoPlayer'
 import type { DayOfWeek } from '../../components/aluno/DayPicker'
 import styles from './AlunoDashboard.module.css'
 
@@ -245,6 +246,8 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
             </>
           )}
         </div>
+
+        {training.video_url && <VideoPlayer videoUrl={training.video_url} />}
 
         {checkin ? (
           <div className={styles.doneRow}>

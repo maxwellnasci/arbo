@@ -50,6 +50,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
   const [sets, setSets] = useState<number | ''>('')
   const [type, setType] = useState<string>('corrida')
   const [tagId, setTagId] = useState('')
+  const [videoUrl, setVideoUrl] = useState('')
 
   const [showNewTag, setShowNewTag] = useState(false)
   const [newTagName, setNewTagName] = useState('')
@@ -70,6 +71,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
     setSets('')
     setType('corrida')
     setTagId('')
+    setVideoUrl('')
     setShowNewTag(false)
     setShowNewType(false)
   }
@@ -94,6 +96,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
         setSets(treinoToEdit.sets || '')
         setType(treinoToEdit.type as TrainingType)
         setTagId(treinoToEdit.tag?.id || '')
+        setVideoUrl(treinoToEdit.video_url || '')
       } else {
         resetForm()
       }
@@ -108,6 +111,10 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
     const paceSec = Number(paceSeconds) || 0
     const totalPaceSeconds = paceMin * 60 + paceSec
 
+    if (videoUrl && !/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/.test(videoUrl)) {
+      return // Previne submit se URL for inválida
+    }
+
     const data: Omit<TrainingInsert, 'created_by'> = {
       title,
       description: description || null,
@@ -117,6 +124,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
       sets: sets ? Number(sets) : null,
       type,
       tag_id: tagId || null,
+      video_url: videoUrl ? videoUrl : null,
     }
 
     onSubmit(data)
@@ -403,6 +411,23 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                   placeholder="Ex: 1"
                   style={inputStyle}
                 />
+              </div>
+
+              {/* Vídeo */}
+              <div>
+                <label style={labelStyle}>URL do Vídeo (opcional)</label>
+                <input
+                  type="url"
+                  value={videoUrl}
+                  onChange={e => setVideoUrl(e.target.value)}
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  style={{ ...inputStyle, borderColor: (videoUrl && !/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/.test(videoUrl)) ? '#EF4444' : 'var(--border-subtle)' }}
+                />
+                {(videoUrl && !/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/.test(videoUrl)) && (
+                  <span style={{ color: '#EF4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                    Insira uma URL válida do YouTube
+                  </span>
+                )}
               </div>
 
               {/* Botões */}
