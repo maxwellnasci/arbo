@@ -25,6 +25,7 @@ export default function AdminAlunos() {
     }
     if (filterType.startsWith('group:')) {
       const group = filterType.split(':')[1]
+      if (group === 'null') return !aluno.group_id
       return String(aluno.group_id) === group
     }
     return true
@@ -93,6 +94,7 @@ export default function AdminAlunos() {
             onBlur={e => e.target.style.borderColor = 'var(--border-subtle)'}
           >
             <option value="all">Todos os alunos</option>
+            <option value="group:null">Sem Turma</option>
             <optgroup label="Por Nível">
               <option value="level:iniciante">Nível: Iniciante</option>
               <option value="level:intermediario">Nível: Intermediário</option>
@@ -174,8 +176,13 @@ function AlunoRow({ aluno, levelLabel }: { aluno: Profile; levelLabel: Record<st
         {initials}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: 700, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {aluno.full_name ?? '(sem nome)'}
+        <p style={{ color: 'var(--text-primary)', fontSize: '15px', fontWeight: 700, margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {aluno.full_name ?? 'Novo Aluno (sem nome)'}
+          {!aluno.group_id && (
+            <span style={{ background: 'var(--red-accent)', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
+              Sem Turma
+            </span>
+          )}
         </p>
         <p style={{ color: 'var(--text-tertiary)', fontSize: '12px', margin: 0, fontWeight: 500 }}>
           {aluno.level ? levelLabel[aluno.level] ?? aluno.level : 'Nível não definido'}
