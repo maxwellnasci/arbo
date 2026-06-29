@@ -70,6 +70,7 @@ Somos um **time de 3**:
 - Task 61: Feature de vídeo YouTube nos treinos — Coluna `video_url` criada, `VideoPlayer.tsx` implementado para YouTube, formulário `TreinoFormPanel` e cards de treino (`TrainingCard`, `FlexibleTrainingCard`) atualizados ✅
 - Task 62: Fix visibilidade de alunos recém-convidados — Adicionada opção de filtro "Sem Turma" e badge visual vermelho no `AdminAlunos` para destacar alunos que completaram o cadastro mas ainda não possuem turma vinculada ✅
 - Task 63: 3 Melhorias admin — Campo "nome" inserido e obrigatório na tela de `SetPassword.tsx`, email dos alunos resgatado via RPC `get_user_email` e exibido no painel `AdminAlunoDetail.tsx`, visualização expandível do `VideoPlayer` adicionada no `TreinoCard.tsx` (biblioteca de treinos) e `SidePanel` (`AdminTurmaDetail.tsx`) ✅
+- Task 64: Editar nome do aluno no admin e correção da RPC `get_user_email` visível no perfil ✅
 
 ### O que foi feito em 2026-05-31
 - Perfil do Aluno (`/admin/alunos/:id`) implementado — 3 tabs (check-ins, recordes, anamnese), métricas, dropdown de turma, framer-motion.

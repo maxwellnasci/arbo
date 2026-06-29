@@ -24,6 +24,11 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 - **Visualização de Email:** Criada uma RPC segura `get_user_email` (`SECURITY DEFINER`) para contornar a limitação de não termos o e-mail na tabela `profiles`. `useAdminAlunoDetail.ts` e `AdminAlunoDetail.tsx` atualizados para exibir o email recuperado de `auth.users` apenas para usuários com role de admin.
 - **Vídeo Player no Admin:** Importado botão de play iterativo (`PlayCircle`) da lucide-react para o `TreinoCard.tsx`, que agora inclui expansão inline animada do iframe de YouTube. Também acoplado no `SidePanel` do `AdminTurmaDetail.tsx`, deixando a biblioteca de treinos e turmas plenamente equipadas.
 
+**Task 64: Edição de Perfil e Correção de RPC na Vercel**
+- Corrigido erro de build na Vercel (`TS2345 never`) causado pela falta de mapeamento da nova RPC `get_user_email` nos tipos do Supabase. A solução adotada foi retirar a chamada do `Promise.all` (para não contaminar a inferência de tipos da tupla) e usar bypass completo no client: `(supabase as any).rpc(...)`.
+- A lição sobre casting correto em RPC não mapeada foi registrada no `GEMINI_LESSONS.md`.
+- Funcionalidade de edição de nome e visualização de e-mail agora estão completamente limpas no painel Admin.
+
 ---
 
 ## O que foi feito em 2026-05-21

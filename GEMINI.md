@@ -303,7 +303,8 @@ npx supabase login
 - **Task 60 (2026-06-13):** Fix piscada pós-carregamento — `listContainer.hidden = {}` nos três pages admin (container monta visível imediatamente, stagger dos filhos preservado); `setLoading(true)` removido de `useAdminTreinos.fetchTrainings()` (sem flash loading em refetch após mutações).
 - **Task 61 (2026-06-29):** Feature de vídeo YouTube nos treinos — Coluna `video_url` (banco), `VideoPlayer.tsx` com regex para extração de ID, validação de URL no `TreinoFormPanel`, e player incorporado responsivamente no `TrainingCard` e `FlexibleTrainingCard`.
 - **Task 62 (2026-06-29):** Fix visibilidade de alunos recém-convidados — Adicionada opção de filtro "Sem Turma" e badge visual vermelho no `AdminAlunos` para destacar alunos que completaram o cadastro mas ainda não possuem turma vinculada.
-- **Task 63 (2026-06-29):** 3 Melhorias Admin — Adicionado campo obrigatório de nome na configuração de senha (`SetPassword.tsx`), email do aluno exibido no perfil usando a nova RPC `get_user_email` (`AdminAlunoDetail.tsx`), e reprodução de vídeos incorporada e expansível no card de treinos e no side panel de turmas.
+- **Task 63 (2026-06-29):** 3 Melhorias Admin — Adicionado campo obrigatório de nome na configuração de senha (`SetPassword.tsx`), reprodução de vídeos incorporada e expansível no card de treinos e no side panel de turmas.
+- **Task 64 (2026-06-29):** Edição de perfil no admin e correção de RPC — Implementado fluxo para editar nome de aluno no painel admin, e e-mail via auth recuperado através da RPC (`get_user_email`) corrigida (com cast completo do client no código).
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
