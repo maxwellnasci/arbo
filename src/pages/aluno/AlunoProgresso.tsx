@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { useProgresso } from '../../hooks/useProgresso'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
-import { Flame, Target } from 'lucide-react'
+import { Flame, Target, Calculator } from 'lucide-react'
 import { motion } from 'framer-motion'
+import PaceCalculator from '../../components/shared/PaceCalculator'
 import styles from './AlunoProgresso.module.css'
 
 function formatTime(seconds: number): string {
@@ -37,6 +39,7 @@ const EFFORT_EMOJIS: Record<number, string> = {
 
 export default function AlunoProgresso({ studentId }: { studentId: string }) {
   const { records, streak, paceHistory, recentCheckins, isLoading } = useProgresso(studentId)
+  const [showCalculator, setShowCalculator] = useState(false)
 
   if (isLoading) {
     return <div className={styles.loadingState}>Carregando progresso...</div>
@@ -48,11 +51,34 @@ export default function AlunoProgresso({ studentId }: { studentId: string }) {
   return (
     <div className={styles.container}>
       <header className={styles.hero}>
-        <p className={styles.eyebrow}>EVOLUÇÃO</p>
-        <h1 className={styles.title}>
-          Seu progresso,<br />
-          <em>em números.</em>
-        </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <p className={styles.eyebrow}>EVOLUÇÃO</p>
+            <h1 className={styles.title}>
+              Seu progresso,<br />
+              <em>em números.</em>
+            </h1>
+          </div>
+          <button 
+            onClick={() => setShowCalculator(true)}
+            className={styles.calcBtn}
+            aria-label="Abrir Calculadora de Pace"
+            style={{ 
+              background: 'rgba(255, 255, 255, 0.1)', 
+              border: 'none', 
+              color: 'var(--orange)', 
+              padding: '10px', 
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+            }}
+          >
+            <Calculator size={24} />
+          </button>
+        </div>
 
         {streak > 0 && (
           <motion.div 
@@ -194,6 +220,8 @@ export default function AlunoProgresso({ studentId }: { studentId: string }) {
           )}
         </div>
       </section>
+
+      <PaceCalculator isOpen={showCalculator} onClose={() => setShowCalculator(false)} />
     </div>
   )
 }

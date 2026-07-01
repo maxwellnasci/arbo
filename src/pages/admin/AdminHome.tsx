@@ -3,7 +3,8 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../contexts/AuthContext'
 import AdminPRFeed from './AdminPRFeed'
 import { motion } from 'framer-motion'
-import { Users, LayoutGrid, Trophy, MessageSquare } from 'lucide-react'
+import { Users, LayoutGrid, Trophy, MessageSquare, Calculator } from 'lucide-react'
+import PaceCalculator from '../../components/shared/PaceCalculator'
 
 type Stats = {
   totalAlunos: number
@@ -37,6 +38,7 @@ export default function AdminHome() {
   const { user } = useAuth()
   const [stats, setStats] = useState<Stats>({ totalAlunos: 0, feedbacksThisWeek: 0, prsThisWeek: 0, turmasAtivas: 0 })
   const [isLoading, setIsLoading] = useState(true)
+  const [showCalculator, setShowCalculator] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -60,13 +62,16 @@ export default function AdminHome() {
           supabase.from('groups').select('id', { count: 'exact', head: true }).eq('is_active', true),
         ])
 
-        if (cancelled) return
-        setStats({
-          totalAlunos: totalAlunos ?? 0,
-          feedbacksThisWeek: feedbacksThisWeek ?? 0,
-          prsThisWeek: prsThisWeek ?? 0,
-          turmasAtivas: turmasAtivas ?? 0,
-        })
+        if (!cancelled) {
+          setStats({
+            totalAlunos: totalAlunos || 0,
+            feedbacksThisWeek: feedbacksThisWeek || 0,
+            prsThisWeek: prsThisWeek || 0,
+            turmasAtivas: turmasAtivas || 0,
+          })
+        }
+      } catch (err: unknown) {
+        console.error('Error fetching admin stats:', err instanceof Error ? err.message : 'Unknown error')
       } finally {
         if (!cancelled) setIsLoading(false)
       }
@@ -100,19 +105,44 @@ export default function AdminHome() {
         <RunnerSVG />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, var(--bg-primary) 100%)', pointerEvents: 'none' }} />
 
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <p style={{ fontFamily: 'var(--sans)', fontSize: '10px', fontWeight: 700, letterSpacing: '2.5px', color: 'var(--orange)', textTransform: 'uppercase', margin: '0 0 12px 0' }}>
-            PAINEL DO PROFESSOR
-          </p>
-          <h1 style={{ fontFamily: 'var(--heading)', fontSize: '30px', fontWeight: 700, margin: '0 0 8px 0', lineHeight: 1.1 }}>
-            Sua turma,<br />
-            <span style={{ color: 'var(--orange)', fontStyle: 'italic' }}>em</span> forma.
-          </h1>
-          <p style={{ fontFamily: 'var(--sans)', fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
-            {greeting()}, {name} — {isLoading ? '…' : stats.prsThisWeek} PRs essa semana 🔥
-          </p>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <p style={{ fontFamily: 'var(--sans)', fontSize: '10px', fontWeight: 700, letterSpacing: '2.5px', color: 'var(--orange)', textTransform: 'uppercase', margin: '0 0 12px 0' }}>
+              PAINEL DO PROFESSOR
+            </p>
+            <h1 style={{ fontFamily: 'var(--heading)', fontSize: '30px', fontWeight: 700, margin: '0 0 8px 0', lineHeight: 1.1 }}>
+              Sua turma,<br />
+              <span style={{ color: 'var(--orange)', fontStyle: 'italic' }}>em</span> forma.
+            </h1>
+            <p style={{ fontFamily: 'var(--sans)', fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+              {greeting()}, {name} — {isLoading ? '…' : stats.prsThisWeek} PRs essa semana 🔥
+            </p>
+          </div>
+          
+          <button 
+            onClick={() => setShowCalculator(true)}
+            aria-label="Abrir Calculadora de Pace"
+            style={{ 
+              background: 'rgba(255, 255, 255, 0.1)', 
+              border: '1px solid rgba(255, 255, 255, 0.05)', 
+              color: 'var(--orange)', 
+              padding: '10px', 
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)'
+            }}
+          >
+            <Calculator size={20} />
+          </button>
         </div>
       </div>
+
+      <PaceCalculator isOpen={showCalculator} onClose={() => setShowCalculator(false)} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', marginBottom: '32px' }}>
         <motion.div variants={cardVariants} custom={0} initial="hidden" animate="visible" style={{ background: 'var(--bg-card-green)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-green)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
