@@ -36,3 +36,8 @@ Depende do item 6 estar pronto. Definir comportamento exato com o professor
 
 ## Status
 Roadmap criado em 2026-06-30. Itens 1 e 3 implementados e validados. Aguardando próximos passos do professor.
+
+## Correções Adicionais (2026-07-01)
+- Corrigido corte de tela no `DayPicker` em dispositivos menores (scroll interno e max-height).
+- Ajustado espaçamento inferior (padding-bottom) no container do painel do aluno para evitar sobreposição da BottomNav aos cards de treino.
+- Corrigido o corte do balão de mensagens do `AlunoChat` através de ajustes na hierarquia do flex wrapper.
