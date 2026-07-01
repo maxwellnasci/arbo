@@ -62,3 +62,10 @@
 3. **Mostrar output real** — nunca reportar sucesso sem colar o output dos comandos
 4. **Não criar arquivos temporários** na raiz do projeto
 5. **Verificar database.types.ts** antes de qualquer query ou JOIN
+
+### 12. Falso Positivo de "0 erros" devido ao Cache do TypeScript (tsbuildinfo)
+**O que aconteceu:** Uma variável/função inutilizada foi deixada para trás, mas o comando `npm run build` rodado localmente passou sem erros (apesar do `tsconfig.json` ter `noUnusedLocals: true`). No entanto, o Vercel falhou com erro `TS6133` porque rodou uma build limpa. O build local passou incorretamente devido ao cache de compilação incremental do `tsc -b` (`tsconfig.tsbuildinfo`).
+**Como evitar:**
+- **Sempre apague o cache antes de validar builds finais** ou rode um comando sem emitir cache: `rm -rf tsconfig.tsbuildinfo && npx tsc --noEmit`. 
+- Nunca assuma que o `tsc -b` pegou todos os erros de lint/unused se o arquivo foi modificado apenas superficialmente e o cache incremental o ignorou.
+
