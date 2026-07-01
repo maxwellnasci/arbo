@@ -4,6 +4,8 @@
   height: 100dvh;
   background: var(--bg-primary);
   position: relative;
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
 }
 
 .contentWrapper {
@@ -11,6 +13,8 @@
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
 }
 
 .container {
