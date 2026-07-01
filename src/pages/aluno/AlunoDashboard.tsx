@@ -387,7 +387,7 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
         </button>
       )}
       {activeTab === 'chat' ? (
-        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', touchAction: 'pan-y', overscrollBehaviorX: 'none' }}>
           <AlunoChat studentId={effectiveUserId} />
         </div>
       ) : activeTab === 'progresso' ? (
