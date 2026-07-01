@@ -193,35 +193,50 @@ async function fetchWithRetry(
     }
 
     if (groupId) {
-      // 2. Fetch Group Plan and Mode
-      const [groupPlanRes, groupRes] = await Promise.all([
-        supabase
-          .from('group_plans')
-          .select('id, starts_at, released_through_week')
-          .eq('group_id', groupId)
-          .lte('starts_at', todayMonday)
-          .order('starts_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        supabase.from('groups').select('mode').eq('id', groupId).single(),
-      ])
+      // 2. Fetch Group Mode and starts_at
+      const { data: groupData, error: groupErr } = await supabase
+        .from('groups')
+        .select('mode, starts_at')
+        .eq('id', groupId)
+        .single()
 
-      if (groupPlanRes.error) throw groupPlanRes.error
-      if (groupRes.error) throw groupRes.error
+      if (groupErr) throw groupErr
 
-      const groupPlan = groupPlanRes.data
-      const groupMode = groupRes.data?.mode ?? 'fixo'
+      const groupMode = groupData.mode ?? 'fixo'
+      const groupStartsAt = groupData.starts_at ?? todayMonday
 
+      // Calculate current cycle EXACTLY like Admin (useAdminTurmaDetail)
+      const origin = new Date(groupStartsAt)
+      const today = new Date()
+      const msPerWeek = 7 * 24 * 60 * 60 * 1000
+      const weeksElapsed = Math.max(0, Math.floor((today.getTime() - origin.getTime()) / msPerWeek))
+      const cycleIndex = Math.floor(weeksElapsed / 4)
+      const cycleStartDate = new Date(origin.getTime() + cycleIndex * 4 * msPerWeek)
+      const cycleStartStr = `${cycleStartDate.getFullYear()}-${String(cycleStartDate.getMonth() + 1).padStart(2, '0')}-${String(cycleStartDate.getDate()).padStart(2, '0')}`
+
+      const currentWeekNumber = (weeksElapsed % 4) + 1
+      const targetWeekNumber = selectedWeekNumber !== undefined ? selectedWeekNumber : currentWeekNumber
+
+      // Fetch the group plan for exactly this cycle
+      const { data: groupPlan, error: groupPlanErr } = await supabase
+        .from('group_plans')
+        .select('id, starts_at, released_through_week')
+        .eq('group_id', groupId)
+        .eq('starts_at', cycleStartStr)
+        .maybeSingle()
+
+      if (groupPlanErr) throw groupPlanErr
+      
       if (!groupPlan) return emptyResult
 
-      const currentWeekNumber = getGroupPlanWeekNumber(groupPlan.starts_at, todayMonday)
-      const targetWeekNumber = selectedWeekNumber !== undefined ? selectedWeekNumber : currentWeekNumber
-      const selectedWeekStart = addWeeks(groupPlan.starts_at, targetWeekNumber - 1)
+      const selectedWeekStartGroup = addWeeks(cycleStartStr, targetWeekNumber - 1)
+      const selectedWeekStartIndiv = addWeeks(todayMonday, targetWeekNumber - currentWeekNumber)
 
       // Se passou de 4 semanas de ciclo, está fora do ciclo atual do plano de grupo
-      const cycleEnd = new Date(groupPlan.starts_at)
+      // (isso não deve acontecer devido ao cálculo modulo 4, mas mantemos o guard)
+      const cycleEnd = new Date(cycleStartStr)
       cycleEnd.setDate(cycleEnd.getDate() + 28)
-      if (new Date(selectedWeekStart) >= cycleEnd) return emptyResult
+      if (new Date(selectedWeekStartGroup) >= cycleEnd) return emptyResult
 
       const releasedThrough = groupPlan.released_through_week ?? 0
 
@@ -229,13 +244,13 @@ async function fetchWithRetry(
       if (targetWeekNumber > releasedThrough) {
         let lastWeekSummary: LastWeekSummary | null = null
         if (targetWeekNumber > 1) {
-          const previousMonday = subtractOneWeek(selectedWeekStart)
+          const previousMonday = subtractOneWeek(selectedWeekStartIndiv)
           const { data: prevCheckins } = await supabase
             .from('checkins')
             .select('actual_distance_m, actual_duration_seconds')
             .eq('student_id', userId)
             .gte('created_at', previousMonday)
-            .lt('created_at', addOneDay(selectedWeekStart))
+            .lt('created_at', addOneDay(selectedWeekStartIndiv))
           lastWeekSummary = computeLastWeekSummary(prevCheckins ?? [])
         }
         return {
@@ -254,7 +269,7 @@ async function fetchWithRetry(
         .from('weekly_plans')
         .select('id, student_id, week_start, notes, created_at, created_by')
         .eq('student_id', userId)
-        .eq('week_start', selectedWeekStart)
+        .eq('week_start', selectedWeekStartIndiv)
         .maybeSingle()
 
       if (planRes.error) throw planRes.error
