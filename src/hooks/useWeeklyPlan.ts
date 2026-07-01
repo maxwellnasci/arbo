@@ -31,6 +31,7 @@ export type UseWeeklyPlanResult = {
   refresh: () => void
   currentWeekNumber: number | undefined
   releasedThroughWeek: number | undefined
+  targetWeekNumber: number | undefined
 }
 
 type RawPlanTraining = {
@@ -60,11 +61,12 @@ type State = {
   tick: number
   currentWeekNumber: number | undefined
   releasedThroughWeek: number | undefined
+  targetWeekNumber: number | undefined
 }
 
 type Action =
   | { type: 'REFRESH' }
-  | { type: 'SUCCESS'; profile: Profile | null; plan: WeeklyPlan | null; groupMode: string | null; trainings: DayTraining[]; checkins: Checkin[]; isLocked: boolean; lockedWeekNumber: number; lastWeekSummary: LastWeekSummary | null; currentWeekNumber: number | undefined; releasedThroughWeek: number | undefined }
+  | { type: 'SUCCESS'; profile: Profile | null; plan: WeeklyPlan | null; groupMode: string | null; trainings: DayTraining[]; checkins: Checkin[]; isLocked: boolean; lockedWeekNumber: number; lastWeekSummary: LastWeekSummary | null; currentWeekNumber: number | undefined; releasedThroughWeek: number | undefined; targetWeekNumber: number | undefined }
   | { type: 'ERROR'; message: string }
   | { type: 'DONE' }
 
@@ -85,6 +87,7 @@ function reducer(state: State, action: Action): State {
         lastWeekSummary: action.lastWeekSummary,
         currentWeekNumber: action.currentWeekNumber,
         releasedThroughWeek: action.releasedThroughWeek,
+        targetWeekNumber: action.targetWeekNumber,
         error: null,
       }
     case 'ERROR':
@@ -147,6 +150,7 @@ type FetchResult = {
   lastWeekSummary: LastWeekSummary | null
   currentWeekNumber?: number
   releasedThroughWeek?: number
+  targetWeekNumber?: number
 }
 
 function addWeeks(dateStr: string, weeks: number): string {
@@ -210,7 +214,7 @@ async function fetchWithRetry(
       const cycleStartStr = `${cycleStartDate.getFullYear()}-${String(cycleStartDate.getMonth() + 1).padStart(2, '0')}-${String(cycleStartDate.getDate()).padStart(2, '0')}`
 
       const currentWeekNumber = (weeksElapsed % 4) + 1
-      const targetWeekNumber = selectedWeekNumber !== undefined ? selectedWeekNumber : currentWeekNumber
+      let targetWeekNumber = selectedWeekNumber !== undefined ? selectedWeekNumber : currentWeekNumber
 
       // Fetch the group plan for exactly this cycle
       const { data: groupPlan, error: groupPlanErr } = await supabase
@@ -235,6 +239,12 @@ async function fetchWithRetry(
 
       const releasedThrough = groupPlan.released_through_week ?? 0
 
+      // Auto-fallback: If user hasn't explicitly selected a week, and current week is locked,
+      // fallback to the highest released week (if any) to prevent getting stuck on LockedScreen.
+      if (selectedWeekNumber === undefined && targetWeekNumber > releasedThrough && releasedThrough > 0) {
+        targetWeekNumber = releasedThrough
+      }
+
       // 3. Check released week lock
       if (targetWeekNumber > releasedThrough) {
         let lastWeekSummary: LastWeekSummary | null = null
@@ -256,6 +266,7 @@ async function fetchWithRetry(
           groupMode,
           currentWeekNumber,
           releasedThroughWeek: releasedThrough,
+          targetWeekNumber,
         }
       }
 
@@ -318,6 +329,7 @@ async function fetchWithRetry(
           lastWeekSummary: null,
           currentWeekNumber,
           releasedThroughWeek: releasedThrough,
+          targetWeekNumber,
         }
       } else {
         // Fetch individual plan trainings
@@ -417,6 +429,7 @@ const initialState: State = {
   tick: 0,
   currentWeekNumber: undefined,
   releasedThroughWeek: undefined,
+  targetWeekNumber: undefined,
 }
 
 export function useWeeklyPlan(userId: string | undefined, selectedWeekNumber?: number): UseWeeklyPlanResult {
@@ -433,7 +446,7 @@ export function useWeeklyPlan(userId: string | undefined, selectedWeekNumber?: n
     const sig = { cancelled: false }
 
     fetchWithRetry(userId, selectedWeekNumber, sig)
-      .then(({ profile, plan, groupMode, rawTrainings, schedByGptId, checkins, isLocked, lockedWeekNumber, lastWeekSummary, currentWeekNumber, releasedThroughWeek }) => {
+      .then(({ profile, plan, groupMode, rawTrainings, schedByGptId, checkins, isLocked, lockedWeekNumber, lastWeekSummary, currentWeekNumber, releasedThroughWeek, targetWeekNumber }) => {
         if (sig.cancelled) return
         dispatch({
           type: 'SUCCESS',
@@ -461,6 +474,7 @@ export function useWeeklyPlan(userId: string | undefined, selectedWeekNumber?: n
           lastWeekSummary,
           currentWeekNumber,
           releasedThroughWeek,
+          targetWeekNumber,
         })
       })
       .catch(err => {
@@ -474,7 +488,7 @@ export function useWeeklyPlan(userId: string | undefined, selectedWeekNumber?: n
     return () => { sig.cancelled = true }
   }, [userId, selectedWeekNumber, state.tick])
 
-  const { profile, plan, groupMode, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, currentWeekNumber, releasedThroughWeek } = state
-  return { profile, plan, groupMode, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh, currentWeekNumber, releasedThroughWeek }
+  const { profile, plan, groupMode, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, currentWeekNumber, releasedThroughWeek, targetWeekNumber } = state
+  return { profile, plan, groupMode, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh, currentWeekNumber, releasedThroughWeek, targetWeekNumber }
 }
 

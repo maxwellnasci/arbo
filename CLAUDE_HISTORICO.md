@@ -44,6 +44,10 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 - A lição sobre casting correto em RPC não mapeada foi registrada no `GEMINI_LESSONS.md`.
 - Funcionalidade de edição de nome e visualização de e-mail agora estão completamente limpas no painel Admin.
 
+**Task 65: UX Bugfix em Treinos Bloqueados (LockedScreen Auto-Fallback)**
+- Diagnóstico: Relato de usuários que, mesmo após a liberação da semana pelo admin, o painel do aluno continuava "trancado". A causa era que o `weeksElapsed` avançava automaticamente a turma para a semana atual (ex: Semana 3), mas se o admin só havia liberado até a Semana 2, a lógica travava o aluno numa grande tela de cadeado "Conteúdo Bloqueado", sem que ele percebesse ser possível clicar na barra "S2" da interface.
+- Solução: Implementado um elegante "Auto-Fallback" no `useWeeklyPlan.ts`. Se o `targetWeekNumber` atual for maior que a semana máxima liberada (`releasedThroughWeek`), o sistema automaticamente faz downgrade para a maior semana livre, evitando a barreira visual da `LockedScreen`. O estado de `activeWeek` no `AlunoDashboard.tsx` foi sincronizado de forma correta e nativa para refletir esse ajuste do hook.
+
 ---
 
 ## O que foi feito em 2026-05-21

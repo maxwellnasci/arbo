@@ -319,11 +319,12 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
     refresh,
     currentWeekNumber,
     releasedThroughWeek,
+    targetWeekNumber,
   } = useWeeklyPlan(effectiveUserId, selectedWeek)
   
   const { streak, recentCheckins, records } = useProgresso(effectiveUserId ?? '')
 
-  const activeWeek = selectedWeek !== undefined ? selectedWeek : (currentWeekNumber || 1)
+  const activeWeek = targetWeekNumber || currentWeekNumber || 1
 
   const gptIds = trainings.map(t => t.weeklyPlanTrainingId)
   const { scheduleTraining, rescheduleTraining } = useScheduling(gptIds)
