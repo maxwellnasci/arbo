@@ -6,9 +6,8 @@ lógica de treinos (corrida, CrossFit, Hyrox, funcional).
 
 ## Roadmap de tarefas
 
-### 1. Calculadora de Pace
-Verificar se já existe no app. Se não, implementar (pace por km, ritmo alvo,
-conversão min/km <-> km/h).
+### 1. Calculadora de Pace — ✅ CONCLUÍDO (2026-06-30)
+Implementado componente standalone (`PaceCalculator.tsx`) com cálculos de Pace, Tempo, Distância e tabelas de projeção de provas clássicas. Adicionado botão de acesso rápido tanto no painel do aluno (aba Progresso) quanto no do professor (aba Home).
 
 ### 2. Biblioteca de treinos — ajustes finais
 Já existe em /admin/treinos. Revisar e ajustar com base no feedback real de uso.
@@ -39,4 +38,4 @@ Depende do item 6 estar pronto. Definir comportamento exato com o professor
 (comentar na atividade, notificar professor, sincronizar dado no app, etc).
 
 ## Status
-Roadmap criado em 2026-06-30. Aguardando início pelo item 1.
+Roadmap criado em 2026-06-30. Item 1 (Calculadora de Pace) implementado e validado. Aguardando próximos passos do professor.

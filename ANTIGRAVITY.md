@@ -449,3 +449,8 @@ Resultado Lighthouse antes:
 - **Fix Vercel CSP (Tela Branca do YouTube):** Corrigido o `vercel.json` adicionando a diretiva `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;` ao header `Content-Security-Policy`. Sem isso, o app bloqueava iframes de vídeos.
 - **Fix Regex do VideoPlayer:** Ampliada a regex no `VideoPlayer.tsx` para reconhecer links de YouTube Shorts (`shorts/`) e URLs contendo parâmetros extras ignorados (`?si=`).
 - **Documentação de Portfólio:** Criado o artefato `docs/PORTFOLIO_DEBUG_CASES.md` registrando a proficiência e detalhamento do debug nos casos de Tipagem RPC (TS), CSP de Infra (Vercel) e React Immutability (Linter).
+
+### Sessão 2026-06-30 (Item 1 Fase 3 — Calculadora de Pace)
+- **Calculadora de Pace:** Implementado `PaceCalculator.tsx` (standalone modal/bottom-sheet).
+- **Funcionalidades:** Cálculos cruzados de Pace, Tempo e Distância, além de conversão para km/h e tabela de projeção de provas clássicas (5k, 10k, 21k, 42k).
+- **Integração:** Adicionado botão de atalho interativo no painel do Aluno (`AlunoProgresso.tsx`) e no painel do Admin (`AdminHome.tsx`).
