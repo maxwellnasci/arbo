@@ -20,6 +20,8 @@
   flex-direction: column;
   gap: 20px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  max-height: calc(100dvh - 200px);
+  overflow-y: auto;
 }
 
 .title {
