@@ -360,37 +360,31 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
   return (
     <div className={styles.page}>
       {isPreview && (
-        <div style={{
-          background: 'var(--orange)',
-          color: '#fff',
-          padding: '12px 16px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '14px' }}>
-            <Eye size={18} />
-            Modo Visualização — Testando como Aluno
-          </div>
-          <button 
-            onClick={() => navigate('/admin')}
-            style={{
-              background: 'rgba(0,0,0,0.2)',
-              border: 'none',
-              color: '#fff',
-              padding: '6px 12px',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '12px',
-              fontWeight: 600
-            }}
-          >
-            Voltar ao Admin
-          </button>
-        </div>
+        <button
+          onClick={() => navigate('/admin')}
+          title="Voltar ao Admin"
+          style={{
+            position: 'fixed',
+            top: '16px',
+            right: '16px',
+            zIndex: 9999,
+            width: '44px',
+            height: '44px',
+            borderRadius: '50%',
+            border: '2px solid var(--orange)',
+            background: 'var(--bg-surface)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            color: 'var(--orange)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+          }}
+        >
+          <Eye size={20} />
+        </button>
       )}
       {activeTab === 'chat' ? (
         <AlunoChat studentId={effectiveUserId} />
