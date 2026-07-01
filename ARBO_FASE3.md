@@ -41,3 +41,4 @@ Roadmap criado em 2026-06-30. Itens 1 e 3 implementados e validados. Aguardando 
 - Corrigido corte de tela no `DayPicker` em dispositivos menores (scroll interno e max-height).
 - Ajustado espaçamento inferior (padding-bottom) no container do painel do aluno para evitar sobreposição da BottomNav aos cards de treino.
 - Corrigido o corte do balão de mensagens do `AlunoChat` através de ajustes na hierarquia do flex wrapper.
+- Refatoração profunda da arquitetura de layout do AlunoDashboard, replicando o padrão do AdminLayout (uso de `.contentWrapper` com `flex: 1; overflow: hidden`) para isolar o contexto de formatação do WebKit e impedir cortes de conteúdo no iOS Safari sem disparar a barra de rolagem nativa.

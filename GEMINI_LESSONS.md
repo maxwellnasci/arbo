@@ -37,6 +37,13 @@
 **O que aconteceu:** Erro `TS2345: Argument of type 'any' is not assignable to parameter of type 'never'` ao usar `supabase.rpc('nome' as any)` porque a nova RPC não estava no `database.types.ts`.
 **Como evitar:** Sempre rodar `npx supabase gen types` após criar RPC nova. Caso necessário fazer bypass, **sempre castear o cliente inteiro**: `(supabase as any).rpc('nome', { ... })`. Nunca usar `'nome' as any` no argumento — contamina a inferência do overload.
 
+### 9. Corte de tela (Safari bug com Flex-Column + Overflow-Y)
+**O que aconteceu:** Múltiplas tentativas falhas de corrigir o corte de conteúdo no `AlunoDashboard` adicionando `min-height: 0` e ajustando wrappers no escuro.
+**Como evitar:** 
+- A causa real era o motor WebKit falhando ao calcular o `scrollHeight` em um elemento que era simultaneamente um **flex container** (com `flex-direction: column`) e o **scroller** (`overflow-y: auto`), sem ter um ancestral direto com `overflow: hidden`.
+- Em vez de testar fixes cegos, **sempre compare com um layout que já funciona**. A solução final (adicionar um `.contentWrapper` com `flex: 1; overflow: hidden`) foi encontrada rapidamente comparando o código quebrado do Aluno com o código funcionando do `AdminLayout`.
+
+
 ## Regras de ouro
 
 1. **Espelhar o banco** — tipos, enums e valores sempre iguais ao SQL
