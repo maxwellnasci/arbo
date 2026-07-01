@@ -15,8 +15,8 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 **Fix 2: Campo de Chat ocultado (Aba Professor)**
 - **Problema:** A `inputArea` para envio de mensagens na aba Professor sumiu inteiramente do AlunoDashboard.
-- **Causa Raiz:** Modificações anteriores no wrapper global do AlunoDashboard (`.contentWrapper`) com `flex: 1` e `overflow: hidden` empurraram a base do chat para debaixo do menu fixo inferior (`BottomNav`), ocultando completamente o campo de input e o botão de envio.
-- **Resolução:** Injetado `paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 16px))'` no inline-style wrapper que envelopa o componente `AlunoChat` em `AlunoDashboard.tsx`, respeitando a safe area e erguendo o campo.
+- **Causa Raiz:** Modificações anteriores no wrapper global do AlunoDashboard (`.contentWrapper`) com `flex: 1` e `overflow: hidden` empurraram a base do chat para debaixo do menu fixo inferior (`BottomNav`). O padding aplicado in-line não era repassado adequadamente na árvore do flexbox no mobile, o que não resolvia o problema do overflow de elementos internos.
+- **Resolução:** O estilo in-line do `AlunoDashboard.tsx` foi revertido (restaurando `styles.contentWrapper`). O `padding-bottom` (de `calc(76px + env(safe-area-inset-bottom, 16px))`) foi movido diretamente para a classe `.inputArea` no `AlunoChat.module.css`. O campo de digitação subiu, a área de fundo contorna a navbar fixada sem falhas visuais, e o clique/foco não é mais encoberto.
 
 ---
 
