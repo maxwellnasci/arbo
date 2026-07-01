@@ -6,12 +6,18 @@
   position: relative;
 }
 
+.contentWrapper {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
 .container {
   flex: 1;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  display: block;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); /* space for bottom nav + breathing room */
 }
 
@@ -24,6 +30,7 @@
   border-radius: 0 0 24px 24px;
   overflow: hidden;
   box-shadow: var(--shadow-card);
+  margin-bottom: 24px;
 }
 
 .heroOrbs {

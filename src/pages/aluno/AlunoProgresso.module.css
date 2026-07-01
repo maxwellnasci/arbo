@@ -1,14 +1,21 @@
 .container {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: block;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: calc(80px + env(safe-area-inset-bottom, 16px));
 }
 
 /* ── Hero Menor ───────────────────────────────────────────────────────────── */
 
 .hero {
-  padding: 32px 24px 0;
+  position: relative;
+  background: linear-gradient(160deg, var(--bg-hero) 0%, var(--bg-primary) 65%);
+  padding: 32px 24px;
+  border-radius: 0 0 24px 24px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 32px;
   display: flex;
   flex-direction: column;
   gap: 8px;

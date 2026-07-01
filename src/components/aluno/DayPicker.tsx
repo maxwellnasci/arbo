@@ -23,20 +23,16 @@ export default function DayPicker({ isOpen, onClose, onSelect, selectedDay }: Da
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          <motion.div
-            className={styles.overlay}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
+        <div className={styles.overlay} onClick={onClose}>
           <motion.div
             className={styles.modal}
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            onClick={e => e.stopPropagation()}
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
           >
+            <div className={styles.handle} />
             <h3 className={styles.title}>Escolha o dia</h3>
             <div className={styles.grid}>
               {DAYS.map((day) => (
@@ -56,7 +52,7 @@ export default function DayPicker({ isOpen, onClose, onSelect, selectedDay }: Da
               Cancelar
             </button>
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );
