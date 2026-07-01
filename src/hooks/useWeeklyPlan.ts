@@ -29,6 +29,8 @@ export type UseWeeklyPlanResult = {
   isLoading: boolean
   error: string | null
   refresh: () => void
+  currentWeekNumber: number | undefined
+  releasedThroughWeek: number | undefined
 }
 
 type RawPlanTraining = {
@@ -56,11 +58,13 @@ type State = {
   isLoading: boolean
   error: string | null
   tick: number
+  currentWeekNumber: number | undefined
+  releasedThroughWeek: number | undefined
 }
 
 type Action =
   | { type: 'REFRESH' }
-  | { type: 'SUCCESS'; profile: Profile | null; plan: WeeklyPlan | null; groupMode: string | null; trainings: DayTraining[]; checkins: Checkin[]; isLocked: boolean; lockedWeekNumber: number; lastWeekSummary: LastWeekSummary | null }
+  | { type: 'SUCCESS'; profile: Profile | null; plan: WeeklyPlan | null; groupMode: string | null; trainings: DayTraining[]; checkins: Checkin[]; isLocked: boolean; lockedWeekNumber: number; lastWeekSummary: LastWeekSummary | null; currentWeekNumber: number | undefined; releasedThroughWeek: number | undefined }
   | { type: 'ERROR'; message: string }
   | { type: 'DONE' }
 
@@ -79,6 +83,8 @@ function reducer(state: State, action: Action): State {
         isLocked: action.isLocked,
         lockedWeekNumber: action.lockedWeekNumber,
         lastWeekSummary: action.lastWeekSummary,
+        currentWeekNumber: action.currentWeekNumber,
+        releasedThroughWeek: action.releasedThroughWeek,
         error: null,
       }
     case 'ERROR':
@@ -399,6 +405,8 @@ const initialState: State = {
   isLoading: false,
   error: null,
   tick: 0,
+  currentWeekNumber: undefined,
+  releasedThroughWeek: undefined,
 }
 
 export function useWeeklyPlan(userId: string | undefined, selectedWeekNumber?: number): UseWeeklyPlanResult {
