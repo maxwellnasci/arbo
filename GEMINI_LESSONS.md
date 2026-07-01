@@ -43,6 +43,10 @@
 - A causa real era o motor WebKit falhando ao calcular o `scrollHeight` em um elemento que era simultaneamente um **flex container** (com `flex-direction: column`) e o **scroller** (`overflow-y: auto`), sem ter um ancestral direto com `overflow: hidden`.
 - Em vez de testar fixes cegos, **sempre compare com um layout que já funciona**. A solução final (adicionar um `.contentWrapper` com `flex: 1; overflow: hidden`) foi encontrada rapidamente comparando o código quebrado do Aluno com o código funcionando do `AdminLayout`.
 
+### 10. Tela elástica no iOS Safari (Overscroll/Swipe-to-go-back)
+**O que aconteceu:** O usuário arrastava a tela lateralmente e o conteúdo deslizava e voltava (elástico), parecendo um bug de animação (`drag`) quando na verdade era o comportamento nativo do navegador.
+**Como evitar:**
+- Em PWAs e interfaces que simulam apps nativos, sempre aplique `touch-action: pan-y; overscroll-behavior-x: none;` no container raiz (`.page` ou `.contentWrapper`) caso ele tenha scroll vertical mas você queira bloquear as ações nativas horizontais (como o swipe para voltar/avançar). Isso previne completamente a "puxada elástica" e mantém o app firme como um app nativo.
 
 ## Regras de ouro
 

@@ -42,3 +42,5 @@ Roadmap criado em 2026-06-30. Itens 1 e 3 implementados e validados. Aguardando 
 - Ajustado espaçamento inferior (padding-bottom) no container do painel do aluno para evitar sobreposição da BottomNav aos cards de treino.
 - Corrigido o corte do balão de mensagens do `AlunoChat` através de ajustes na hierarquia do flex wrapper.
 - Refatoração profunda da arquitetura de layout do AlunoDashboard, replicando o padrão do AdminLayout (uso de `.contentWrapper` com `flex: 1; overflow: hidden`) para isolar o contexto de formatação do WebKit e impedir cortes de conteúdo no iOS Safari sem disparar a barra de rolagem nativa.
+- Corrigido desaparecimento do input do chat alterando sua herança Flexbox (`height: 100%` para `flex: 1; min-height: 0`).
+- Bloqueado o comportamento elástico nativo de arrasto horizontal do iOS Safari (Swipe-to-go-back/Overscroll) através de `touch-action: pan-y; overscroll-behavior-x: none` no nível da página do Aluno.
