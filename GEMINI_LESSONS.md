@@ -48,6 +48,13 @@
 **Como evitar:**
 - Em PWAs e interfaces que simulam apps nativos, sempre aplique `touch-action: pan-y; overscroll-behavior-x: none;` no container raiz (`.page` ou `.contentWrapper`) caso ele tenha scroll vertical mas você queira bloquear as ações nativas horizontais (como o swipe para voltar/avançar). Isso previne completamente a "puxada elástica" e mantém o app firme como um app nativo.
 
+### 11. Classes órfãs no CSS e Herança de Touch-Action
+**O que aconteceu:** As propriedades do overscroll foram aplicadas a um `.contentWrapper` no CSS que sequer existia no JSX. O Gemini reportou como "corrigido", mas o bug persistiu. Além disso, as propriedades não herdaram corretamente do elemento pai `.page`.
+**Como evitar:**
+- **Sempre verifique se a classe CSS está de fato sendo usada no JSX** antes de considerar um fix concluído. Nunca presuma que a marcação possui a mesma estrutura que o CSS.
+- **`touch-action` não é herdado pela árvore inteira de forma mágica no iOS Safari** — ele precisa estar explicitamente associado ao elemento que recebe o toque (os scrollers reais dos filhos) ou em cada ancestral direto que compõe a cadeia daquele scroll container.
+- Sempre garanta que elementos fixos ou dinâmicos que não devem encolher sob pressão do Flexbox possuam `flex-shrink: 0` (como a `inputArea` do chat).
+
 ## Regras de ouro
 
 1. **Espelhar o banco** — tipos, enums e valores sempre iguais ao SQL
