@@ -14,7 +14,7 @@ Já existe em /admin/treinos. Revisar e ajustar com base no feedback real de uso
 
 ### 3. Botão "Testar como Aluno" (admin) — ✅ CONCLUÍDO (2026-06-30)
 Admin consegue ver o app como um aluno veria, sem sair do contexto admin.
-Implementado criando uma rota `/preview-aluno` acessível pelo menu do Admin, injetando um `previewStudentId` (conta demo previamente inserida no banco) no `AlunoDashboard`. Adicionado um banner fixo "Modo Visualização" e bloqueado o botão de logout na aba Perfil, isolando a experiência com zero risco de acessar dado real de aluno.
+Implementado criando uma rota `/preview-aluno` acessível pelo menu do Admin, injetando um `previewStudentId` (conta demo previamente inserida no banco) no `AlunoDashboard`. Adicionado um botão flutuante discreto (FAB) "Voltar ao Admin" e bloqueado o botão de logout na aba Perfil, isolando a experiência e evitando distorções no layout com zero risco de acessar dado real de aluno.
 
 ### 4. Padronização de treinos via IA
 Receber arquivo Word com 10 treinos do professor, processar com IA para extrair
