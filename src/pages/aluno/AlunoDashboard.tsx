@@ -7,8 +7,8 @@ import { useProgresso } from '../../hooks/useProgresso'
 import { useScheduling } from '../../hooks/useScheduling'
 import { supabase } from '../../lib/supabase'
 import type { TrainingType } from '../../lib/types'
-import { Home, TrendingUp, MessageSquare, User, Calendar, CheckCircle2, Medal, Flame } from 'lucide-react'
-
+import { useNavigate } from 'react-router-dom'
+import { Home, TrendingUp, MessageSquare, User, Calendar, CheckCircle2, Medal, Flame, Eye } from 'lucide-react'
 import AlunoChat from './AlunoChat'
 import AlunoProgresso from './AlunoProgresso'
 import AlunoPerfil from './AlunoPerfil'
@@ -297,10 +297,15 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 
-export default function AlunoDashboard() {
+export default function AlunoDashboard({ previewStudentId }: { previewStudentId?: string }) {
   const { user } = useAuth()
-  const { profile, plan, groupMode, trainings, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh } = useWeeklyPlan(user?.id)
-  const { streak, recentCheckins, records } = useProgresso(user?.id ?? '')
+  const navigate = useNavigate()
+  
+  const effectiveUserId = previewStudentId || user?.id
+  const isPreview = !!previewStudentId
+
+  const { profile, plan, groupMode, trainings, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh } = useWeeklyPlan(effectiveUserId)
+  const { streak, recentCheckins, records } = useProgresso(effectiveUserId ?? '')
 
   const gptIds = trainings.map(t => t.weeklyPlanTrainingId)
   const { scheduleTraining, rescheduleTraining } = useScheduling(gptIds)
@@ -314,12 +319,12 @@ export default function AlunoDashboard() {
 
   async function handleScheduleUpdate(gptId: string, newDay: DayOfWeek) {
     const dt = trainings.find(t => t.weeklyPlanTrainingId === gptId)
-    if (!user) return
+    if (!effectiveUserId) return
     if (dt?.scheduleId) {
       const result = await rescheduleTraining(dt.scheduleId, newDay)
       if (!result) { toast.error('Erro ao reagendar treino. Tente novamente.'); return }
     } else {
-      const result = await scheduleTraining(user.id, gptId, newDay)
+      const result = await scheduleTraining(effectiveUserId, gptId, newDay)
       if (!result) { toast.error('Erro ao agendar treino. Tente novamente.'); return }
     }
     refresh()
@@ -345,21 +350,54 @@ export default function AlunoDashboard() {
     )
   }
 
-  if (!user) return null
+  if (!effectiveUserId) return null
 
-  const name = profile?.full_name || user.email?.split('@')[0] || 'Atleta'
+  const name = profile?.full_name || (isPreview ? 'Aluno Demo' : user?.email?.split('@')[0]) || 'Atleta'
   const sorted = [...trainings].sort((a, b) => (a.dayOfWeek ?? 99) - (b.dayOfWeek ?? 99))
 
   const numRecords = Object.values(records).filter(Boolean).length
 
   return (
     <div className={styles.page}>
+      {isPreview && (
+        <div style={{
+          background: 'var(--orange)',
+          color: '#fff',
+          padding: '12px 16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '14px' }}>
+            <Eye size={18} />
+            Modo Visualização — Testando como Aluno
+          </div>
+          <button 
+            onClick={() => navigate('/admin')}
+            style={{
+              background: 'rgba(0,0,0,0.2)',
+              border: 'none',
+              color: '#fff',
+              padding: '6px 12px',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: 600
+            }}
+          >
+            Voltar ao Admin
+          </button>
+        </div>
+      )}
       {activeTab === 'chat' ? (
-        <AlunoChat studentId={user.id} />
+        <AlunoChat studentId={effectiveUserId} />
       ) : activeTab === 'progresso' ? (
-        <AlunoProgresso studentId={user.id} />
+        <AlunoProgresso studentId={effectiveUserId} />
       ) : activeTab === 'perfil' ? (
-        <AlunoPerfil studentId={user.id} />
+        <AlunoPerfil studentId={effectiveUserId} isPreview={isPreview} />
       ) : activeTab === 'calendario' ? (
         <main className={styles.container}>
           <div className={styles.emptyState}>
@@ -464,7 +502,7 @@ export default function AlunoDashboard() {
                   <TrainingCard
                     dayTraining={dt}
                     planId={plan?.id ?? null}
-                    userId={user.id}
+                    userId={effectiveUserId}
                     isToday={dt.dayOfWeek !== null && dt.dayOfWeek === todayDow}
                     onCheckinSuccess={refresh}
                   />
@@ -478,7 +516,7 @@ export default function AlunoDashboard() {
               dayTraining={activeCheckin}
               planId={plan?.id ?? null}
               scheduleId={activeCheckin.scheduleId}
-              userId={user.id}
+              userId={effectiveUserId}
               existingCheckin={activeCheckin.checkin}
               onClose={() => setActiveCheckin(null)}
               onSuccess={() => { setActiveCheckin(null); refresh() }}

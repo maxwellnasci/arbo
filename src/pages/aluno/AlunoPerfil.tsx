@@ -5,7 +5,7 @@ import { LogOut, Activity } from 'lucide-react'
 import { motion } from 'framer-motion'
 import styles from './AlunoPerfil.module.css'
 
-export default function AlunoPerfil({ studentId }: { studentId: string }) {
+export default function AlunoPerfil({ studentId, isPreview }: { studentId: string, isPreview?: boolean }) {
   const { perfil, isLoading } = useAlunoPerfil(studentId)
   const navigate = useNavigate()
 
@@ -93,12 +93,14 @@ export default function AlunoPerfil({ studentId }: { studentId: string }) {
         </motion.div>
       </section>
 
-      <section className={styles.section}>
-        <button className={styles.logoutBtn} onClick={handleLogout}>
-          <LogOut size={18} />
-          Sair da Conta
-        </button>
-      </section>
+      {!isPreview && (
+        <section className={styles.section}>
+          <button className={styles.logoutBtn} onClick={handleLogout}>
+            <LogOut size={18} />
+            Sair da Conta
+          </button>
+        </section>
+      )}
     </div>
   )
 }

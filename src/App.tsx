@@ -169,6 +169,7 @@ const router = createBrowserRouter([
                   { path: 'treinos', element: <Suspense fallback={<PageLoader />}><AdminTreinos /></Suspense> },
                 ]
               },
+              { path: '/preview-aluno', element: <Suspense fallback={<PageLoader />}><AlunoDashboard previewStudentId="00000000-0000-0000-0000-000000000000" /></Suspense> },
             ],
           },
           { path: '/aluno', element: <Suspense fallback={<PageLoader />}><AlunoDashboard /></Suspense> },

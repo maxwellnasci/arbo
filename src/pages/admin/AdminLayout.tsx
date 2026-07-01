@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useNavigate } from 'react-router-dom'
 import { AdminSidebar } from './AdminSidebar'
 import AdminBottomNav from '../../components/AdminBottomNav'
 import styles from './AdminLayout.module.css'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLogout } from '../../hooks/useLogout'
-import { LogOut, Sun, Moon, Settings } from 'lucide-react'
+import { LogOut, Sun, Moon, Settings, Eye } from 'lucide-react'
 import arboLogo from '../../assets/arbo-run-logo.png'
 
 export function AdminLayout() {
   const { user } = useAuth()
   const logout = useLogout()
+  const navigate = useNavigate()
   const name = user?.user_metadata?.full_name || user?.email || 'A'
   const initials = name.substring(0, 2).toUpperCase()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -69,6 +70,15 @@ export function AdminLayout() {
                 <Settings size={16} /> Configurações
               </button>
               <div className={styles.dropdownDivider} />
+              <button 
+                className={styles.dropdownItem} 
+                onClick={() => {
+                  setMenuOpen(false)
+                  navigate('/preview-aluno')
+                }}
+              >
+                <Eye size={16} /> Testar como Aluno
+              </button>
               <button className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={logout}>
                 <LogOut size={16} /> Sair
               </button>

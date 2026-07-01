@@ -12,12 +12,9 @@ Implementado componente standalone (`PaceCalculator.tsx`) com cálculos de Pace,
 ### 2. Biblioteca de treinos — ajustes finais
 Já existe em /admin/treinos. Revisar e ajustar com base no feedback real de uso.
 
-### 3. Botão "Testar como Aluno" (admin)
+### 3. Botão "Testar como Aluno" (admin) — ✅ CONCLUÍDO (2026-06-30)
 Admin consegue ver o app como um aluno veria, sem sair do contexto admin.
-Abordagem: conta demo fixa no banco com dados de exemplo (treino, PR, vídeo).
-Botão no menu admin: "Testar como Aluno" -> troca a visualização para o layout
-do AlunoDashboard usando os dados dessa conta demo. Botão fixo "Voltar ao Admin"
-sempre visível. Zero risco de acessar dado real de aluno.
+Implementado criando uma rota `/preview-aluno` acessível pelo menu do Admin, injetando um `previewStudentId` (conta demo previamente inserida no banco) no `AlunoDashboard`. Adicionado um banner fixo "Modo Visualização" e bloqueado o botão de logout na aba Perfil, isolando a experiência com zero risco de acessar dado real de aluno.
 
 ### 4. Padronização de treinos via IA
 Receber arquivo Word com 10 treinos do professor, processar com IA para extrair
@@ -38,4 +35,4 @@ Depende do item 6 estar pronto. Definir comportamento exato com o professor
 (comentar na atividade, notificar professor, sincronizar dado no app, etc).
 
 ## Status
-Roadmap criado em 2026-06-30. Item 1 (Calculadora de Pace) implementado e validado. Aguardando próximos passos do professor.
+Roadmap criado em 2026-06-30. Itens 1 e 3 implementados e validados. Aguardando próximos passos do professor.
