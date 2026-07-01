@@ -5,6 +5,21 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-07-01 (Sessão de Bugfixing)
+
+**Fix 1: Sincronização de Ciclos (Treinos não liberando no Aluno)**
+- **Problema:** O Admin avançava a liberação do plano para as próximas semanas, mas o app do Aluno exibia "Conteúdo bloqueado".
+- **Causa Raiz:** O Admin (`useAdminTurmaDetail.ts`) calculava a "semana atual" do ciclo baseando-se nas semanas transcorridas entre a data de início da turma (`starts_at`) e `new Date()` (hoje). Já o Aluno (`useWeeklyPlan.ts`) utilizava sempre a "segunda-feira da semana corrente" (`getMonday()`) como âncora. Isso gerava um dessincronismo no cálculo de datas caso o `starts_at` da turma caísse no meio da semana (ex: quarta-feira), deixando o aluno 1 semana "atrasado".
+- **Resolução:** O hook `useWeeklyPlan.ts` foi refatorado para utilizar a **mesma matemática de ciclos** (`cycleIndex`, `weeksElapsed`, `cycleStartDate`) do painel Admin. A função `getGroupPlanWeekNumber` foi deletada por se tornar obsoleta.
+- **Side-effect mitigado:** O TypeScript cache (`tsbuildinfo`) escondeu o erro de variável não-utilizada (`getGroupPlanWeekNumber`) localmente, mas gerou um bloqueio (TS6133) no CI da Vercel. A função não-utilizada foi removida e uma lição (`GEMINI_LESSONS.md`) foi adicionada sobre invalidação de cache.
+
+**Fix 2: Campo de Chat ocultado (Aba Professor)**
+- **Problema:** A `inputArea` para envio de mensagens na aba Professor sumiu inteiramente do AlunoDashboard.
+- **Causa Raiz:** Modificações anteriores no wrapper global do AlunoDashboard (`.contentWrapper`) com `flex: 1` e `overflow: hidden` empurraram a base do chat para debaixo do menu fixo inferior (`BottomNav`), ocultando completamente o campo de input e o botão de envio.
+- **Resolução:** Injetado `paddingBottom: 'calc(64px + env(safe-area-inset-bottom, 16px))'` no inline-style wrapper que envelopa o componente `AlunoChat` em `AlunoDashboard.tsx`, respeitando a safe area e erguendo o campo.
+
+---
+
 ## O que foi feito em 2026-06-29
 
 **Task 61: Feature de vídeo YouTube nos treinos**
