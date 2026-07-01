@@ -176,7 +176,60 @@
   font-weight: 600;
 }
 
-/* ── Training List & Cards ───────────────────────────────────────────────────── */
+/* ── Week Selector ───────────────────────────────────────────────────────────── */
+
+.weekSelector {
+  display: flex;
+  gap: 8px;
+  padding: 0 24px;
+  margin-bottom: 8px;
+}
+
+.weekChip {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  outline: none;
+  font-family: var(--sans);
+}
+
+.weekChipSelected {
+  background: var(--orange);
+  color: var(--text-on-brand);
+  border-color: var(--orange);
+  box-shadow: 0 4px 12px rgba(232, 82, 26, 0.2);
+}
+
+.weekChipReleased {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  border-color: var(--border-default);
+}
+
+.weekChipReleased:hover {
+  background: var(--bg-surface-hover);
+}
+
+.weekChipLocked {
+  background: var(--bg-surface);
+  color: var(--text-disabled);
+  border-color: var(--border-subtle);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.weekChipLockIcon {
+  color: var(--text-disabled);
+}
 
 .trainingList {
   display: flex;

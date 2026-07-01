@@ -144,27 +144,38 @@ type FetchResult = {
   isLocked: boolean
   lockedWeekNumber: number
   lastWeekSummary: LastWeekSummary | null
+  currentWeekNumber?: number
+  releasedThroughWeek?: number
 }
 
-async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, attempt = 0): Promise<FetchResult> {
-  try {
-    const weekStart = getMonday()
+function addWeeks(dateStr: string, weeks: number): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  d.setDate(d.getDate() + weeks * 7)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
 
-    const [profileRes, planRes] = await Promise.all([
-      supabase.from('profiles').select('id, full_name, avatar_url, birth_date, group_id, has_set_password, level, role, strava_athlete_id, created_at, updated_at').eq('id', userId).single(),
-      supabase
-        .from('weekly_plans')
-        .select('id, student_id, week_start, notes, created_at, created_by')
-        .eq('student_id', userId)
-        .eq('week_start', weekStart)
-        .maybeSingle(),
-    ])
+async function fetchWithRetry(
+  userId: string,
+  selectedWeekNumber: number | undefined,
+  signal: { cancelled: boolean },
+  attempt = 0
+): Promise<FetchResult> {
+  try {
+    const todayMonday = getMonday()
+
+    // 1. Fetch Profile
+    const profileRes = await supabase
+      .from('profiles')
+      .select('id, full_name, avatar_url, birth_date, group_id, has_set_password, level, role, strava_athlete_id, created_at, updated_at')
+      .eq('id', userId)
+      .single()
 
     if (profileRes.error) throw profileRes.error
-    if (planRes.error) throw planRes.error
+    const profile = profileRes.data
+    const groupId = profile?.group_id
 
     const emptyResult: FetchResult = {
-      profile: profileRes.data,
+      profile,
       plan: null,
       groupMode: null,
       rawTrainings: [],
@@ -175,118 +186,202 @@ async function fetchWithRetry(userId: string, signal: { cancelled: boolean }, at
       lastWeekSummary: null,
     }
 
-    if (!planRes.data) {
-      const groupId = profileRes.data?.group_id
-      if (!groupId) return emptyResult
-
+    if (groupId) {
+      // 2. Fetch Group Plan and Mode
       const [groupPlanRes, groupRes] = await Promise.all([
         supabase
           .from('group_plans')
           .select('id, starts_at, released_through_week')
           .eq('group_id', groupId)
-          .lte('starts_at', weekStart)
+          .lte('starts_at', todayMonday)
           .order('starts_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
         supabase.from('groups').select('mode').eq('id', groupId).single(),
       ])
 
+      if (groupPlanRes.error) throw groupPlanRes.error
+      if (groupRes.error) throw groupRes.error
+
       const groupPlan = groupPlanRes.data
-      const groupMode: string = groupRes.data?.mode ?? 'fixo'
+      const groupMode = groupRes.data?.mode ?? 'fixo'
 
       if (!groupPlan) return emptyResult
 
+      const currentWeekNumber = getGroupPlanWeekNumber(groupPlan.starts_at, todayMonday)
+      const targetWeekNumber = selectedWeekNumber !== undefined ? selectedWeekNumber : currentWeekNumber
+      const selectedWeekStart = addWeeks(groupPlan.starts_at, targetWeekNumber - 1)
+
+      // Se passou de 4 semanas de ciclo, está fora do ciclo atual do plano de grupo
       const cycleEnd = new Date(groupPlan.starts_at)
       cycleEnd.setDate(cycleEnd.getDate() + 28)
-      if (new Date(weekStart) >= cycleEnd) return emptyResult
+      if (new Date(selectedWeekStart) >= cycleEnd) return emptyResult
 
-      const weekNumber = getGroupPlanWeekNumber(groupPlan.starts_at, weekStart)
+      const releasedThrough = groupPlan.released_through_week ?? 0
 
-      if (weekNumber > (groupPlan.released_through_week ?? 0)) {
+      // 3. Check released week lock
+      if (targetWeekNumber > releasedThrough) {
         let lastWeekSummary: LastWeekSummary | null = null
-        if (weekNumber > 1) {
-          const previousMonday = subtractOneWeek(weekStart)
+        if (targetWeekNumber > 1) {
+          const previousMonday = subtractOneWeek(selectedWeekStart)
           const { data: prevCheckins } = await supabase
             .from('checkins')
             .select('actual_distance_m, actual_duration_seconds')
             .eq('student_id', userId)
             .gte('created_at', previousMonday)
-            .lt('created_at', addOneDay(weekStart))
+            .lt('created_at', addOneDay(selectedWeekStart))
           lastWeekSummary = computeLastWeekSummary(prevCheckins ?? [])
         }
-        return { ...emptyResult, isLocked: true, lockedWeekNumber: weekNumber, lastWeekSummary, groupMode }
+        return {
+          ...emptyResult,
+          isLocked: true,
+          lockedWeekNumber: targetWeekNumber,
+          lastWeekSummary,
+          groupMode,
+          currentWeekNumber,
+          releasedThroughWeek: releasedThrough,
+        }
       }
 
-      const { data: gptData, error: gptError } = await supabase
-        .from('group_plan_trainings')
-        .select('id, group_plan_id, week_number, day_of_week, training_id, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, tags(id, name, color, created_at, created_by, updated_at))')
-        .eq('group_plan_id', groupPlan.id)
-        .eq('week_number', weekNumber)
-        .order('day_of_week')
+      // 4. Fetch either Individual Plan override for this week, or Group Plan trainings
+      const planRes = await supabase
+        .from('weekly_plans')
+        .select('id, student_id, week_start, notes, created_at, created_by')
+        .eq('student_id', userId)
+        .eq('week_start', selectedWeekStart)
+        .maybeSingle()
 
-      if (gptError) throw gptError
+      if (planRes.error) throw planRes.error
+      const plan = planRes.data
 
-      const rawTrainings = (gptData ?? []) as unknown as RawPlanTraining[]
+      if (!plan) {
+        // Fetch group plan trainings
+        const { data: gptData, error: gptError } = await supabase
+          .from('group_plan_trainings')
+          .select('id, group_plan_id, week_number, day_of_week, training_id, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, tags(id, name, color, created_at, created_by, updated_at))')
+          .eq('group_plan_id', groupPlan.id)
+          .eq('week_number', targetWeekNumber)
+          .order('day_of_week')
 
-      // Para modo flexível, busca agendamentos do aluno para este ciclo
-      let schedByGptId: Map<string, ScheduleRow> = new Map()
-      if (groupMode === 'flexivel' && rawTrainings.length > 0) {
-        const gptIds = rawTrainings.map(r => r.id)
-        const { data: schedData } = await supabase
-          .from('schedules')
-          .select('id, group_plan_training_id, scheduled_day_of_week')
+        if (gptError) throw gptError
+        const rawTrainings = (gptData ?? []) as unknown as RawPlanTraining[]
+
+        // Fetch student schedules for flex mode
+        let schedByGptId: Map<string, ScheduleRow> = new Map()
+        if (groupMode === 'flexivel' && rawTrainings.length > 0) {
+          const gptIds = rawTrainings.map(r => r.id)
+          const { data: schedData } = await supabase
+            .from('schedules')
+            .select('id, group_plan_training_id, scheduled_day_of_week')
+            .eq('student_id', userId)
+            .in('group_plan_training_id', gptIds)
+          schedByGptId = new Map((schedData ?? []).map(s => [s.group_plan_training_id, s]))
+        }
+
+        // Fetch checkins for these group plan trainings
+        const trainingIds = rawTrainings.map(r => r.training_id)
+        let checkins: Checkin[] = []
+        if (trainingIds.length > 0) {
+          const { data: checkinsData } = await supabase
+            .from('checkins')
+            .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
+            .eq('student_id', userId)
+            .in('training_id', trainingIds)
+          checkins = checkinsData ?? []
+        }
+
+        return {
+          profile,
+          plan: null,
+          groupMode,
+          rawTrainings,
+          schedByGptId,
+          checkins,
+          isLocked: false,
+          lockedWeekNumber: 0,
+          lastWeekSummary: null,
+          currentWeekNumber,
+          releasedThroughWeek: releasedThrough,
+        }
+      } else {
+        // Fetch individual plan trainings
+        const [trainingsRes, checkinsRes] = await Promise.all([
+          supabase
+            .from('weekly_plan_trainings')
+            .select('id, plan_id, training_id, day_of_week, sort_order, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, tags(id, name, color, created_at, created_by, updated_at))')
+            .eq('plan_id', plan.id)
+            .order('day_of_week'),
+          supabase
+            .from('checkins')
+            .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
+            .eq('student_id', userId)
+            .eq('plan_id', plan.id),
+        ])
+
+        if (trainingsRes.error) throw trainingsRes.error
+        if (checkinsRes.error) throw checkinsRes.error
+
+        return {
+          profile,
+          plan,
+          groupMode: null,
+          rawTrainings: (trainingsRes.data ?? []) as unknown as RawPlanTraining[],
+          schedByGptId: new Map(),
+          checkins: checkinsRes.data ?? [],
+          isLocked: false,
+          lockedWeekNumber: 0,
+          lastWeekSummary: null,
+          currentWeekNumber,
+          releasedThroughWeek: releasedThrough,
+        }
+      }
+    } else {
+      // Individual plans only (no group)
+      const planRes = await supabase
+        .from('weekly_plans')
+        .select('id, student_id, week_start, notes, created_at, created_by')
+        .eq('student_id', userId)
+        .eq('week_start', todayMonday)
+        .maybeSingle()
+
+      if (planRes.error) throw planRes.error
+      const plan = planRes.data
+
+      if (!plan) return emptyResult
+
+      const [trainingsRes, checkinsRes] = await Promise.all([
+        supabase
+          .from('weekly_plan_trainings')
+          .select('id, plan_id, training_id, day_of_week, sort_order, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, tags(id, name, color, created_at, created_by, updated_at))')
+          .eq('plan_id', plan.id)
+          .order('day_of_week'),
+        supabase
+          .from('checkins')
+          .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
           .eq('student_id', userId)
-          .in('group_plan_training_id', gptIds)
-        schedByGptId = new Map((schedData ?? []).map(s => [s.group_plan_training_id, s]))
-      }
+          .eq('plan_id', plan.id),
+      ])
+
+      if (trainingsRes.error) throw trainingsRes.error
+      if (checkinsRes.error) throw checkinsRes.error
 
       return {
-        profile: profileRes.data,
-        plan: null,
-        groupMode,
-        rawTrainings,
-        schedByGptId,
-        checkins: [],
+        profile,
+        plan,
+        groupMode: null,
+        rawTrainings: (trainingsRes.data ?? []) as unknown as RawPlanTraining[],
+        schedByGptId: new Map(),
+        checkins: checkinsRes.data ?? [],
         isLocked: false,
         lockedWeekNumber: 0,
         lastWeekSummary: null,
       }
     }
-
-    const planId = planRes.data.id
-
-    const [trainingsRes, checkinsRes] = await Promise.all([
-      supabase
-        .from('weekly_plan_trainings')
-        .select('id, plan_id, training_id, day_of_week, sort_order, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, tags(id, name, color, created_at, created_by, updated_at))')
-        .eq('plan_id', planId)
-        .order('day_of_week'),
-      supabase
-        .from('checkins')
-        .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
-        .eq('student_id', userId)
-        .eq('plan_id', planId),
-    ])
-
-    if (trainingsRes.error) throw trainingsRes.error
-    if (checkinsRes.error) throw checkinsRes.error
-
-    return {
-      profile: profileRes.data,
-      plan: planRes.data,
-      groupMode: null,
-      rawTrainings: (trainingsRes.data ?? []) as unknown as RawPlanTraining[],
-      schedByGptId: new Map(),
-      checkins: checkinsRes.data ?? [],
-      isLocked: false,
-      lockedWeekNumber: 0,
-      lastWeekSummary: null,
-    }
   } catch (err: unknown) {
     if (attempt < 2 && !signal.cancelled) {
       await sleep(1000 * Math.pow(2, attempt))
       if (signal.cancelled) throw err
-      return fetchWithRetry(userId, signal, attempt + 1)
+      return fetchWithRetry(userId, selectedWeekNumber, signal, attempt + 1)
     }
     throw err
   }
@@ -306,7 +401,7 @@ const initialState: State = {
   tick: 0,
 }
 
-export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
+export function useWeeklyPlan(userId: string | undefined, selectedWeekNumber?: number): UseWeeklyPlanResult {
   const [state, dispatch] = useReducer(reducer, {
     ...initialState,
     isLoading: !!userId,
@@ -319,8 +414,8 @@ export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
 
     const sig = { cancelled: false }
 
-    fetchWithRetry(userId, sig)
-      .then(({ profile, plan, groupMode, rawTrainings, schedByGptId, checkins, isLocked, lockedWeekNumber, lastWeekSummary }) => {
+    fetchWithRetry(userId, selectedWeekNumber, sig)
+      .then(({ profile, plan, groupMode, rawTrainings, schedByGptId, checkins, isLocked, lockedWeekNumber, lastWeekSummary, currentWeekNumber, releasedThroughWeek }) => {
         if (sig.cancelled) return
         dispatch({
           type: 'SUCCESS',
@@ -346,6 +441,8 @@ export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
           isLocked,
           lockedWeekNumber,
           lastWeekSummary,
+          currentWeekNumber,
+          releasedThroughWeek,
         })
       })
       .catch(err => {
@@ -357,8 +454,9 @@ export function useWeeklyPlan(userId: string | undefined): UseWeeklyPlanResult {
       })
 
     return () => { sig.cancelled = true }
-  }, [userId, state.tick])
+  }, [userId, selectedWeekNumber, state.tick])
 
-  const { profile, plan, groupMode, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error } = state
-  return { profile, plan, groupMode, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh }
+  const { profile, plan, groupMode, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, currentWeekNumber, releasedThroughWeek } = state
+  return { profile, plan, groupMode, trainings, checkins, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh, currentWeekNumber, releasedThroughWeek }
 }
+

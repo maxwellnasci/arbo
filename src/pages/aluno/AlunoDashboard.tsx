@@ -8,7 +8,7 @@ import { useScheduling } from '../../hooks/useScheduling'
 import { supabase } from '../../lib/supabase'
 import type { TrainingType } from '../../lib/types'
 import { useNavigate } from 'react-router-dom'
-import { Home, TrendingUp, MessageSquare, User, Calendar, CheckCircle2, Medal, Flame, Eye } from 'lucide-react'
+import { Home, TrendingUp, MessageSquare, User, Calendar, CheckCircle2, Medal, Flame, Eye, Lock } from 'lucide-react'
 import AlunoChat from './AlunoChat'
 import AlunoProgresso from './AlunoProgresso'
 import AlunoPerfil from './AlunoPerfil'
@@ -304,8 +304,26 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
   const effectiveUserId = previewStudentId || user?.id
   const isPreview = !!previewStudentId
 
-  const { profile, plan, groupMode, trainings, isLocked, lockedWeekNumber, lastWeekSummary, isLoading, error, refresh } = useWeeklyPlan(effectiveUserId)
+  const [selectedWeek, setSelectedWeek] = useState<number | undefined>(undefined)
+
+  const {
+    profile,
+    plan,
+    groupMode,
+    trainings,
+    isLocked,
+    lockedWeekNumber,
+    lastWeekSummary,
+    isLoading,
+    error,
+    refresh,
+    currentWeekNumber,
+    releasedThroughWeek,
+  } = useWeeklyPlan(effectiveUserId, selectedWeek)
+  
   const { streak, recentCheckins, records } = useProgresso(effectiveUserId ?? '')
+
+  const activeWeek = selectedWeek !== undefined ? selectedWeek : (currentWeekNumber || 1)
 
   const gptIds = trainings.map(t => t.weeklyPlanTrainingId)
   const { scheduleTraining, rescheduleTraining } = useScheduling(gptIds)
@@ -466,45 +484,81 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
             <LockedScreen
               lockedWeekNumber={lockedWeekNumber}
               lastWeekSummary={lastWeekSummary}
+              activeWeek={activeWeek}
+              releasedThroughWeek={releasedThroughWeek ?? 0}
+              onSelectWeek={(week) => setSelectedWeek(week)}
             />
-          ) : trainings.length === 0 ? (
-            <EmptyState />
-          ) : groupMode === 'flexivel' ? (
-            <div className={styles.trainingList}>
-              {sorted.map((dt, i) => (
-                <motion.div
-                  key={dt.weeklyPlanTrainingId}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08, duration: 0.3 }}
-                >
-                  <FlexibleTrainingCard
-                    dayTraining={dt}
-                    onScheduleUpdate={handleScheduleUpdate}
-                    onCheckinClick={setActiveCheckin}
-                  />
-                </motion.div>
-              ))}
-            </div>
           ) : (
-            <div className={styles.trainingList}>
-              {sorted.map((dt, i) => (
-                <motion.div
-                  key={dt.weeklyPlanTrainingId}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.08, duration: 0.3 }}
-                >
-                  <TrainingCard
-                    dayTraining={dt}
-                    planId={plan?.id ?? null}
-                    userId={effectiveUserId}
-                    isToday={dt.dayOfWeek !== null && dt.dayOfWeek === todayDow}
-                    onCheckinSuccess={refresh}
-                  />
-                </motion.div>
-              ))}
-            </div>
+            <>
+              {profile?.group_id && (
+                <div className={styles.weekSelector}>
+                  {[1, 2, 3, 4].map(n => {
+                    const isReleased = n <= (releasedThroughWeek ?? 0)
+                    const isSelected = n === activeWeek
+                    return (
+                      <button
+                        key={n}
+                        onClick={() => {
+                          if (isReleased) {
+                            setSelectedWeek(n)
+                          } else {
+                            toast.error(`Semana ${n} ainda não foi liberada pelo professor.`)
+                          }
+                        }}
+                        className={`${styles.weekChip} ${
+                          isSelected ? styles.weekChipSelected : 
+                          isReleased ? styles.weekChipReleased : 
+                          styles.weekChipLocked
+                        }`}
+                      >
+                        <span>Semana {n}</span>
+                        {!isReleased && <Lock size={12} className={styles.weekChipLockIcon} />}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
+              {trainings.length === 0 ? (
+                <EmptyState />
+              ) : groupMode === 'flexivel' ? (
+                <div className={styles.trainingList}>
+                  {sorted.map((dt, i) => (
+                    <motion.div
+                      key={dt.weeklyPlanTrainingId}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, duration: 0.3 }}
+                    >
+                      <FlexibleTrainingCard
+                        dayTraining={dt}
+                        onScheduleUpdate={handleScheduleUpdate}
+                        onCheckinClick={setActiveCheckin}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.trainingList}>
+                  {sorted.map((dt, i) => (
+                    <motion.div
+                      key={dt.weeklyPlanTrainingId}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.08, duration: 0.3 }}
+                    >
+                      <TrainingCard
+                        dayTraining={dt}
+                        planId={plan?.id ?? null}
+                        userId={effectiveUserId}
+                        isToday={dt.dayOfWeek !== null && dt.dayOfWeek === todayDow}
+                        onCheckinSuccess={refresh}
+                      />
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           {activeCheckin && (

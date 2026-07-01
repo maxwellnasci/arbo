@@ -1,10 +1,20 @@
 import { Lock } from 'lucide-react'
 import type { LastWeekSummary } from '../../hooks/useWeeklyPlan'
 import styles from './LockedScreen.module.css'
+import { toast } from 'sonner'
 
-export default function LockedScreen({ lockedWeekNumber, lastWeekSummary }: {
+export default function LockedScreen({
+  lockedWeekNumber,
+  lastWeekSummary,
+  activeWeek,
+  releasedThroughWeek,
+  onSelectWeek,
+}: {
   lockedWeekNumber: number
   lastWeekSummary: LastWeekSummary | null
+  activeWeek: number
+  releasedThroughWeek: number
+  onSelectWeek: (week: number) => void
 }) {
   function formatPace(secondsPerKm: number | null): string | null {
     if (secondsPerKm == null) return null
@@ -55,20 +65,33 @@ export default function LockedScreen({ lockedWeekNumber, lastWeekSummary }: {
 
       {/* Barra de progresso do ciclo S1–S4 */}
       <div className={styles.cycle}>
-        {[1, 2, 3, 4].map(n => (
-          <div key={n} className={styles.cycleItem}>
-            <div className={`${styles.cycleBar} ${
-              n < lockedWeekNumber ? styles.cycleBarDone :
-              n === lockedWeekNumber ? styles.cycleBarCurrent :
-              styles.cycleBarFuture
-            }`} />
-            <span className={`${styles.cycleLabel} ${
-              n < lockedWeekNumber ? styles.cycleLabelDone :
-              n === lockedWeekNumber ? styles.cycleLabelCurrent :
-              styles.cycleLabelFuture
-            }`}>S{n}</span>
-          </div>
-        ))}
+        {[1, 2, 3, 4].map(n => {
+          const isReleased = n <= releasedThroughWeek
+          return (
+            <button
+              key={n}
+              onClick={() => {
+                if (isReleased) {
+                  onSelectWeek(n)
+                } else {
+                  toast.error(`Semana ${n} ainda não foi liberada pelo professor.`)
+                }
+              }}
+              className={styles.cycleItem}
+            >
+              <div className={`${styles.cycleBar} ${
+                n < activeWeek ? styles.cycleBarDone :
+                n === activeWeek ? styles.cycleBarCurrent :
+                styles.cycleBarFuture
+              }`} />
+              <span className={`${styles.cycleLabel} ${
+                n < activeWeek ? styles.cycleLabelDone :
+                n === activeWeek ? styles.cycleLabelCurrent :
+                styles.cycleLabelFuture
+              }`}>S{n}</span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )
