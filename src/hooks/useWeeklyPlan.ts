@@ -107,12 +107,7 @@ function getMonday(): string {
   return `${yyyy}-${mm}-${dd}`
 }
 
-function getGroupPlanWeekNumber(cycleStartStr: string, weekStartStr: string): number {
-  const cycleStart = new Date(cycleStartStr)
-  const weekStart = new Date(weekStartStr)
-  const msPerWeek = 7 * 24 * 60 * 60 * 1000
-  return Math.floor((weekStart.getTime() - cycleStart.getTime()) / msPerWeek) + 1
-}
+
 
 function subtractOneWeek(dateStr: string): string {
   const d = new Date(dateStr + 'T12:00:00')
