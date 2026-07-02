@@ -205,8 +205,10 @@ async function fetchWithRetry(
       const groupStartsAt = groupData.starts_at ?? todayMonday
 
       // Calculate current cycle EXACTLY like Admin (useAdminTurmaDetail)
-      const origin = new Date(groupStartsAt)
+      const [y, m, d] = groupStartsAt.split('-').map(Number)
+      const origin = new Date(y, m - 1, d)
       const today = new Date()
+      today.setHours(0, 0, 0, 0)
       const msPerWeek = 7 * 24 * 60 * 60 * 1000
       const weeksElapsed = Math.max(0, Math.floor((today.getTime() - origin.getTime()) / msPerWeek))
       const cycleIndex = Math.floor(weeksElapsed / 4)

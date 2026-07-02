@@ -31,8 +31,10 @@ function toDateString(d: Date): string {
 }
 
 function getCurrentCycle(startsAt: string): { cycleStart: string; weekNumber: number } {
-  const origin = new Date(startsAt)
+  const [y, m, d] = startsAt.split('-').map(Number)
+  const origin = new Date(y, m - 1, d)
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const msPerWeek = 7 * 24 * 60 * 60 * 1000
   const weeksElapsed = Math.max(0, Math.floor((today.getTime() - origin.getTime()) / msPerWeek))
   const cycleIndex = Math.floor(weeksElapsed / 4)
