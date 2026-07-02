@@ -214,32 +214,29 @@ async function fetchWithRetry(
       const cycleIndex = Math.floor(weeksElapsed / 4)
       const cycleStartDate = new Date(origin.getTime() + cycleIndex * 4 * msPerWeek)
       const cycleStartStr = `${cycleStartDate.getFullYear()}-${String(cycleStartDate.getMonth() + 1).padStart(2, '0')}-${String(cycleStartDate.getDate()).padStart(2, '0')}`
-
       const currentWeekNumber = (weeksElapsed % 4) + 1
       let targetWeekNumber = selectedWeekNumber !== undefined ? selectedWeekNumber : currentWeekNumber
 
-      // Fetch the group plan for exactly this cycle
+      // 1. Fetch the group plan for exactly this cycle to get released_through_week
+      // Use range query (7-day window) to handle cases where admin saved plan
+      // with a non-Monday date while cycleStartStr is always a Monday.
+      const cycleWindowEnd = new Date(cycleStartStr)
+      cycleWindowEnd.setDate(cycleWindowEnd.getDate() + 6)
+      const cycleWindowEndStr = `${cycleWindowEnd.getFullYear()}-${String(cycleWindowEnd.getMonth() + 1).padStart(2, '0')}-${String(cycleWindowEnd.getDate()).padStart(2, '0')}`
+
       const { data: groupPlan, error: groupPlanErr } = await supabase
         .from('group_plans')
         .select('id, starts_at, released_through_week')
         .eq('group_id', groupId)
-        .eq('starts_at', cycleStartStr)
+        .gte('starts_at', cycleStartStr)
+        .lte('starts_at', cycleWindowEndStr)
+        .order('starts_at', { ascending: false })
+        .limit(1)
         .maybeSingle()
 
       if (groupPlanErr) throw groupPlanErr
       
-      if (!groupPlan) return emptyResult
-
-      const selectedWeekStartGroup = addWeeks(cycleStartStr, targetWeekNumber - 1)
-      const selectedWeekStartIndiv = addWeeks(todayMonday, targetWeekNumber - currentWeekNumber)
-
-      // Se passou de 4 semanas de ciclo, está fora do ciclo atual do plano de grupo
-      // (isso não deve acontecer devido ao cálculo modulo 4, mas mantemos o guard)
-      const cycleEnd = new Date(cycleStartStr)
-      cycleEnd.setDate(cycleEnd.getDate() + 28)
-      if (new Date(selectedWeekStartGroup) >= cycleEnd) return emptyResult
-
-      const releasedThrough = groupPlan.released_through_week ?? 0
+      const releasedThrough = groupPlan?.released_through_week ?? 0
 
       // Auto-fallback: If user hasn't explicitly selected a week, and current week is locked,
       // fallback to the highest released week (if any) to prevent getting stuck on LockedScreen.
@@ -247,32 +244,10 @@ async function fetchWithRetry(
         targetWeekNumber = releasedThrough
       }
 
-      // 3. Check released week lock
-      if (targetWeekNumber > releasedThrough) {
-        let lastWeekSummary: LastWeekSummary | null = null
-        if (targetWeekNumber > 1) {
-          const previousMonday = subtractOneWeek(selectedWeekStartIndiv)
-          const { data: prevCheckins } = await supabase
-            .from('checkins')
-            .select('actual_distance_m, actual_duration_seconds')
-            .eq('student_id', userId)
-            .gte('created_at', previousMonday)
-            .lt('created_at', addOneDay(selectedWeekStartIndiv))
-          lastWeekSummary = computeLastWeekSummary(prevCheckins ?? [])
-        }
-        return {
-          ...emptyResult,
-          isLocked: true,
-          lockedWeekNumber: targetWeekNumber,
-          lastWeekSummary,
-          groupMode,
-          currentWeekNumber,
-          releasedThroughWeek: releasedThrough,
-          targetWeekNumber,
-        }
-      }
+      const selectedWeekStartGroup = addWeeks(cycleStartStr, targetWeekNumber - 1)
+      const selectedWeekStartIndiv = addWeeks(todayMonday, targetWeekNumber - currentWeekNumber)
 
-      // 4. Fetch either Individual Plan override for this week, or Group Plan trainings
+      // 2. Fetch Individual Plan override for this week FIRST
       const planRes = await supabase
         .from('weekly_plans')
         .select('id, student_id, week_start, notes, created_at, created_by')
@@ -284,6 +259,41 @@ async function fetchWithRetry(
       const plan = planRes.data
 
       if (!plan) {
+        // No individual plan override, fall back to Group Plan
+
+        if (!groupPlan) return emptyResult
+
+        // Se passou de 4 semanas de ciclo, está fora do ciclo atual do plano de grupo
+        // (isso não deve acontecer devido ao cálculo modulo 4, mas mantemos o guard)
+        const cycleEnd = new Date(cycleStartStr)
+        cycleEnd.setDate(cycleEnd.getDate() + 28)
+        if (new Date(selectedWeekStartGroup) >= cycleEnd) return emptyResult
+
+        // 3. Check released week lock
+        if (targetWeekNumber > releasedThrough) {
+          let lastWeekSummary: LastWeekSummary | null = null
+          if (targetWeekNumber > 1) {
+            const previousMonday = subtractOneWeek(selectedWeekStartIndiv)
+            const { data: prevCheckins } = await supabase
+              .from('checkins')
+              .select('actual_distance_m, actual_duration_seconds')
+              .eq('student_id', userId)
+              .gte('created_at', previousMonday)
+              .lt('created_at', addOneDay(selectedWeekStartIndiv))
+            lastWeekSummary = computeLastWeekSummary(prevCheckins ?? [])
+          }
+          return {
+            ...emptyResult,
+            isLocked: true,
+            lockedWeekNumber: targetWeekNumber,
+            lastWeekSummary,
+            groupMode,
+            currentWeekNumber,
+            releasedThroughWeek: releasedThrough,
+            targetWeekNumber,
+          }
+        }
+
         // Fetch group plan trainings
         const { data: gptData, error: gptError } = await supabase
           .from('group_plan_trainings')
@@ -334,7 +344,7 @@ async function fetchWithRetry(
           targetWeekNumber,
         }
       } else {
-        // Fetch individual plan trainings
+        // Individual Plan Override logic
         const [trainingsRes, checkinsRes] = await Promise.all([
           supabase
             .from('weekly_plan_trainings')
@@ -363,6 +373,7 @@ async function fetchWithRetry(
           lastWeekSummary: null,
           currentWeekNumber,
           releasedThroughWeek: releasedThrough,
+          targetWeekNumber,
         }
       }
     } else {
@@ -463,7 +474,7 @@ export function useWeeklyPlan(userId: string | undefined, selectedWeekNumber?: n
               const dt: DayTraining = {
                 weeklyPlanTrainingId: wpt.id,
                 // Modo fixo: usa day_of_week do plano. Modo flexível: usa dia agendado pelo aluno (ou null)
-                dayOfWeek: sched?.scheduled_day_of_week ?? wpt.day_of_week ?? null,
+                dayOfWeek: groupMode === 'flexivel' ? (sched?.scheduled_day_of_week ?? null) : (wpt.day_of_week ?? null),
                 training,
                 checkin: checkins.find(c => c.training_id === wpt.training_id) ?? null,
                 scheduleId: sched?.id,
