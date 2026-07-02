@@ -69,3 +69,7 @@
 - **Sempre apague o cache antes de validar builds finais** ou rode um comando sem emitir cache: `rm -rf tsconfig.tsbuildinfo && npx tsc --noEmit`. 
 - Nunca assuma que o `tsc -b` pegou todos os erros de lint/unused se o arquivo foi modificado apenas superficialmente e o cache incremental o ignorou.
 
+
+### Timezone Bugs em Dashboards (2026-07-02)
+- **Problema**: O `getCurrentCycle` usava `new Date(startsAt)` (string YYYY-MM-DD), o que resulta em UTC. Em GMT-3 (Brasil), isso jogava a data para o dia anterior (ex: dia 29 virava dia 28), fazendo o Supabase retornar null no `group_plans`.
+- **Lição**: getMonday() e qualquer cálculo de data/semana deve usar horário LOCAL (getDay/setDate), nunca UTC (getUTCDay/setUTCDate), especialmente em apps usados no Brasil (GMT-3). Diferença de timezone pode fazer o app mostrar a semana errada. Para contornar conversões automáticas do construtor de `Date` com strings, sempre converta "YYYY-MM-DD" quebrando a string `startsAt.split('-')` e criando a data com `new Date(y, m-1, d)`.
