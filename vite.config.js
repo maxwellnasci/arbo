@@ -10,8 +10,8 @@ export default defineConfig({
             registerType: 'autoUpdate',
             includeAssets: ['icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-512-maskable.png', 'offline.html'],
             manifest: {
-                name: 'Arbo',
-                short_name: 'Arbo',
+                name: 'Arbo Run',
+                short_name: 'Arbo Run',
                 description: 'CrossFit Running App',
                 theme_color: '#111111',
                 background_color: '#111111',

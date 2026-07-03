@@ -5,6 +5,14 @@ Aplicativo de corrida exclusivo para alunos e professores de CrossFit.
 O objetivo é integrar o desempenho de corrida com a rotina de treino dos atletas,
 oferecendo acompanhamento de progresso, treinos estruturados e comunidade.
 
+## ⚠️ PROTOCOLO SUPREMO (PADRÃO 2030) - OBRIGATÓRIO
+Para garantir estabilidade máxima e eliminar a quebra de produção por agilidade irresponsável, você (Gemini) **DEVE** seguir este fluxo estrito em todas as tarefas:
+1. **Deep Discovery:** Use `grep_search` e `view_file` para escanear extensivamente todas as dependências do componente/lógica antes de escrever/apagar qualquer código. Nunca assuma. Entenda o código legado por trás.
+2. **Peer Review (Opcional/Se Complexo):** Utilize subagentes de pesquisa (`research`) para cruzar informações ou validar grandes refatorações antes da execução.
+3. **Execução Cirúrgica:** Edições atômicas e focadas. Sem modificações caóticas em múltiplos arquivos simultâneos.
+4. **Verificação Suprema (A Barreira):** Nenhum `git commit` será feito sem antes rodar `npm run lint`, limpar cache do typescript (`rm -rf tsconfig.tsbuildinfo && npx tsc --noEmit`) e rodar `npm run build`. O código DEVE estar impecável.
+5. **Memória Persistente:** Registre o aprendizado da sessão em `CLAUDE_HISTORICO.md` (ou `GEMINI_LESSONS.md`) detalhando o bug, diagnóstico e a solução.
+
 ## Stack Técnica
 - **Frontend Web:** React 19 + Vite + TypeScript
 - **Hospedagem:** Vercel
