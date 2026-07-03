@@ -6,8 +6,17 @@ lógica de treinos (corrida, CrossFit, Hyrox, funcional).
 
 ## Roadmap de tarefas
 
-### 1. Calculadora de Pace — ✅ CONCLUÍDO (2026-06-30)
+### 1. Calculadora de Pace — ✅ 100% CONCLUÍDO COM ZONAS (2026-07-03)
 Implementado componente standalone (`PaceCalculator.tsx`) com cálculos de Pace, Tempo, Distância e tabelas de projeção de provas clássicas. Adicionado botão de acesso rápido tanto no painel do aluno (aba Progresso) quanto no do professor (aba Home).
+
+**Atualização 2026-07-03:**
+- Toggle "Básico / Zonas" no topo do modal — modo Básico mantém as 3 abas originais (Pace/Tempo/Distância) intactas
+- Modo Zonas: input de pace de referência + botão "Calcular Zonas" → 5 cards de zona de treino (Z1 Regenerativo, Z2 Base Aeróbica, Z3 Moderado, Z4 Limiar, Z5 Máximo/VO2), cada um com faixa de pace calculada a partir de percentuais sobre o pace de referência, descrição e borda esquerda colorida por zona
+- Corrigidos hardcoded colors remanescentes no `PaceCalculator.module.css` (overlay, tabs, inputs, resultBox, speedBox, tableBox) — migrados para CSS vars semânticas (`--backdrop-bg`, `--bg-input`, `--border-default`, `--orange-subtle`, `--orange-border`, `--bg-surface-hover`)
+- Corrigido bug de variável CSS inexistente (`var(--border)` não existia em `index.css` — trocado por `var(--border-default)` nas 4 ocorrências)
+- Botões trigger em `AlunoProgresso.tsx` e `AdminHome.tsx` migrados de `rgba(255,255,255,...)` hardcoded para `var(--orange-subtle)` / `var(--border-default)`
+- Modal agora tem `max-height: calc(100dvh - 60px)` + `overflow-y: auto` + `touch-action: pan-y` (overlay e modal) — evita corte de tela e permite scroll seguro em telas pequenas com as 5 zonas
+- Validado: `tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros/warnings
 
 ### 2. Biblioteca de treinos — ajustes finais
 Já existe em /admin/treinos. Revisar e ajustar com base no feedback real de uso.
