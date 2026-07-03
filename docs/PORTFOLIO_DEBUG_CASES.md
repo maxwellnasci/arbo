@@ -128,3 +128,36 @@ Como o elemento de navegação usa `position: fixed`, ele é removido do fluxo n
 }
 ```
 **Conhecimento demonstrado:** Domínio de `position: fixed` vs. fluxo flexbox, `env(safe-area-inset-bottom)` para notch/home-indicator em iOS, e diagnóstico de bugs "invisíveis" que não aparecem em nenhuma ferramenta de log — só observando o comportamento real do layout.
+
+---
+
+## Estudo de Caso 6: Feature Ausente no Modo Flexível (React / Gap Analysis)
+
+**O Cenário:**
+Turmas no modo "flexível" existem no sistema, mas alunos viam 100% do conteúdo bloqueado mesmo após o professor tentar liberar.
+
+**O Sintoma:**
+`released_through_week` ficava travado em `0` para turmas flexíveis — nenhuma semana era liberada nunca, independente do que o professor fizesse.
+
+**O Diagnóstico:**
+O componente `AdminTurmaDetail.tsx` usa branches separados para modo fixo e flexível. Os chips S1–S4 de liberar/bloquear semana (`handleChipClick` / `releaseThrough`) só existiam no branch do modo fixo (`WeekView`). O branch flexível não tinha nenhum mecanismo de liberação — a feature simplesmente não foi implementada quando o modo flexível foi criado.
+
+Segundo problema encontrado na mesma investigação: o botão "+ Adicionar Treino" no modo flexível sempre usava `openSlot(1, 1)` — adicionava apenas na Semana 1, sem seletor. Mesmo liberando S2/S3/S4, era impossível colocar treinos nelas.
+
+**A Solução:**
+Adicionados chips S1–S4 no branch flexível reaproveitando a lógica existente (mesmo `handleChipClick`, mesmo toggle bidirecional já usado no modo fixo — sem reimplementar nada). Lista de treinos agrupada por semana (1 a 4), cada uma com botão próprio de adicionar treino na semana correta:
+```tsx
+{([1, 2, 3, 4] as const).map(w => {
+  const isReleased = (plan?.released_through_week ?? 0) >= w
+  const weekTrainings = trainings.filter(entry => entry.weekNumber === w)
+  return (
+    <div key={w}>
+      <span>Semana {w}</span>
+      {weekTrainings.map(entry => /* ... */)}
+      <button onClick={() => openSlot(w, 1)}>+ Adicionar Treino · Semana {w}</button>
+    </div>
+  )
+})}
+```
+
+**Conhecimento demonstrado:** Identificação de feature gap em modo alternativo via leitura direta do código (não por tentativa e erro), reuso de lógica existente sem duplicação de código.
