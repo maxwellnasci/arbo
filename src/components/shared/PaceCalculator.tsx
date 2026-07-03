@@ -62,6 +62,12 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
   const [paceMin, setPaceMin] = useState('')
   const [paceSec, setPaceSec] = useState('')
 
+  // Avançado — "descubra a zona de um treino específico"
+  const [checkKm, setCheckKm] = useState('')
+  const [checkHours, setCheckHours] = useState('')
+  const [checkMinutes, setCheckMinutes] = useState('')
+  const [checkSeconds, setCheckSeconds] = useState('')
+
   // Parsing helpers
   const parseNum = (val: string) => {
     const n = parseFloat(val.replace(',', '.'))
@@ -127,6 +133,31 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
 
   const renderZoneRange = (pace: number, zone: Zone) =>
     `${formatPace(pace * zone.minFactor)}–${formatPace(pace * zone.maxFactor)}`
+
+  // Avançado — descobrir a zona de um treino específico (km + tempo)
+  const checkTotalSecs = parseIntSafe(checkHours) * 3600 + parseIntSafe(checkMinutes) * 60 + parseIntSafe(checkSeconds)
+  const checkDistKm = parseNum(checkKm)
+  const checkPaceSecs = checkDistKm > 0 && checkTotalSecs > 0 ? checkTotalSecs / checkDistKm : 0
+
+  const findZoneForPace = (paceSecs: number, refPace: number): AdvancedZone | null => {
+    if (paceSecs <= 0 || refPace <= 0) return null
+    const exact = ADVANCED_ZONES.find(z => paceSecs >= refPace * z.minFactor && paceSecs <= refPace * z.maxFactor)
+    if (exact) return exact
+    // fora das faixas (zona de transição) — retorna a zona com o centro mais próximo
+    let closest = ADVANCED_ZONES[0]
+    let closestDist = Infinity
+    for (const z of ADVANCED_ZONES) {
+      const center = refPace * ((z.minFactor + z.maxFactor) / 2)
+      const dist = Math.abs(paceSecs - center)
+      if (dist < closestDist) {
+        closestDist = dist
+        closest = z
+      }
+    }
+    return closest
+  }
+
+  const matchedZone = findZoneForPace(checkPaceSecs, advancedPaceSecs)
 
   return (
     <AnimatePresence>
@@ -210,6 +241,70 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
                           <p className={styles.zoneWorkout}><strong>Treino:</strong> {zone.workout}</p>
                         </div>
                       ))}
+                    </div>
+                  )}
+
+                  {advancedPaceSecs > 0 && (
+                    <div className={styles.zonesBox}>
+                      <h4 className={styles.tableTitle}>Descubra a zona de um treino específico</h4>
+                      <div className={styles.content}>
+                        <div className={styles.fieldGroup}>
+                          <label className={styles.label}>Distância (km)</label>
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            className={styles.input}
+                            placeholder="Ex: 8"
+                            value={checkKm}
+                            onChange={e => setCheckKm(e.target.value)}
+                          />
+                        </div>
+
+                        <div className={styles.fieldGroup}>
+                          <label className={styles.label}>Tempo (hh:mm:ss)</label>
+                          <div className={styles.timeInputs}>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              className={styles.input}
+                              placeholder="h"
+                              value={checkHours}
+                              onChange={e => setCheckHours(e.target.value)}
+                            />
+                            <span className={styles.timeColon}>:</span>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              className={styles.input}
+                              placeholder="m"
+                              value={checkMinutes}
+                              onChange={e => setCheckMinutes(e.target.value)}
+                            />
+                            <span className={styles.timeColon}>:</span>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              className={styles.input}
+                              placeholder="s"
+                              value={checkSeconds}
+                              onChange={e => setCheckSeconds(e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        {checkPaceSecs > 0 && matchedZone && (
+                          <div className={`${styles.zoneCard} ${styles.zoneCardHighlight} ${ZONE_COLOR_CLASS[matchedZone.color]}`}>
+                            <span className={styles.resultLabel}>Esse treino foi na</span>
+                            <div className={styles.zoneHeader}>
+                              <span className={styles.zoneName}>{matchedZone.label}</span>
+                              <span className={styles.zoneRange}>
+                                {formatPace(checkPaceSecs)} <small>/km</small>
+                              </span>
+                            </div>
+                            <p className={styles.zoneDesc}>{matchedZone.desc}</p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

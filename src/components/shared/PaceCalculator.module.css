@@ -297,6 +297,11 @@
   gap: 6px;
 }
 
+.zoneCardHighlight {
+  border-left-width: 6px;
+  box-shadow: var(--shadow-card);
+}
+
 .zoneHeader {
   display: flex;
   justify-content: space-between;
