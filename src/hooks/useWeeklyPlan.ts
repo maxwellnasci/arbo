@@ -230,7 +230,7 @@ async function fetchWithRetry(
         .eq('group_id', groupId)
         .gte('starts_at', cycleStartStr)
         .lte('starts_at', cycleWindowEndStr)
-        .order('starts_at', { ascending: false })
+        .order('starts_at', { ascending: true })
         .limit(1)
         .maybeSingle()
 
