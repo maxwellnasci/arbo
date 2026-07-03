@@ -6,13 +6,18 @@ interface CreateGroupModalProps {
   onSuccess: () => void
 }
 
+function todayDateString(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) {
   const [name, setName] = useState('')
   const [goal, setGoal] = useState('10k')
   const [frequency, setFrequency] = useState('3x')
   const [planType, setPlanType] = useState('grupo')
   const [mode, setMode] = useState('fixo')
-  const [startsAt, setStartsAt] = useState('')
+  const [startsAt, setStartsAt] = useState(todayDateString)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
@@ -22,7 +27,11 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
       setError('Preencha o nome da turma.')
       return
     }
-    
+    if (!startsAt) {
+      setError('Selecione a data de início da turma.')
+      return
+    }
+
     setIsSubmitting(true)
     setError('')
 
@@ -32,7 +41,7 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
       frequency,
       plan_type: planType,
       mode,
-      starts_at: startsAt || null,
+      starts_at: startsAt,
       is_active: true
     })
 
@@ -188,9 +197,10 @@ export function CreateGroupModal({ onClose, onSuccess }: CreateGroupModalProps) 
             </div>
 
             <div style={{ flex: '1 1 200px' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>Início (Opcional)</label>
-              <input 
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>Início</label>
+              <input
                 type="date"
+                required
                 value={startsAt}
                 onChange={e => setStartsAt(e.target.value)}
                 style={{
