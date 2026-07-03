@@ -7,7 +7,7 @@
   background-color: var(--backdrop-bg);
   z-index: 999;
   display: flex;
-  align-items: flex-end;
+  align-items: stretch;
   justify-content: center;
   touch-action: pan-y;
 }
@@ -15,30 +15,33 @@
 .modal {
   background-color: var(--bg-surface);
   width: 100%;
-  max-width: 500px;
-  max-height: calc(100dvh - 60px);
-  border-radius: 20px 20px 0 0;
-  padding: 16px 20px 32px;
+  height: 100dvh;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
   touch-action: pan-y;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
 }
 
-.handle {
-  width: 40px;
-  height: 4px;
-  background-color: var(--border-default);
-  border-radius: 2px;
-  margin: 0 auto 16px;
+.modalHeader {
+  flex-shrink: 0;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 20px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding: 20px 20px calc(32px + env(safe-area-inset-bottom, 0px));
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .title {
@@ -73,7 +76,6 @@
   background-color: var(--bg-input);
   border-radius: 12px;
   padding: 4px;
-  margin-bottom: 16px;
 }
 
 .modeBtn {
@@ -130,6 +132,13 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.helperText {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
 }
 
 .fieldGroup {
@@ -240,7 +249,8 @@
   color: var(--text-primary);
 }
 
-.tableBox {
+.tableBox,
+.zonesBox {
   background-color: var(--bg-input);
   border-radius: 12px;
   border: 1px solid var(--border-default);
@@ -272,28 +282,10 @@
   color: var(--text-secondary);
 }
 
-.calcZonesBtn {
-  background-color: var(--orange);
-  color: var(--text-on-brand);
-  border: none;
-  border-radius: 10px;
-  padding: 12px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.calcZonesBtn:hover {
-  opacity: 0.9;
-}
-
 .zonesList {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 320px;
-  overflow-y: auto;
 }
 
 .zoneCard {
@@ -337,6 +329,28 @@
   color: var(--text-secondary);
 }
 
+.zoneHr {
+  display: inline-block;
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background-color: var(--bg-surface);
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.zoneWorkout {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.zoneWorkout strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 .zoneGreen {
   border-left-color: var(--green-accent);
   background-color: var(--green-subtle);
@@ -362,15 +376,26 @@
   background-color: var(--red-subtle);
 }
 
+.zonePurple {
+  border-left-color: var(--purple-accent);
+  background-color: var(--purple-subtle);
+}
+
 @media (min-width: 768px) {
   .overlay {
     align-items: center;
   }
   .modal {
+    max-width: 500px;
+    height: auto;
+    max-height: 85vh;
     border-radius: 20px;
-    padding: 24px 32px;
   }
-  .handle {
-    display: none;
+  .modalHeader {
+    padding: 24px 32px 16px;
+    border-radius: 20px 20px 0 0;
+  }
+  .body {
+    padding: 8px 32px 32px;
   }
 }

@@ -4,8 +4,8 @@ import { X, Clock, Ruler, Activity } from 'lucide-react'
 import styles from './PaceCalculator.module.css'
 
 type Tab = 'pace' | 'tempo' | 'distancia'
-type Mode = 'basico' | 'zonas'
-type ZoneColor = 'green' | 'greenDark' | 'yellow' | 'orange' | 'red'
+type Mode = 'basico' | 'avancado'
+type ZoneColor = 'green' | 'greenDark' | 'yellow' | 'orange' | 'red' | 'purple'
 
 type Zone = {
   key: string
@@ -16,13 +16,34 @@ type Zone = {
   color: ZoneColor
 }
 
-const ZONES: Zone[] = [
-  { key: 'z1', label: 'Z1 — Regenerativo', desc: 'Muito fácil, dá pra conversar sem esforço', minFactor: 1.35, maxFactor: 1.40, color: 'green' },
-  { key: 'z2', label: 'Z2 — Base Aeróbica', desc: 'Fácil, ritmo de corrida longa', minFactor: 1.15, maxFactor: 1.25, color: 'greenDark' },
-  { key: 'z3', label: 'Z3 — Moderado', desc: 'Moderado, começa a ficar difícil conversar', minFactor: 1.05, maxFactor: 1.10, color: 'yellow' },
-  { key: 'z4', label: 'Z4 — Limiar', desc: 'Forte, ritmo de prova de 10km', minFactor: 0.95, maxFactor: 1.05, color: 'orange' },
-  { key: 'z5', label: 'Z5 — Máximo/VO2', desc: 'Máximo, intervalados curtos e intensos', minFactor: 0.85, maxFactor: 0.92, color: 'red' },
+type AdvancedZone = Zone & {
+  hr: string
+  workout: string
+}
+
+const BASIC_ZONES: Zone[] = [
+  { key: 'b1', label: 'Leve', desc: 'Dá pra conversar sem esforço. Ideal pra recuperar e rodar longo.', minFactor: 1.20, maxFactor: 1.40, color: 'green' },
+  { key: 'b2', label: 'Moderado', desc: 'Já sente o esforço, mas consegue sustentar. Seu ritmo de treino.', minFactor: 1.00, maxFactor: 1.12, color: 'yellow' },
+  { key: 'b3', label: 'Forte', desc: 'Esforço alto, ritmo de prova. Só aguenta por pouco tempo.', minFactor: 0.85, maxFactor: 0.98, color: 'orange' },
 ]
+
+const ADVANCED_ZONES: AdvancedZone[] = [
+  { key: 'a1', label: 'Z1 — Regenerativo', desc: 'Muito fácil, dá pra conversar sem esforço.', minFactor: 1.30, maxFactor: 1.40, color: 'green', hr: '60–70% FCmáx', workout: 'Rodagem leve de recuperação, 20–40 min' },
+  { key: 'a2', label: 'Z2 — Base Aeróbica', desc: 'Fácil, ritmo de corrida longa.', minFactor: 1.15, maxFactor: 1.25, color: 'greenDark', hr: '70–80% FCmáx', workout: 'Rodagem longa, constrói resistência de base' },
+  { key: 'a3', label: 'Z3 — Moderado', desc: 'Moderado, ritmo de maratona.', minFactor: 1.05, maxFactor: 1.12, color: 'yellow', hr: '80–87% FCmáx', workout: 'Tempo run de 20–40 min em ritmo constante' },
+  { key: 'a4', label: 'Z4 — Limiar', desc: 'Forte, ritmo de prova de 10km.', minFactor: 0.95, maxFactor: 1.05, color: 'orange', hr: '87–92% FCmáx', workout: 'Tiros de 8–15 min com pausa curta' },
+  { key: 'a5', label: 'Z5 — VO2max', desc: 'Muito forte, intervalados intensos.', minFactor: 0.85, maxFactor: 0.94, color: 'red', hr: '92–97% FCmáx', workout: 'Intervalados de 3–5 min (ex: 1000m) com descanso igual' },
+  { key: 'a6', label: 'Z6 — Anaeróbico', desc: 'Máximo, tiros curtos e explosivos.', minFactor: 0.70, maxFactor: 0.85, color: 'purple', hr: 'Acima de 97% FCmáx', workout: 'Tiros de 15–30s, foco em potência e técnica' },
+]
+
+const ZONE_COLOR_CLASS: Record<ZoneColor, string> = {
+  green: styles.zoneGreen,
+  greenDark: styles.zoneGreenDark,
+  yellow: styles.zoneYellow,
+  orange: styles.zoneOrange,
+  red: styles.zoneRed,
+  purple: styles.zonePurple,
+}
 
 type Props = {
   isOpen: boolean
@@ -32,7 +53,6 @@ type Props = {
 export default function PaceCalculator({ isOpen, onClose }: Props) {
   const [mode, setMode] = useState<Mode>('basico')
   const [activeTab, setActiveTab] = useState<Tab>('pace')
-  const [showZones, setShowZones] = useState(false)
 
   // Inputs
   const [distanceKm, setDistanceKm] = useState('')
@@ -102,15 +122,11 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
   const refPaceSecs = calculatedPaceForTable()
   const speedKmh = refPaceSecs > 0 ? (3600 / refPaceSecs).toFixed(1) : '--'
 
-  // Zonas de treino
-  const zoneRefPaceSecs = parseIntSafe(paceMin) * 60 + parseIntSafe(paceSec)
-  const zoneColorClass: Record<ZoneColor, string> = {
-    green: styles.zoneGreen,
-    greenDark: styles.zoneGreenDark,
-    yellow: styles.zoneYellow,
-    orange: styles.zoneOrange,
-    red: styles.zoneRed,
-  }
+  // Modo Avançado — pace de referência dedicado
+  const advancedPaceSecs = parseIntSafe(paceMin) * 60 + parseIntSafe(paceSec)
+
+  const renderZoneRange = (pace: number, zone: Zone) =>
+    `${formatPace(pace * zone.minFactor)}–${formatPace(pace * zone.maxFactor)}`
 
   return (
     <AnimatePresence>
@@ -124,225 +140,249 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
             exit={{ y: '100%' }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
           >
-            <div className={styles.handle} />
-            
-            <div className={styles.header}>
-              <h2 className={styles.title}>Calculadora</h2>
-              <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar">
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className={styles.modeToggle}>
-              <button
-                className={`${styles.modeBtn} ${mode === 'basico' ? styles.modeBtnActive : ''}`}
-                onClick={() => setMode('basico')}
-              >
-                Básico
-              </button>
-              <button
-                className={`${styles.modeBtn} ${mode === 'zonas' ? styles.modeBtnActive : ''}`}
-                onClick={() => setMode('zonas')}
-              >
-                Zonas
-              </button>
-            </div>
-
-            {mode === 'zonas' ? (
-              <div className={styles.content}>
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>Pace de referência (min/km)</label>
-                  <div className={styles.timeInputs} style={{ width: '60%' }}>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      className={styles.input}
-                      placeholder="m"
-                      value={paceMin}
-                      onChange={e => setPaceMin(e.target.value)}
-                    />
-                    <span className={styles.timeColon}>:</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      className={styles.input}
-                      placeholder="s"
-                      value={paceSec}
-                      onChange={e => setPaceSec(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <button className={styles.calcZonesBtn} onClick={() => setShowZones(true)}>
-                  Calcular Zonas
+            <div className={styles.modalHeader}>
+              <div className={styles.header}>
+                <h2 className={styles.title}>Calculadora</h2>
+                <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar">
+                  <X size={24} />
                 </button>
-
-                {showZones && zoneRefPaceSecs > 0 && (
-                  <div className={styles.zonesList}>
-                    {ZONES.map(zone => (
-                      <div key={zone.key} className={`${styles.zoneCard} ${zoneColorClass[zone.color]}`}>
-                        <div className={styles.zoneHeader}>
-                          <span className={styles.zoneName}>{zone.label}</span>
-                          <span className={styles.zoneRange}>
-                            {formatPace(zoneRefPaceSecs * zone.minFactor)}–{formatPace(zoneRefPaceSecs * zone.maxFactor)} <small>/km</small>
-                          </span>
-                        </div>
-                        <p className={styles.zoneDesc}>{zone.desc}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
-            ) : (
-              <>
-                <div className={styles.tabs}>
-                  <button
-                    className={`${styles.tab} ${activeTab === 'pace' ? styles.tabActive : ''}`}
-                    onClick={() => setActiveTab('pace')}
-                  >
-                    <Activity size={16} /> Pace
-                  </button>
-                  <button
-                    className={`${styles.tab} ${activeTab === 'tempo' ? styles.tabActive : ''}`}
-                    onClick={() => setActiveTab('tempo')}
-                  >
-                    <Clock size={16} /> Tempo
-                  </button>
-                  <button
-                    className={`${styles.tab} ${activeTab === 'distancia' ? styles.tabActive : ''}`}
-                    onClick={() => setActiveTab('distancia')}
-                  >
-                    <Ruler size={16} /> Distância
-                  </button>
-                </div>
 
+              <div className={styles.modeToggle}>
+                <button
+                  className={`${styles.modeBtn} ${mode === 'basico' ? styles.modeBtnActive : ''}`}
+                  onClick={() => setMode('basico')}
+                >
+                  Básico
+                </button>
+                <button
+                  className={`${styles.modeBtn} ${mode === 'avancado' ? styles.modeBtnActive : ''}`}
+                  onClick={() => setMode('avancado')}
+                >
+                  Avançado
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.body}>
+              {mode === 'avancado' ? (
                 <div className={styles.content}>
-                  {/* INPUTS ROW 1 */}
-                  {activeTab !== 'distancia' && (
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Distância (km)</label>
+                  <p className={styles.helperText}>
+                    Digite seu pace de uma prova recente (ex: seu pace de 10km) ou o pace que você já usa nos treinos.
+                    As 6 zonas mostram em qual ritmo treinar cada estímulo — pergunte ao seu professor qual delas focar essa semana.
+                  </p>
+
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.label}>Pace de referência (min/km)</label>
+                    <div className={styles.timeInputs} style={{ width: '60%' }}>
                       <input
                         type="number"
-                        inputMode="decimal"
+                        inputMode="numeric"
                         className={styles.input}
-                        placeholder="Ex: 5"
-                        value={distanceKm}
-                        onChange={e => setDistanceKm(e.target.value)}
+                        placeholder="m"
+                        value={paceMin}
+                        onChange={e => setPaceMin(e.target.value)}
+                      />
+                      <span className={styles.timeColon}>:</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        className={styles.input}
+                        placeholder="s"
+                        value={paceSec}
+                        onChange={e => setPaceSec(e.target.value)}
                       />
                     </div>
-                  )}
-
-                  {activeTab !== 'tempo' && (
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Tempo (hh:mm:ss)</label>
-                      <div className={styles.timeInputs}>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          className={styles.input}
-                          placeholder="h"
-                          value={hours}
-                          onChange={e => setHours(e.target.value)}
-                        />
-                        <span className={styles.timeColon}>:</span>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          className={styles.input}
-                          placeholder="m"
-                          value={minutes}
-                          onChange={e => setMinutes(e.target.value)}
-                        />
-                        <span className={styles.timeColon}>:</span>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          className={styles.input}
-                          placeholder="s"
-                          value={seconds}
-                          onChange={e => setSeconds(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab !== 'pace' && (
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label}>Pace alvo (min/km)</label>
-                      <div className={styles.timeInputs} style={{ width: '60%' }}>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          className={styles.input}
-                          placeholder="m"
-                          value={paceMin}
-                          onChange={e => setPaceMin(e.target.value)}
-                        />
-                        <span className={styles.timeColon}>:</span>
-                        <input
-                          type="number"
-                          inputMode="numeric"
-                          className={styles.input}
-                          placeholder="s"
-                          value={paceSec}
-                          onChange={e => setPaceSec(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* RESULTS */}
-                  <div className={styles.resultBox}>
-                    <span className={styles.resultLabel}>
-                      {activeTab === 'pace' ? 'Seu Pace é' : activeTab === 'tempo' ? 'Tempo Estimado' : 'Distância Estimada'}
-                    </span>
-                    <span className={styles.resultValue}>
-                      {activeTab === 'pace' && (
-                        <>{calcPace().display} <small className={styles.resultSmall}>min/km</small></>
-                      )}
-                      {activeTab === 'tempo' && (
-                        <>{calcTime()}</>
-                      )}
-                      {activeTab === 'distancia' && (
-                        <>{calcDistance()} <small className={styles.resultSmall}>km</small></>
-                      )}
-                    </span>
                   </div>
 
-                  {/* EXTRAS */}
-                  <div className={styles.extras}>
-                    <div className={styles.speedBox}>
-                      <span className={styles.speedLabel}>Velocidade Equivalente</span>
-                      <span className={styles.speedValue}>{speedKmh} km/h</span>
+                  {advancedPaceSecs > 0 && (
+                    <div className={styles.zonesList}>
+                      {ADVANCED_ZONES.map(zone => (
+                        <div key={zone.key} className={`${styles.zoneCard} ${ZONE_COLOR_CLASS[zone.color]}`}>
+                          <div className={styles.zoneHeader}>
+                            <span className={styles.zoneName}>{zone.label}</span>
+                            <span className={styles.zoneRange}>
+                              {renderZoneRange(advancedPaceSecs, zone)} <small>/km</small>
+                            </span>
+                          </div>
+                          <p className={styles.zoneDesc}>{zone.desc}</p>
+                          <span className={styles.zoneHr}>{zone.hr}</span>
+                          <p className={styles.zoneWorkout}><strong>Treino:</strong> {zone.workout}</p>
+                        </div>
+                      ))}
                     </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className={styles.tabs}>
+                    <button
+                      className={`${styles.tab} ${activeTab === 'pace' ? styles.tabActive : ''}`}
+                      onClick={() => setActiveTab('pace')}
+                    >
+                      <Activity size={16} /> Pace
+                    </button>
+                    <button
+                      className={`${styles.tab} ${activeTab === 'tempo' ? styles.tabActive : ''}`}
+                      onClick={() => setActiveTab('tempo')}
+                    >
+                      <Clock size={16} /> Tempo
+                    </button>
+                    <button
+                      className={`${styles.tab} ${activeTab === 'distancia' ? styles.tabActive : ''}`}
+                      onClick={() => setActiveTab('distancia')}
+                    >
+                      <Ruler size={16} /> Distância
+                    </button>
+                  </div>
 
-                    {refPaceSecs > 0 && (
-                      <div className={styles.tableBox}>
-                        <h4 className={styles.tableTitle}>Tempos de prova neste pace</h4>
-                        <div className={styles.tableGrid}>
-                          <div className={styles.tableRow}>
-                            <span>5 km</span>
-                            <strong>{formatTime(5 * refPaceSecs)}</strong>
-                          </div>
-                          <div className={styles.tableRow}>
-                            <span>10 km</span>
-                            <strong>{formatTime(10 * refPaceSecs)}</strong>
-                          </div>
-                          <div className={styles.tableRow}>
-                            <span>Meia (21k)</span>
-                            <strong>{formatTime(21.0975 * refPaceSecs)}</strong>
-                          </div>
-                          <div className={styles.tableRow}>
-                            <span>Maratona (42k)</span>
-                            <strong>{formatTime(42.195 * refPaceSecs)}</strong>
-                          </div>
+                  <div className={styles.content}>
+                    {/* INPUTS ROW 1 */}
+                    {activeTab !== 'distancia' && (
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.label}>Distância (km)</label>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          className={styles.input}
+                          placeholder="Ex: 5"
+                          value={distanceKm}
+                          onChange={e => setDistanceKm(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {activeTab !== 'tempo' && (
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.label}>Tempo (hh:mm:ss)</label>
+                        <div className={styles.timeInputs}>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            className={styles.input}
+                            placeholder="h"
+                            value={hours}
+                            onChange={e => setHours(e.target.value)}
+                          />
+                          <span className={styles.timeColon}>:</span>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            className={styles.input}
+                            placeholder="m"
+                            value={minutes}
+                            onChange={e => setMinutes(e.target.value)}
+                          />
+                          <span className={styles.timeColon}>:</span>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            className={styles.input}
+                            placeholder="s"
+                            value={seconds}
+                            onChange={e => setSeconds(e.target.value)}
+                          />
                         </div>
                       </div>
                     )}
+
+                    {activeTab !== 'pace' && (
+                      <div className={styles.fieldGroup}>
+                        <label className={styles.label}>Pace alvo (min/km)</label>
+                        <div className={styles.timeInputs} style={{ width: '60%' }}>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            className={styles.input}
+                            placeholder="m"
+                            value={paceMin}
+                            onChange={e => setPaceMin(e.target.value)}
+                          />
+                          <span className={styles.timeColon}>:</span>
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            className={styles.input}
+                            placeholder="s"
+                            value={paceSec}
+                            onChange={e => setPaceSec(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* RESULTS */}
+                    <div className={styles.resultBox}>
+                      <span className={styles.resultLabel}>
+                        {activeTab === 'pace' ? 'Seu Pace é' : activeTab === 'tempo' ? 'Tempo Estimado' : 'Distância Estimada'}
+                      </span>
+                      <span className={styles.resultValue}>
+                        {activeTab === 'pace' && (
+                          <>{calcPace().display} <small className={styles.resultSmall}>min/km</small></>
+                        )}
+                        {activeTab === 'tempo' && (
+                          <>{calcTime()}</>
+                        )}
+                        {activeTab === 'distancia' && (
+                          <>{calcDistance()} <small className={styles.resultSmall}>km</small></>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* EXTRAS */}
+                    <div className={styles.extras}>
+                      <div className={styles.speedBox}>
+                        <span className={styles.speedLabel}>Velocidade Equivalente</span>
+                        <span className={styles.speedValue}>{speedKmh} km/h</span>
+                      </div>
+
+                      {refPaceSecs > 0 && (
+                        <div className={styles.zonesBox}>
+                          <h4 className={styles.tableTitle}>Zonas de treino</h4>
+                          <div className={styles.zonesList}>
+                            {BASIC_ZONES.map(zone => (
+                              <div key={zone.key} className={`${styles.zoneCard} ${ZONE_COLOR_CLASS[zone.color]}`}>
+                                <div className={styles.zoneHeader}>
+                                  <span className={styles.zoneName}>{zone.label}</span>
+                                  <span className={styles.zoneRange}>
+                                    {renderZoneRange(refPaceSecs, zone)} <small>/km</small>
+                                  </span>
+                                </div>
+                                <p className={styles.zoneDesc}>{zone.desc}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {refPaceSecs > 0 && (
+                        <div className={styles.tableBox}>
+                          <h4 className={styles.tableTitle}>Tempos de prova neste pace</h4>
+                          <div className={styles.tableGrid}>
+                            <div className={styles.tableRow}>
+                              <span>5 km</span>
+                              <strong>{formatTime(5 * refPaceSecs)}</strong>
+                            </div>
+                            <div className={styles.tableRow}>
+                              <span>10 km</span>
+                              <strong>{formatTime(10 * refPaceSecs)}</strong>
+                            </div>
+                            <div className={styles.tableRow}>
+                              <span>Meia (21k)</span>
+                              <strong>{formatTime(21.0975 * refPaceSecs)}</strong>
+                            </div>
+                            <div className={styles.tableRow}>
+                              <span>Maratona (42k)</span>
+                              <strong>{formatTime(42.195 * refPaceSecs)}</strong>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </>
-            )}
+                </>
+              )}
+            </div>
           </motion.div>
         </div>
       )}
