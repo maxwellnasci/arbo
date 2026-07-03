@@ -4,28 +4,32 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: var(--backdrop-bg);
   z-index: 999;
   display: flex;
   align-items: flex-end;
   justify-content: center;
+  touch-action: pan-y;
 }
 
 .modal {
   background-color: var(--bg-surface);
   width: 100%;
   max-width: 500px;
+  max-height: calc(100dvh - 60px);
   border-radius: 20px 20px 0 0;
   padding: 16px 20px 32px;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  touch-action: pan-y;
   box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.4);
 }
 
 .handle {
   width: 40px;
   height: 4px;
-  background-color: var(--border);
+  background-color: var(--border-default);
   border-radius: 2px;
   margin: 0 auto 16px;
 }
@@ -60,13 +64,40 @@
 }
 
 .closeBtn:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--bg-surface-hover);
   color: var(--text-primary);
+}
+
+.modeToggle {
+  display: flex;
+  background-color: var(--bg-input);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+
+.modeBtn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modeBtnActive {
+  background-color: var(--bg-surface);
+  color: var(--orange);
+  box-shadow: var(--shadow-card);
 }
 
 .tabs {
   display: flex;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--bg-input);
   border-radius: 12px;
   padding: 4px;
   margin-bottom: 24px;
@@ -114,8 +145,8 @@
 }
 
 .input {
-  background-color: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--border);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-default);
   border-radius: 10px;
   padding: 12px 16px;
   color: var(--text-primary);
@@ -147,8 +178,8 @@
 
 .resultBox {
   margin-top: 12px;
-  background: linear-gradient(135deg, rgba(232, 82, 26, 0.15) 0%, rgba(232, 82, 26, 0.05) 100%);
-  border: 1px solid rgba(232, 82, 26, 0.2);
+  background: linear-gradient(135deg, var(--orange-border) 0%, var(--orange-subtle) 100%);
+  border: 1px solid var(--orange-border);
   border-radius: 12px;
   padding: 20px;
   display: flex;
@@ -193,9 +224,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--bg-input);
   border-radius: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-default);
 }
 
 .speedLabel {
@@ -210,9 +241,9 @@
 }
 
 .tableBox {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: var(--bg-input);
   border-radius: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-default);
   padding: 16px;
 }
 
@@ -239,6 +270,96 @@
 
 .tableRow span {
   color: var(--text-secondary);
+}
+
+.calcZonesBtn {
+  background-color: var(--orange);
+  color: var(--text-on-brand);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.calcZonesBtn:hover {
+  opacity: 0.9;
+}
+
+.zonesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.zoneCard {
+  border-left: 4px solid transparent;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.zoneHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.zoneName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.zoneRange {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.zoneRange small {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.zoneDesc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.zoneGreen {
+  border-left-color: var(--green-accent);
+  background-color: var(--green-subtle);
+}
+
+.zoneGreenDark {
+  border-left-color: var(--green-accent);
+  background-color: var(--green-border);
+}
+
+.zoneYellow {
+  border-left-color: var(--yellow-accent);
+  background-color: var(--yellow-subtle);
+}
+
+.zoneOrange {
+  border-left-color: var(--orange);
+  background-color: var(--orange-subtle);
+}
+
+.zoneRed {
+  border-left-color: var(--red-accent);
+  background-color: var(--red-subtle);
 }
 
 @media (min-width: 768px) {

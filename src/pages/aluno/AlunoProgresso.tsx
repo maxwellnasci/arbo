@@ -63,10 +63,10 @@ export default function AlunoProgresso({ studentId }: { studentId: string }) {
             onClick={() => setShowCalculator(true)}
             className={styles.calcBtn}
             aria-label="Abrir Calculadora de Pace"
-            style={{ 
-              background: 'rgba(255, 255, 255, 0.1)', 
-              border: 'none', 
-              color: 'var(--orange)', 
+            style={{
+              background: 'var(--orange-subtle)',
+              border: 'none',
+              color: 'var(--orange)',
               padding: '10px', 
               borderRadius: '50%',
               display: 'flex',

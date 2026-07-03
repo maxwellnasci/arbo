@@ -122,10 +122,10 @@ export default function AdminHome() {
           <button 
             onClick={() => setShowCalculator(true)}
             aria-label="Abrir Calculadora de Pace"
-            style={{ 
-              background: 'rgba(255, 255, 255, 0.1)', 
-              border: '1px solid rgba(255, 255, 255, 0.05)', 
-              color: 'var(--orange)', 
+            style={{
+              background: 'var(--orange-subtle)',
+              border: '1px solid var(--border-default)',
+              color: 'var(--orange)',
               padding: '10px', 
               borderRadius: '50%',
               display: 'flex',
