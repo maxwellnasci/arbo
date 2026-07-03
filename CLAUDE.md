@@ -273,14 +273,16 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-06-29)
+## Estado atual (2026-07-02)
 
 - **Média geral:** 9.0/10 — Segurança 8.5 · Performance 8.8 · Qualidade 9.2 · UX/Bugs 9.2 · Arquitetura 8.5 · PWA/Mobile 9.0
-- **Tasks 39-55, 56, 57, 59, 59c, 60, 61, 62, 63, 64 concluídas**
+- **Tasks 39-55, 56, 57, 59, 59c, 60, 61, 62, 63, 64, 65, 66 concluídas**
 - **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 - **Testes:** 22 testes passando (Vitest)
+- **Sessão 2026-07-02:** 2 rodadas de correção no painel do aluno — causa raiz de `groups.starts_at NULL` gerando `group_plans` duplicados (Task 65) e feature de liberação de semana ausente por completo no modo flexível (Task 66). 6 estudos de caso documentados em `docs/PORTFOLIO_DEBUG_CASES.md`, linkado no README.
 - **Próxima sessão:**
-  - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos)
+  - Testar no celular o fluxo completo de turma flexível ponta a ponta (liberar semana → aluno ver treino → check-in)
+  - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos) — cobrir especialmente `useWeeklyPlan.ts` (cálculo de ciclo) e o branch flexível do `AdminTurmaDetail.tsx`, que não tinham cobertura e foi onde os bugs desta sessão viveram sem detecção
   - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`
   - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
   - Security scanning no CI (`npm audit`)
