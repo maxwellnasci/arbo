@@ -58,6 +58,13 @@
 | Boas Práticas | 100 |
 | SEO | 100 |
 
+## 🔍 Cases de Debug & Arquitetura
+
+Documentação técnica de problemas reais resolvidos durante o desenvolvimento,
+incluindo diagnóstico, causa raiz e solução aplicada.
+
+[Ver casos documentados →](docs/PORTFOLIO_DEBUG_CASES.md)
+
 ## 🏃 Como rodar localmente
 
 ### Pré-requisitos
