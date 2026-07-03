@@ -70,3 +70,61 @@ const updateName = async (newName: string) => {
 }
 ```
 **Conhecimento demonstrado:** Design Patterns do React, Imutabilidade, Custom Hooks e resolução estruturada de arquitetura Frontend.
+
+---
+
+## Estudo de Caso 4: Deriva Temporal em Dados — "O Bug Que Já Estava Corrigido" (Full-Stack / PostgreSQL + React)
+
+**O Cenário:**
+Um agente de IA anterior (Gemini) já havia corrigido a lógica de liberação de semanas de treino (`weekNumber <= released_through_week`) e ajustado o CSS do chat. Testado em produção, o comportamento continuava quebrado: o professor liberava as 4 semanas do ciclo, mas o aluno continuava vendo conteúdo bloqueado, e a área de digitar do chat sumia atrás da barra de navegação.
+
+**O Sintoma:**
+A correção anterior parecia logicamente correta lendo o diff isoladamente. A tentação é reaplicar o mesmo tipo de fix ("deve ser outro operador de comparação invertido"). Em vez disso, a investigação partiu para verificar o comportamento real: reler a condição em produção linha a linha (já estava certa) e, então, consultar o banco de dados diretamente via MCP do Supabase para observar os dados que a aplicação realmente estava lendo.
+
+**O Diagnóstico:**
+A consulta direta revelou a causa raiz, três camadas abaixo de onde o bug foi originalmente reportado:
+1. A turma do aluno de teste tinha `groups.starts_at = NULL`.
+2. Sem uma âncora de data fixa, o cálculo do ciclo de 4 semanas fazia fallback para "hoje" — uma referência que muda a cada dia e diverge entre o código do admin (`?? toDateString(new Date())`) e o do aluno (`?? todayMonday`).
+3. Isso fazia a rotina de criação de plano do admin (que busca por *match exato* de data) **nunca encontrar o plano existente**, criando um registro novo em `group_plans` a cada sessão em dia diferente — 5 registros duplicados para a mesma turma ao longo de 5 dias.
+4. A query do aluno, ao tentar compensar esse desalinhamento com uma janela de 7 dias, pegava sistematicamente o registro *mais recente* dentro da janela — que por acaso era um plano de teste mais novo, com liberação desatualizada, sombreando o plano correto que o professor de fato havia liberado.
+
+O comparador de liberação (`<=`) nunca esteve errado. O bug era estrutural: a aplicação estava lendo a linha errada do banco.
+
+**A Solução:**
+Correção em camadas, da mais superficial à mais estrutural:
+```typescript
+// useWeeklyPlan.ts — pega o primeiro plano do ciclo, não o mais recente da janela
+.order('starts_at', { ascending: true }) // era: ascending: false
+```
+```sql
+-- Realinhamento pontual dos dados já inconsistentes em produção
+UPDATE groups SET starts_at = '2026-06-30' WHERE id = '...';
+```
+```typescript
+// CreateGroupModal.tsx — impede a recorrência do bug em turmas futuras
+const [startsAt, setStartsAt] = useState(todayDateString) // antes: ''
+// + validação obrigatória no submit, campo deixa de ser "opcional"
+```
+**Conhecimento demonstrado:** Depuração de causa raiz sob pressão de um fix anterior aparentemente válido, modelagem de dados temporais/cíclicos, uso de MCP para inspecionar produção com segurança (SQL somente leitura antes de qualquer escrita), e prevenção sistêmica (resolver a instância *e* fechar a porta para o problema se repetir).
+
+---
+
+## Estudo de Caso 5: Elemento Fixo Sobrepondo Conteúdo Flexível (CSS / Layout Mobile)
+
+**O Cenário:**
+O painel do aluno usa uma barra de navegação inferior fixa (`position: fixed; bottom: 0`) sobre um layout `flex` de altura total (`100dvh`). Uma alteração recente no chat removeu o espaçamento de segurança do formulário de envio de mensagem.
+
+**O Sintoma:**
+O campo de digitar mensagem "sumia" no celular. O código React estava correto, o CSS "parecia" correto — nenhum erro de console, nenhum warning de layout.
+
+**O Diagnóstico:**
+Como o elemento de navegação usa `position: fixed`, ele é removido do fluxo normal do flexbox e passa a flutuar por cima de qualquer conteúdo, independente da altura calculada pelos pais `flex`. Isso significa que o último elemento de uma coluna flexível (o formulário de chat) ocupa 100% da altura da tela *até embaixo*, inclusive a faixa que fica visualmente coberta pela barra fixa. Sem um `padding-bottom` no próprio elemento compensando exatamente a altura da barra fixa, o conteúdo real é renderizado — apenas invisível, atrás de outro elemento com `z-index` maior.
+
+**A Solução:**
+```css
+.inputArea {
+  padding: 16px 24px calc(76px + env(safe-area-inset-bottom, 16px));
+  /* 76px ≈ altura da BottomNav fixed; sem isso o form fica atrás dela */
+}
+```
+**Conhecimento demonstrado:** Domínio de `position: fixed` vs. fluxo flexbox, `env(safe-area-inset-bottom)` para notch/home-indicator em iOS, e diagnóstico de bugs "invisíveis" que não aparecem em nenhuma ferramenta de log — só observando o comportamento real do layout.

@@ -344,7 +344,8 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 62 (2026-06-29):** Fix visibilidade de alunos recém-convidados — Adicionada opção de filtro "Sem Turma" e badge visual vermelho no `AdminAlunos` para destacar alunos que completaram o cadastro mas ainda não possuem turma vinculada. ✅
 - **Task 63 (2026-06-29):** 3 Melhorias Admin — Adicionado campo obrigatório de nome na configuração de senha (`SetPassword.tsx`), email do aluno exibido no perfil usando a nova RPC `get_user_email` (`AdminAlunoDetail.tsx`), e reprodução de vídeos incorporada e expansível no card de treinos e no side panel de turmas. ✅
 - **Task 64 (2026-06-29):** Edição de perfil no admin e correção de RPC — Implementado fluxo para editar nome de aluno no painel admin, e e-mail via auth recuperado através da RPC (`get_user_email`) corrigida (com cast completo do client no código). ✅
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-06-29)
+- **Task 65 (2026-07-02):** Correção de causa raiz — chat do aluno sem área de digitar + semanas liberadas não refletindo no aluno. Root cause real: `groups.starts_at NULL` fazia o cálculo de ciclo/semana usar âncora que muda todo dia, gerando `group_plans` duplicados por turma com `released_through_week` divergente entre admin e aluno. Corrigido `AlunoChat.module.css` (padding do `.inputArea` restaurado para não ficar atrás do `BottomNav` fixed), `useWeeklyPlan.ts` (query do ciclo ordena ascendente ao invés de pegar o registro mais recente da janela), dados de 2 turmas corrigidos via SQL direto no Supabase, e `CreateGroupModal.tsx` passou a exigir data de início (evita recorrência em turmas novas). Ver estudo de caso completo em `docs/PORTFOLIO_DEBUG_CASES.md`. ✅
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-07-02)
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
 **Vitest:** 22 testes passando ✅

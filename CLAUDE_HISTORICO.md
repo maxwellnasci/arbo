@@ -836,3 +836,33 @@ isLoading === false →  <motion.div
 - **Calculadora de Pace:** Implementado `PaceCalculator.tsx` (standalone modal/bottom-sheet).
 - **Funcionalidades:** Cálculos cruzados de Pace, Tempo e Distância, além de conversão para km/h e tabela de projeção de provas clássicas (5k, 10k, 21k, 42k).
 - **Integração:** Adicionado botão de atalho interativo no painel do Aluno (`AlunoProgresso.tsx`) e no painel do Admin (`AdminHome.tsx`).
+
+### Sessão 2026-07-02 (Correções Críticas no Painel do Aluno)
+- **Chat Layout:** Corrigido o `padding-bottom` do `.inputArea` no chat (`AlunoChat.module.css`). Ajustado de `76px` para `110px`, seguindo o mesmo recuo do contêiner principal para evitar que o ícone de envio seja cortado pelo `<BottomNav>` ou em telas com safe-area complexa.
+- **Lógica de Treinos Trancados:** Refatorado `useWeeklyPlan.ts`. O plano individual (override) agora é consultado **antes** do plano da turma. Isso garante que se um admin alocou um plano diretamente para o aluno (exceção), o sistema ignora a trava (`isLocked: true`) que estaria ativa baseada no `released_through_week` do plano da turma.
+- **Modo Flexível (Dia da Semana Null):** Corrigido o fallback do dia da semana (`dayOfWeek`) no modo flexível. Quando não agendado, agora retorna estritamente `null`, evitando herdar o slot original invisível configurado pelo admin, preservando a lógica de lista do componente `FlexibleTrainingCard`.
+- **Validação:** Rodado `tsc --noEmit` e `vite build` sem erros para garantir 100% de confiabilidade.
+
+### Sessão 2026-07-02 (Follow-up — Causa Raiz Real dos Bugs do Aluno)
+
+A sessão anterior (Gemini) tinha corrigido a *comparação* de liberação de semana (`weekNumber <= released_through_week`) e mexido no CSS do chat, mas o app continuou quebrado em produção: chat sem área de digitar, e semanas liberadas pelo admin não apareciam pro aluno. Esta sessão investigou o código real e o banco de dados diretamente (via MCP Supabase) em vez de assumir que o fix anterior estava correto.
+
+**Bug 1 — Chat sem área de digitar (regressão de CSS):**
+O commit anterior trocou `padding: 16px 24px calc(76px + safe-area)` do `.inputArea` (`AlunoChat.module.css`) por `calc(16px + safe-area)`. Como o `<BottomNav>` do `AlunoDashboard` é `position: fixed` (sobreposto, fora do fluxo do flexbox), remover essa folga fez o formulário de envio ficar posicionado exatamente atrás da barra fixa — visível no código, mas inacessível na tela. Restaurado o padding original de 76px.
+
+**Bug 2 — "Semanas liberadas" não refletiam no aluno (causa raiz real, não era a comparação):**
+A lógica `targetWeekNumber > releasedThrough` (bloqueado) / `n <= releasedThroughWeek` (liberado) em `useWeeklyPlan.ts` e `LockedScreen.tsx` já estava correta. O sintoma persistia porque **a fonte do dado estava errada**, não a comparação:
+
+1. Consultado o Supabase diretamente (`groups`, `group_plans`) e descoberto que a turma do aluno de teste (`Turma 5K Manhã`) tinha `groups.starts_at = NULL`.
+2. Sem uma âncora fixa, o cálculo de ciclo (`origin = groupData.starts_at ?? todayMonday` no aluno, `?? toDateString(new Date())` no admin) recalculava a partir de "hoje" — uma referência que muda todo dia e diverge entre admin e aluno.
+3. Isso fez o fluxo de criação de plano (`ensureGroupPlan`, que dá match exato em `starts_at`) criar um **novo `group_plans` a cada sessão do admin em dia diferente**, em vez de reaproveitar o existente. Resultado: 5 registros de plano para a mesma turma (`05-30`, `06-04`, `06-28`, `06-30`, `07-02`), cada um com seu próprio `released_through_week`.
+4. A query do aluno (correção anterior) buscava por uma janela de 7 dias e pegava o registro `.order('starts_at', { ascending: false }).limit(1)` — ou seja, o **mais recente** dentro da janela. Quando dois planos caíam na mesma janela (`2026-06-30`, liberado até semana 4, e `2026-07-02`, liberado só até semana 1 — criado num teste posterior), o aluno sempre recebia o mais novo e "errado".
+
+**Correção aplicada:**
+- `useWeeklyPlan.ts`: `order('starts_at', { ascending: true })` — pega o primeiro plano da janela do ciclo, não o mais recente, coerente com o fato de `ensureGroupPlan` sempre dar match exato no início do ciclo.
+- SQL direto no Supabase: `UPDATE groups SET starts_at = ...` para as 2 turmas afetadas (`Turma 5K Manhã` → `2026-06-30`, alinhado ao plano já liberado até semana 4; `Rumo aos 10 k` → `2026-07-02`, sem aluno vinculado ainda mas corrigido preventivamente).
+- `CreateGroupModal.tsx`: campo "Início" deixou de ser opcional — vem pré-preenchido com a data de hoje e é `required` no submit, prevenindo que turmas novas nasçam com `starts_at NULL`.
+
+**Lição:** um bug de "condição errada" reportado pelo usuário pode já estar corrigido no código e o sintoma continuar idêntico — a causa real pode estar numa camada abaixo (qual linha do banco está sendo lida), não na lógica que a manipula. Necessário consultar o banco diretamente para confirmar a hipótese antes de aplicar mais um fix cego na mesma função.
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · commits `d0e29d1` e `82dad4b` em `master`.
