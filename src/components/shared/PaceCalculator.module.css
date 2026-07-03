@@ -185,6 +185,29 @@
   font-weight: 600;
 }
 
+.calcBtn {
+  background-color: var(--orange);
+  color: var(--text-on-brand);
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.calcBtn:active {
+  opacity: 0.85;
+}
+
+.errorText {
+  margin: 0;
+  font-size: 13px;
+  color: var(--red-accent);
+  font-weight: 500;
+}
+
 .resultBox {
   margin-top: 12px;
   background: linear-gradient(135deg, var(--orange-border) 0%, var(--orange-subtle) 100%);

@@ -62,6 +62,14 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
   const [paceMin, setPaceMin] = useState('')
   const [paceSec, setPaceSec] = useState('')
 
+  // Avançado — distância + tempo geram o pace de referência
+  const [advDistanceKm, setAdvDistanceKm] = useState('')
+  const [advHours, setAdvHours] = useState('')
+  const [advMinutes, setAdvMinutes] = useState('')
+  const [advSeconds, setAdvSeconds] = useState('')
+  const [advPaceSecs, setAdvPaceSecs] = useState(0)
+  const [advError, setAdvError] = useState<string | null>(null)
+
   // Avançado — "descubra a zona de um treino específico"
   const [checkKm, setCheckKm] = useState('')
   const [checkHours, setCheckHours] = useState('')
@@ -128,8 +136,27 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
   const refPaceSecs = calculatedPaceForTable()
   const speedKmh = refPaceSecs > 0 ? (3600 / refPaceSecs).toFixed(1) : '--'
 
-  // Modo Avançado — pace de referência dedicado
-  const advancedPaceSecs = parseIntSafe(paceMin) * 60 + parseIntSafe(paceSec)
+  // Modo Avançado — distância + tempo geram o pace de referência ao clicar "Calcular Zonas"
+  const handleCalcZones = () => {
+    const dist = parseNum(advDistanceKm)
+    const totalSecs = parseIntSafe(advHours) * 3600 + parseIntSafe(advMinutes) * 60 + parseIntSafe(advSeconds)
+
+    if (dist <= 0 || totalSecs <= 0) {
+      setAdvError('Preencha distância e tempo')
+      setAdvPaceSecs(0)
+      return
+    }
+
+    const pace = totalSecs / dist
+    if (!isFinite(pace) || pace <= 0) {
+      setAdvError('Pace calculado inválido')
+      setAdvPaceSecs(0)
+      return
+    }
+
+    setAdvError(null)
+    setAdvPaceSecs(pace)
+  }
 
   const renderZoneRange = (pace: number, zone: Zone) =>
     `${formatPace(pace * zone.minFactor)}–${formatPace(pace * zone.maxFactor)}`
@@ -157,7 +184,7 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
     return closest
   }
 
-  const matchedZone = findZoneForPace(checkPaceSecs, advancedPaceSecs)
+  const matchedZone = findZoneForPace(checkPaceSecs, advPaceSecs)
 
   return (
     <AnimatePresence>
@@ -199,20 +226,42 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
               {mode === 'avancado' ? (
                 <div className={styles.content}>
                   <p className={styles.helperText}>
-                    Digite seu pace de uma prova recente (ex: seu pace de 10km) ou o pace que você já usa nos treinos.
-                    As 6 zonas mostram em qual ritmo treinar cada estímulo — pergunte ao seu professor qual delas focar essa semana.
+                    Informe a distância e o tempo de uma prova ou treino recente (ex: seu tempo de 10km) pra calcular seu
+                    pace de referência. As 6 zonas mostram em qual ritmo treinar cada estímulo — pergunte ao seu professor
+                    qual delas focar essa semana.
                   </p>
 
                   <div className={styles.fieldGroup}>
-                    <label className={styles.label}>Pace de referência (min/km)</label>
-                    <div className={styles.timeInputs} style={{ width: '60%' }}>
+                    <label className={styles.label}>Distância (km)</label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      className={styles.input}
+                      placeholder="Ex: 10"
+                      value={advDistanceKm}
+                      onChange={e => setAdvDistanceKm(e.target.value)}
+                    />
+                  </div>
+
+                  <div className={styles.fieldGroup}>
+                    <label className={styles.label}>Tempo (hh:mm:ss)</label>
+                    <div className={styles.timeInputs}>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        className={styles.input}
+                        placeholder="h"
+                        value={advHours}
+                        onChange={e => setAdvHours(e.target.value)}
+                      />
+                      <span className={styles.timeColon}>:</span>
                       <input
                         type="number"
                         inputMode="numeric"
                         className={styles.input}
                         placeholder="m"
-                        value={paceMin}
-                        onChange={e => setPaceMin(e.target.value)}
+                        value={advMinutes}
+                        onChange={e => setAdvMinutes(e.target.value)}
                       />
                       <span className={styles.timeColon}>:</span>
                       <input
@@ -220,20 +269,35 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
                         inputMode="numeric"
                         className={styles.input}
                         placeholder="s"
-                        value={paceSec}
-                        onChange={e => setPaceSec(e.target.value)}
+                        value={advSeconds}
+                        onChange={e => setAdvSeconds(e.target.value)}
                       />
                     </div>
                   </div>
 
-                  {advancedPaceSecs > 0 && (
+                  <button type="button" className={styles.calcBtn} onClick={handleCalcZones}>
+                    Calcular Zonas
+                  </button>
+
+                  {advError && <p className={styles.errorText}>{advError}</p>}
+
+                  {advPaceSecs > 0 && (
+                    <div className={styles.resultBox}>
+                      <span className={styles.resultLabel}>Seu pace é</span>
+                      <span className={styles.resultValue}>
+                        {formatPace(advPaceSecs)} <small className={styles.resultSmall}>min/km</small>
+                      </span>
+                    </div>
+                  )}
+
+                  {advPaceSecs > 0 && (
                     <div className={styles.zonesList}>
                       {ADVANCED_ZONES.map(zone => (
                         <div key={zone.key} className={`${styles.zoneCard} ${ZONE_COLOR_CLASS[zone.color]}`}>
                           <div className={styles.zoneHeader}>
                             <span className={styles.zoneName}>{zone.label}</span>
                             <span className={styles.zoneRange}>
-                              {renderZoneRange(advancedPaceSecs, zone)} <small>/km</small>
+                              {renderZoneRange(advPaceSecs, zone)} <small>/km</small>
                             </span>
                           </div>
                           <p className={styles.zoneDesc}>{zone.desc}</p>
@@ -244,7 +308,7 @@ export default function PaceCalculator({ isOpen, onClose }: Props) {
                     </div>
                   )}
 
-                  {advancedPaceSecs > 0 && (
+                  {advPaceSecs > 0 && (
                     <div className={styles.zonesBox}>
                       <h4 className={styles.tableTitle}>Descubra a zona de um treino específico</h4>
                       <div className={styles.content}>
