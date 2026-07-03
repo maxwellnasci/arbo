@@ -16,9 +16,9 @@
   <body>
     <div id="root"></div>
     <script>
-      // arbo-v4: limpeza nuclear de SWs e caches antigos (roda 1x, nunca mais)
+      // arbo-v5: limpeza nuclear de SWs e caches antigos (roda 1x, nunca mais)
       (function() {
-        var VERSION = 'arbo-v4';
+        var VERSION = 'arbo-v5';
         if (localStorage.getItem('arbo_sw_ver') === VERSION) return;
         localStorage.setItem('arbo_sw_ver', VERSION);
         setTimeout(function() {

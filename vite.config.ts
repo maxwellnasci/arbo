@@ -54,7 +54,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        cacheId: 'arbo-v4',
+        cacheId: 'arbo-v5',
         skipWaiting: true,
         clientsClaim: true,
         runtimeCaching: [
