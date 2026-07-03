@@ -327,31 +327,73 @@ export default function AdminTurmaDetail() {
               />
             ) : group?.mode === 'flexivel' ? (
               <div style={{ padding: '16px' }}>
-                <h3 style={{ margin: '0 0 16px', color: 'var(--text-primary)', fontSize: '16px' }}>Treinos da Turma (Flexível)</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {trainings.map(entry => (
-                    <div 
-                      key={entry.id} 
-                      onClick={() => openCard(entry)}
-                      style={{ background: panel?.existing?.id === entry.id ? 'var(--bg-card-orange)' : 'var(--bg-surface)', border: `1px solid ${panel?.existing?.id === entry.id ? 'var(--orange)' : 'var(--border-default)'}`, padding: '12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                    >
-                      <div>
-                        <div style={{ fontSize: '10px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
-                          {TRAINING_TYPE_LABELS[entry.training.type] ?? entry.training.type}
+                <h3 style={{ margin: '0 0 12px', color: 'var(--text-primary)', fontSize: '16px' }}>Treinos da Turma (Flexível)</h3>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 600, marginRight: '2px' }}>Liberar:</span>
+                  {([1, 2, 3, 4] as const).map(w => {
+                    const isReleased = (plan?.released_through_week ?? 0) >= w
+                    return (
+                      <button
+                        key={w}
+                        onClick={() => handleChipClick(w)}
+                        disabled={releasing || !plan}
+                        style={{
+                          padding: '4px 10px', borderRadius: '6px', border: 'none',
+                          cursor: releasing || !plan ? 'not-allowed' : 'pointer',
+                          fontSize: '11px', fontWeight: 700,
+                          background: isReleased ? 'var(--border-green)' : 'var(--bg-surface)',
+                          color: isReleased ? 'var(--green-accent)' : 'var(--text-secondary)',
+                          opacity: releasing ? 0.6 : 1,
+                        }}
+                      >
+                        S{w} {isReleased ? '✓' : '🔒'}
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {([1, 2, 3, 4] as const).map(w => {
+                    const isReleased = (plan?.released_through_week ?? 0) >= w
+                    const weekTrainings = trainings.filter(entry => entry.weekNumber === w)
+                    return (
+                      <div key={w}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>Semana {w}</span>
+                          <span style={{ fontSize: '10px', color: isReleased ? 'var(--green-accent)' : 'var(--text-tertiary)', fontWeight: 600 }}>
+                            {isReleased ? '✓ liberada' : '🔒 bloqueada'}
+                          </span>
                         </div>
-                        <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 600 }}>{entry.training.title}</div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {weekTrainings.map(entry => (
+                            <div
+                              key={entry.id}
+                              onClick={() => openCard(entry)}
+                              style={{ background: panel?.existing?.id === entry.id ? 'var(--bg-card-orange)' : 'var(--bg-surface)', border: `1px solid ${panel?.existing?.id === entry.id ? 'var(--orange)' : 'var(--border-default)'}`, padding: '12px', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                            >
+                              <div>
+                                <div style={{ fontSize: '10px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>
+                                  {TRAINING_TYPE_LABELS[entry.training.type] ?? entry.training.type}
+                                </div>
+                                <div style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 600 }}>{entry.training.title}</div>
+                              </div>
+                              <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
+                                {entry.training.distance_m ? `${(entry.training.distance_m/1000).toFixed(1)}km` : ''}
+                              </div>
+                            </div>
+                          ))}
+                          <button
+                            onClick={() => openSlot(w, 1)}
+                            style={{ border: '1px dashed var(--border-default)', background: 'transparent', color: 'var(--text-tertiary)', padding: '12px', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}
+                          >
+                            + Adicionar Treino · Semana {w}
+                          </button>
+                        </div>
                       </div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-                        {entry.training.distance_m ? `${(entry.training.distance_m/1000).toFixed(1)}km` : ''}
-                      </div>
-                    </div>
-                  ))}
-                  <button 
-                    onClick={() => openSlot(1, 1)}
-                    style={{ border: '1px dashed var(--border-default)', background: 'transparent', color: 'var(--text-tertiary)', padding: '16px', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: 600, textAlign: 'center' }}
-                  >
-                    + Adicionar Treino
-                  </button>
+                    )
+                  })}
                 </div>
               </div>
             ) : view === 'week' ? (
