@@ -24,6 +24,15 @@ Implementado componente standalone (`PaceCalculator.tsx`) com cálculos de Pace,
 - **Modo Avançado** expandido de 5 para **6 zonas** (Regenerativo, Base Aeróbica, Moderado, Limiar, VO2max, Anaeróbico), cada uma com pace + faixa de **% FCmáx** + sugestão de treino, mais um texto de ajuda explicando o conceito de "pace de referência" para alunos novos
 - Validado: `tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros/warnings em ambas as rodadas
 
+**Atualização 2026-07-03 (v3) — "descubra a zona de um treino específico":**
+- Novo bloco no modo Avançado: campos de Distância (km) + Tempo (hh:mm:ss) de um treino já realizado
+- App calcula o pace daquele treino e identifica automaticamente em qual das 6 zonas ele caiu (card destacado com borda mais grossa e a cor da zona correspondente)
+- Se o pace cair numa faixa de transição entre duas zonas (existem pequenos gaps intencionais entre elas), retorna a zona com o centro mais próximo em vez de não mostrar nada
+- Matemática validada manualmente (ex: referência 5:00/km + treino de 8km em 42:00 → pace 5:15/km → Z3 Moderado, correto)
+- Validado: `tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros/warnings
+
+**Incidente de infraestrutura (2026-07-03):** durante a checagem de deploy, múltiplas requisições `curl` automatizadas (incluindo um loop de verificação a cada 5s) dispararam o **Vercel Security Checkpoint** (proteção anti-bot), bloqueando o site inteiro por um tempo — não relacionado a bug de código. Lição: nunca fazer polling agressivo contra o domínio de produção; usar no máximo 1 request espaçado, e lembrar que `curl` não resolve o desafio JS do checkpoint (só um navegador real resolve sozinho) — então `curl` pode reportar bloqueio falso mesmo depois de já ter liberado para usuários reais. Se o site parecer fora do ar sem motivo aparente, checar primeiro Vercel Dashboard → Project → Settings → Firewall antes de suspeitar do código.
+
 ### 2. Biblioteca de treinos — ajustes finais
 Já existe em /admin/treinos. Revisar e ajustar com base no feedback real de uso.
 
