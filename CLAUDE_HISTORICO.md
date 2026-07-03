@@ -866,3 +866,26 @@ A lógica `targetWeekNumber > releasedThrough` (bloqueado) / `n <= releasedThrou
 **Lição:** um bug de "condição errada" reportado pelo usuário pode já estar corrigido no código e o sintoma continuar idêntico — a causa real pode estar numa camada abaixo (qual linha do banco está sendo lida), não na lógica que a manipula. Necessário consultar o banco diretamente para confirmar a hipótese antes de aplicar mais um fix cego na mesma função.
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · commits `d0e29d1` e `82dad4b` em `master`.
+
+### Sessão 2026-07-02 (Follow-up 2 — Modo Flexível sem Liberação de Semana)
+
+Usuário testou no celular após o fix anterior e reportou dois pontos: o chat ainda precisava "subir mais um pouco", e turmas em modo flexível continuavam com tudo bloqueado mesmo o professor tentando liberar.
+
+**Chat:** o padding restaurado na sessão anterior (`76px`) era o valor histórico antigo. O resto do app (`AlunoDashboard.module.css .container`) usa `110px` de folga acima do `BottomNav` fixed. Alinhado o `.inputArea` do chat pro mesmo valor, por consistência.
+
+**Modo flexível bloqueado — causa raiz real:**
+Leitura direta de `AdminTurmaDetail.tsx` mostrou que o componente bifurca em dois branches JSX totalmente separados por `group.mode`:
+- `mode === 'fixo'` → renderiza `WeekView`, que tem os chips S1–S4 de liberar semana (`onChipRelease`/`onRelease`, ligados a `handleChipClick`/`releaseThrough`).
+- `mode === 'flexivel'` → renderiza uma lista plana de treinos com só um botão "+ Adicionar Treino". **Nenhum controle de liberação existia nesse branch.**
+
+Ou seja, `released_through_week` para turmas flexíveis só podia ser alterado manualmente no banco — a feature nunca foi implementada quando o modo flexível foi criado (Task 55). Isso não era um bug de lógica invertida como os anteriores: era ausência total de feature num dos dois branches.
+
+Investigação revelou um segundo problema na mesma área: o botão "+ Adicionar Treino" do modo flexível chamava `openSlot(1, 1)` fixo — todo treino novo ia pra Semana 1, sem exceção. Mesmo se o professor liberasse S2–S4 (via SQL direto, contornando o bug acima), não havia como colocar conteúdo nelas pela UI.
+
+**Correção:**
+- Chips S1–S4 adicionados ao branch flexível, reaproveitando `handleChipClick`/`releasing`/`plan?.released_through_week` — mesmo toggle bidirecional já usado no modo fixo, zero lógica nova.
+- Lista de treinos do modo flexível reestruturada: agrupada por `weekNumber` (1 a 4), cada seção com seu próprio "+ Adicionar Treino · Semana N" chamando `openSlot(w, 1)`.
+
+**Lição:** nem todo sintoma parecido ("aluno vê tudo bloqueado") tem a mesma causa. Na sessão anterior era dado errado sendo lido; nesta, era feature nunca implementada num dos dois branches de um componente bifurcado. Vale sempre conferir se os dois caminhos de um `if`/ternário condicional por `mode` têm paridade de funcionalidade, não só de layout.
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · commit `9535055` em `master`. Documentado como Caso 6 em `docs/PORTFOLIO_DEBUG_CASES.md` (commit `f06b5bc`).
