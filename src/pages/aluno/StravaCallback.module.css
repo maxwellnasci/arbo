@@ -1,0 +1,50 @@
+.container {
+  height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: var(--bg-primary);
+  padding: 24px;
+  text-align: center;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--orange-border);
+  border-top-color: var(--orange);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.text {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.errorText {
+  font-size: 15px;
+  color: var(--text-primary);
+  max-width: 340px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.backBtn {
+  background: var(--orange);
+  color: var(--text-on-brand);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}

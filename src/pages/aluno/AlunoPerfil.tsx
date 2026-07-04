@@ -1,12 +1,36 @@
+import { useState } from 'react'
 import { useAlunoPerfil } from '../../hooks/useAlunoPerfil'
+import { useStravaConnection } from '../../hooks/useStravaConnection'
 import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
-import { LogOut, Activity } from 'lucide-react'
+import { toast } from 'sonner'
+import { LogOut, Activity, RefreshCw } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import styles from './AlunoPerfil.module.css'
+
+function formatPace(secondsPerKm: number | null) {
+  if (!secondsPerKm) return '--:--'
+  const m = Math.floor(secondsPerKm / 60)
+  const s = Math.round(secondsPerKm % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+function formatActivityDate(iso: string) {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+}
 
 export default function AlunoPerfil({ studentId, isPreview }: { studentId: string, isPreview?: boolean }) {
   const { perfil, isLoading } = useAlunoPerfil(studentId)
+  const {
+    isConnected,
+    activities,
+    isLoading: isStravaLoading,
+    isSyncing,
+    syncActivities,
+    disconnect,
+  } = useStravaConnection()
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -15,8 +39,22 @@ export default function AlunoPerfil({ studentId, isPreview }: { studentId: strin
   }
 
   const handleStravaConnect = () => {
-    // Integração futura via Edge Function / n8n
-    alert('Integração com Strava via n8n será implementada em breve!')
+    const state = crypto.randomUUID()
+    sessionStorage.setItem('arbo_strava_state', state)
+    window.location.href = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/strava-auth?state=${state}`
+  }
+
+  const handleSync = async () => {
+    const ok = await syncActivities()
+    if (ok) toast.success('Atividades sincronizadas!')
+    else toast.error('Erro ao sincronizar com o Strava.')
+  }
+
+  const handleDisconnect = async () => {
+    setShowDisconnectConfirm(false)
+    const ok = await disconnect()
+    if (ok) toast.success('Strava desconectado.')
+    else toast.error('Erro ao desconectar do Strava.')
   }
 
   if (isLoading) {
@@ -72,7 +110,7 @@ export default function AlunoPerfil({ studentId, isPreview }: { studentId: strin
 
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Aplicativos</h2>
-        <motion.div 
+        <motion.div
           className={styles.stravaCard}
           whileHover={{ scale: 1.01 }}
         >
@@ -80,18 +118,59 @@ export default function AlunoPerfil({ studentId, isPreview }: { studentId: strin
             <Activity className={styles.stravaIcon} size={24} />
           </div>
           <div className={styles.stravaContent}>
-            <span className={styles.stravaTitle}>Conectar Strava</span>
-            <span className={styles.stravaSubtitle}>Em breve</span>
+            <span className={styles.stravaTitle}>Strava</span>
+            <span className={styles.stravaSubtitle}>
+              {isStravaLoading ? 'Verificando...' : isConnected ? 'Conectado' : 'Não conectado'}
+            </span>
           </div>
-          <button 
-            className={styles.stravaBtn}
-            onClick={handleStravaConnect}
-            disabled={perfil.strava_connected}
-          >
-            {perfil.strava_connected ? 'Conectado' : 'Conectar'}
-          </button>
+          {!isStravaLoading && (
+            isConnected ? (
+              <button className={styles.stravaBtn} onClick={() => setShowDisconnectConfirm(true)}>
+                Desconectar
+              </button>
+            ) : (
+              <button className={styles.stravaBtn} onClick={handleStravaConnect}>
+                Conectar
+              </button>
+            )
+          )}
         </motion.div>
+
+        {isConnected && (
+          <>
+            <button className={styles.syncBtn} onClick={handleSync} disabled={isSyncing}>
+              <RefreshCw size={14} className={isSyncing ? styles.spinning : undefined} />
+              {isSyncing ? 'Sincronizando...' : 'Sincronizar atividades'}
+            </button>
+
+            {activities.length > 0 && (
+              <div className={styles.activitiesList}>
+                {activities.map(activity => (
+                  <div key={activity.id} className={styles.activityRow}>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.activityName}>{activity.name}</span>
+                      <span className={styles.activityMeta}>
+                        {activity.distanceKm} km · {formatPace(activity.paceSecondsPerKm)} /km
+                      </span>
+                    </div>
+                    <span className={styles.activityDate}>{formatActivityDate(activity.date)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </section>
+
+      <ConfirmModal
+        isOpen={showDisconnectConfirm}
+        title="Desconectar Strava?"
+        description="Suas atividades sincronizadas continuam salvas, mas o app para de buscar novas atividades até você conectar de novo."
+        confirmText="Desconectar"
+        type="warning"
+        onConfirm={handleDisconnect}
+        onCancel={() => setShowDisconnectConfirm(false)}
+      />
 
       {!isPreview && (
         <section className={styles.section}>

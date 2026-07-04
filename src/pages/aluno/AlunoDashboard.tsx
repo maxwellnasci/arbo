@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
@@ -7,7 +7,7 @@ import { useProgresso } from '../../hooks/useProgresso'
 import { useScheduling } from '../../hooks/useScheduling'
 import { supabase } from '../../lib/supabase'
 import type { TrainingType } from '../../lib/types'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Home, TrendingUp, MessageSquare, User, Calendar, CheckCircle2, Medal, Flame, Eye, Lock } from 'lucide-react'
 import AlunoChat from './AlunoChat'
 import AlunoProgresso from './AlunoProgresso'
@@ -331,6 +331,17 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
 
   const [activeTab, setActiveTab] = useState<NavTab>('inicio')
   const [activeCheckin, setActiveCheckin] = useState<DayTraining | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  useEffect(() => {
+    async function syncStravaRedirect() {
+      if (searchParams.get('strava') !== 'success') return
+      setActiveTab('perfil')
+      toast.success('Strava conectado com sucesso!')
+      setSearchParams({}, { replace: true })
+    }
+    syncStravaRedirect()
+  }, [searchParams, setSearchParams])
 
   const todayDow    = new Date().getDay()
   const completed   = trainings.filter(t => t.checkin !== null).length

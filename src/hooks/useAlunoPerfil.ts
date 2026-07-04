@@ -10,7 +10,6 @@ export interface AlunoPerfilData {
   groups: {
     name: string;
   } | null;
-  strava_connected: boolean;
 }
 
 export function useAlunoPerfil(studentId: string) {
@@ -40,7 +39,6 @@ export function useAlunoPerfil(studentId: string) {
           avatar_url: data.avatar_url,
           level: data.level,
           groups: data.groups,
-          strava_connected: false
         });
       } catch (e: unknown) {
         if (!cancelled) {

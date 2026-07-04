@@ -23,6 +23,7 @@ const AdminAlunoDetail = lazy(() => import('./pages/admin/AdminAlunoDetail'))
 const AdminTreinos     = lazy(() => import('./pages/admin/AdminTreinos'))
 const AlunoDashboard   = lazy(() => import('./pages/aluno/AlunoDashboard'))
 const AnamnesisForm    = lazy(() => import('./pages/aluno/AnamnesisForm'))
+const StravaCallback   = lazy(() => import('./pages/aluno/StravaCallback'))
 
 // ── Suspense fallback ────────────────────────────────────────────────────────
 function PageLoader() {
@@ -148,6 +149,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/login', element: <Suspense fallback={<PageLoader />}><LoginPage /></Suspense> },
       { path: '/set-password', element: <Suspense fallback={<PageLoader />}><SetPassword /></Suspense> },
+      { path: '/strava/callback', element: <Suspense fallback={<PageLoader />}><StravaCallback /></Suspense> },
       {
         element: <ProtectedRoute />,
         children: [
