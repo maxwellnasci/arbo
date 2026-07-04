@@ -877,3 +877,9 @@ Resultado Lighthouse antes:
 - **Calculadora de Pace:** Implementado `PaceCalculator.tsx` (standalone modal/bottom-sheet).
 - **Funcionalidades:** Cálculos cruzados de Pace, Tempo e Distância, além de conversão para km/h e tabela de projeção de provas clássicas (5k, 10k, 21k, 42k).
 - **Integração:** Adicionado botão de atalho interativo no painel do Aluno (`AlunoProgresso.tsx`) e no painel do Admin (`AdminHome.tsx`).
+
+### Sessão 2026-07-03 (Item 6 Fase 3 — Integração Strava)
+- **Verificação prévia:** antes de gerar SQL, consultado o schema real de `strava_connections`/`strava_activities` ao vivo no Supabase — a tabela já existia com `user_id`/`token_expires_at` (não `student_id`/`expires_at`) e já estava travada (RLS ativo, zero policies, GRANT `authenticated` só REFERENCES/TRIGGER/TRUNCATE). Nenhum SQL foi aplicado — o GRANT pedido teria exposto `access_token`/`refresh_token` ao cliente.
+- **4 Edge Functions** (`strava-auth`, `strava-callback`, `strava-sync` + `strava-connection` — extra necessária pra checar status/desconectar sem acesso direto à tabela): OAuth completo, refresh automático de token, sincronização das últimas 10 corridas.
+- **Frontend:** `useStravaConnection.ts` (só `fetch` contra as Edge Functions, nunca acessa a tabela direto), `StravaCallback.tsx` (rota `/strava/callback` com proteção CSRF via `state`), card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades) substituindo o placeholder "Em breve".
+- **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · commit `325c876` em `master`.

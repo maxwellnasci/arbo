@@ -49,17 +49,25 @@ fluxo de carga automática desses treinos no banco.
 Hoje o app suporta apenas link do YouTube (Task 61). Avaliar se o professor quer
 upload direto (Supabase Storage) ou se o link do YouTube já resolve.
 
-### 6. Integração Strava
-Hoje é placeholder (strava_connected: false, nunca implementado de verdade).
-Necessário: criar app no Strava Developer (Client ID/Secret), OAuth, Edge Function
-para sincronizar atividades.
+### 6. Integração Strava — ✅ CONCLUÍDO (2026-07-03)
+OAuth completo implementado via 4 Edge Functions (`strava-auth`, `strava-callback`, `strava-sync`, `strava-connection`), hook `useStravaConnection.ts`, página de callback `StravaCallback.tsx` (rota `/strava/callback`, com proteção CSRF via `state`) e card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades), substituindo o placeholder `strava_connected: false`.
+
+**Verificação prévia (antes de escrever qualquer SQL):** consultado o schema real de `strava_connections`/`strava_activities` ao vivo no Supabase via MCP. As tabelas já existiam com `user_id`/`token_expires_at` (não `student_id`/`expires_at`, como o pedido original assumia) e `strava_connections` já estava corretamente travada — RLS ativo, zero policies, GRANT `authenticated` só `REFERENCES/TRIGGER/TRUNCATE`. Nenhuma migration foi aplicada; o `GRANT` originalmente pedido teria revertido essa trava e exposto `access_token`/`refresh_token` ao cliente.
+
+**Por que 4 Edge Functions e não 3:** com `strava_connections` inacessível ao cliente, o frontend não tinha como checar status de conexão nem desconectar sem violar a trava — daí a `strava-connection` (GET status / DELETE desconectar) além das 3 pedidas (`strava-auth`, `strava-callback`, `strava-sync`).
+
+**Segurança:** client secret nunca no frontend, JWT validado em toda Edge Function antes de qualquer uso de `service_role`, filtro explícito por `user.id` mesmo com `service_role` (que ignora RLS), tokens do Strava nunca retornam em nenhuma resposta ao cliente — o hook só consome `{ isConnected, activities }`.
+
+**Pendente para produção:** criar app no Strava Developer com domínio real, configurar `STRAVA_CLIENT_ID`/`STRAVA_CLIENT_SECRET` em produção (Vercel + Supabase Edge Functions) e testar o fluxo ponta a ponta com uma conta real.
+
+Validado: `tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros/warnings. Commit `325c876` em `master`.
 
 ### 7. Agente de resposta no Strava
 Depende do item 6 estar pronto. Definir comportamento exato com o professor
 (comentar na atividade, notificar professor, sincronizar dado no app, etc).
 
 ## Status
-Roadmap criado em 2026-06-30. Itens 1 e 3 implementados e validados. Aguardando próximos passos do professor.
+Roadmap criado em 2026-06-30. Itens 1, 3 e 6 implementados e validados. Aguardando próximos passos do professor (itens 2, 4, 5, 7 pendentes; item 7 depende de decisão do professor sobre o comportamento do agente Strava).
 
 ## Correções Adicionais (2026-07-01)
 - Corrigido corte de tela no `DayPicker` em dispositivos menores (scroll interno e max-height).

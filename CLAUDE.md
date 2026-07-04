@@ -244,6 +244,7 @@ catch (e: unknown) {
 | `/admin/treinos` | `AdminTreinos` | somente `role=admin` |
 | `/aluno` | `AlunoDashboard.tsx` | somente `role=aluno` |
 | `/onboarding` | `AnamnesisForm.tsx` | aluno sem anamnese |
+| `/strava/callback` | `StravaCallback.tsx` | público (retorno do OAuth do Strava, fora do `ProtectedRoute`) |
 
 ### Sistema de convite
 
@@ -267,6 +268,25 @@ Edge Function: `supabase/functions/delete-user/index.ts`
 - CORS restrito ao mesmo allowlist de `invite-user`  
 - Deploy: `npx supabase functions deploy delete-user --project-ref jhfkflnixzivuichmkie`
 
+### Integração Strava (implementada 2026-07-03)
+
+4 Edge Functions em `supabase/functions/`:
+- **`strava-auth`** — monta a URL de autorização do Strava (`STRAVA_CLIENT_ID` + `SITE_URL`) e responde com `Response.redirect` 302. Chamada via `window.location.href` (navegação direta, não `fetch`) — por isso não valida JWT.
+- **`strava-callback`** — valida JWT do aluno, troca `code` por tokens em `POST https://www.strava.com/oauth/token`, grava com `service_role` em `strava_connections` via `upsert(..., { onConflict: 'user_id' })`.
+- **`strava-sync`** — valida JWT, busca a conexão do próprio usuário (`service_role` + filtro explícito `.eq('user_id', user.id)`, nunca confiando só no bypass de RLS do `service_role`), renova o token se `token_expires_at` já passou, busca até 30 atividades no Strava, filtra as últimas 10 do tipo `Run` e grava em `strava_activities` via `upsert(..., { onConflict: 'strava_id' })`.
+- **`strava-connection`** — GET retorna `{ isConnected, athleteId, connectedAt }` (nunca os tokens); DELETE remove a conexão (desconectar).
+
+**Por que 4 e não 3:** `strava_connections` já vinha travada de propósito — RLS ativo, zero policies, GRANT para `authenticated` é só `REFERENCES/TRIGGER/TRUNCATE` (nem SELECT). Sem uma function dedicada, o frontend não teria como checar status/desconectar sem violar essa trava.
+
+**Schema real da tabela** (confirmado ao vivo via SQL antes de escrever qualquer código): colunas são `user_id` e `token_expires_at` — não `student_id`/`expires_at`.
+
+Frontend:
+- `src/hooks/useStravaConnection.ts` — `isConnected`, `activities`, `isLoading`, `isSyncing`, `error`, `syncActivities()`, `disconnect()`, `refresh()`. Nunca faz `supabase.from('strava_connections')` — só `fetch` contra as Edge Functions com o JWT da sessão atual.
+- `src/pages/aluno/StravaCallback.tsx` — rota `/strava/callback`, valida `state` (nonce `crypto.randomUUID()` gerado no clique de "Conectar" e guardado em `sessionStorage`) contra CSRF antes de chamar `strava-callback`.
+- `src/pages/aluno/AlunoPerfil.tsx` — card Strava com status real, Conectar/Desconectar (`ConfirmModal`, nunca `window.confirm`), botão "Sincronizar atividades", lista das últimas atividades.
+
+**Segurança:** client secret nunca no frontend (só `Deno.env` nas Edge Functions); `access_token`/`refresh_token` nunca retornam em nenhuma resposta ao cliente; todas as functions validam JWT via `userClient.auth.getUser(token)` antes de qualquer operação com `service_role`.
+
 ### Aviso SMTP
 
 O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação de senha.  
@@ -276,18 +296,19 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 ## Estado atual (2026-07-02)
 
 - **Média geral:** 9.0/10 — Segurança 8.5 · Performance 8.8 · Qualidade 9.2 · UX/Bugs 9.2 · Arquitetura 8.5 · PWA/Mobile 9.0
-- **Tasks 39-55, 56, 57, 59, 59c, 60, 61, 62, 63, 64, 65, 66 concluídas**
+- **Tasks 39-55, 56, 57, 59, 59c, 60, 61, 62, 63, 64, 65, 66, 67 concluídas**
 - **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 - **Testes:** 22 testes passando (Vitest)
 - **Sessão 2026-07-02:** 2 rodadas de correção no painel do aluno — causa raiz de `groups.starts_at NULL` gerando `group_plans` duplicados (Task 65) e feature de liberação de semana ausente por completo no modo flexível (Task 66). 6 estudos de caso documentados em `docs/PORTFOLIO_DEBUG_CASES.md`, linkado no README.
+- **Sessão 2026-07-03 (Task 67):** Integração Strava completa — OAuth, 4 Edge Functions, hook e UI no `AlunoPerfil`. Ver seção "Integração Strava" acima.
 - **Próxima sessão:**
   - Testar no celular o fluxo completo de turma flexível ponta a ponta (liberar semana → aluno ver treino → check-in)
+  - Testar o fluxo completo de conexão Strava com uma conta real do professor (criar app no Strava Developer, configurar `STRAVA_CLIENT_ID`/`STRAVA_CLIENT_SECRET` em produção)
   - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos) — cobrir especialmente `useWeeklyPlan.ts` (cálculo de ciclo) e o branch flexível do `AdminTurmaDetail.tsx`, que não tinham cobertura e foi onde os bugs desta sessão viveram sem detecção
   - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`
   - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
   - Security scanning no CI (`npm audit`)
   - Push notifications (Web Push API)
-  - Integração Strava via Edge Function + n8n
   - Sentry para monitoramento de erros em produção
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
@@ -348,7 +369,8 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 64 (2026-06-29):** Edição de perfil no admin e correção de RPC — Implementado fluxo para editar nome de aluno no painel admin, e e-mail via auth recuperado através da RPC (`get_user_email`) corrigida (com cast completo do client no código). ✅
 - **Task 65 (2026-07-02):** Correção de causa raiz — chat do aluno sem área de digitar + semanas liberadas não refletindo no aluno. Root cause real: `groups.starts_at NULL` fazia o cálculo de ciclo/semana usar âncora que muda todo dia, gerando `group_plans` duplicados por turma com `released_through_week` divergente entre admin e aluno. Corrigido `AlunoChat.module.css` (padding do `.inputArea` restaurado para não ficar atrás do `BottomNav` fixed), `useWeeklyPlan.ts` (query do ciclo ordena ascendente ao invés de pegar o registro mais recente da janela), dados de 2 turmas corrigidos via SQL direto no Supabase, e `CreateGroupModal.tsx` passou a exigir data de início (evita recorrência em turmas novas). Ver estudo de caso completo em `docs/PORTFOLIO_DEBUG_CASES.md`. ✅
 - **Task 66 (2026-07-02):** Fix crítico — modo flexível não tinha NENHUM mecanismo de liberar semana no admin (`AdminTurmaDetail.tsx`). Os chips S1–S4 (`handleChipClick`/`releaseThrough`) só existiam no branch `WeekView` do modo fixo; turmas flexíveis ficavam com `released_through_week` travado em 0 pra sempre — todo aluno via tudo bloqueado, sem forma de o professor liberar. Adicionados os mesmos chips S1–S4 no branch flexível (reuso da lógica existente, sem duplicar). Corrigido também: botão "+ Adicionar Treino" sempre criava na Semana 1 (`openSlot(1, 1)` fixo); lista agora é agrupada por semana (1–4), cada uma com seu próprio botão de adicionar. `AlunoChat.module.css` — padding do `.inputArea` alinhado a 110px (mesmo valor do resto do app) para folga real acima do `BottomNav` no celular. Ver Caso 6 em `docs/PORTFOLIO_DEBUG_CASES.md`. ✅
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-07-02)
+- **Task 67 (2026-07-03):** Integração Strava — OAuth completo, 4 Edge Functions (`strava-auth`, `strava-callback`, `strava-sync`, `strava-connection` — a 4ª não estava no escopo original, mas foi necessária porque `strava_connections` está travada pra `authenticated` desde sempre), `useStravaConnection.ts`, `StravaCallback.tsx` (com proteção CSRF via `state`), card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades). Antes de escrever qualquer SQL, consultado o schema real via MCP Supabase — a tabela já existia com `user_id`/`token_expires_at` (não `student_id`/`expires_at` como um primeiro rascunho supôs) e RLS corretamente travada; nenhuma migration foi necessária. Tokens do Strava nunca trafegam para o cliente — todas as operações passam por `service_role` nas Edge Functions, filtrando explicitamente por `user.id`. ✅
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-07-03)
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
 **Vitest:** 22 testes passando ✅
@@ -356,7 +378,7 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 ### Próximos passos
 - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos)
 - SMTP externo (Resend ou AWS SES) antes de produção
-- Integração Strava (Edge Function via n8n)
+- Testar fluxo Strava ponta a ponta com conta real do professor + credenciais de produção
 - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`
 - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
 - Security scanning no CI (`npm audit`)
@@ -383,9 +405,9 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 | Progresso do Aluno | aba em `/aluno` | ✅ |
 | Perfil do Aluno | aba em `/aluno` | ✅ |
 | Notificações de PR | widget em `/admin` | ✅ |
+| Integração Strava | card na aba Perfil em `/aluno` | ✅ |
 
 ### Pendentes
-- Integração Strava (Edge Function via n8n)
 - SMTP externo (Resend ou AWS SES)
 
 ### Task 45 (Findings Claude Code)
@@ -568,3 +590,10 @@ Resultado Lighthouse antes:
 - **Calculadora de Pace:** Implementado `PaceCalculator.tsx` (standalone modal/bottom-sheet).
 - **Funcionalidades:** Cálculos cruzados de Pace, Tempo e Distância, além de conversão para km/h e tabela de projeção de provas clássicas (5k, 10k, 21k, 42k).
 - **Integração:** Adicionado botão de atalho interativo no painel do Aluno (`AlunoProgresso.tsx`) e no painel do Admin (`AdminHome.tsx`).
+
+### Sessão 2026-07-03 (Item 6 Fase 3 — Integração Strava)
+- **Verificação prévia obrigatória:** antes de escrever qualquer SQL, consultado o schema real de `strava_connections`/`strava_activities` ao vivo via MCP Supabase (`pg_policies`, `information_schema.role_table_grants`, `pg_constraint`). Descoberto que as tabelas já existiam com colunas `user_id`/`token_expires_at` (o rascunho original pedia `student_id`/`expires_at`) e que `strava_connections` já estava corretamente travada — RLS ativo, zero policies, GRANT `authenticated` só `REFERENCES/TRIGGER/TRUNCATE`. Nenhuma migration foi aplicada; o SQL proposto originalmente (`GRANT ... TO authenticated`) teria revertido essa trava e exposto `access_token`/`refresh_token` ao cliente.
+- **4 Edge Functions** (não 3 — a 4ª foi necessária pela trava confirmada acima): `strava-auth` (redirect OAuth via `Response.redirect`), `strava-callback` (troca `code` por token, `upsert` em `strava_connections` com `service_role`), `strava-sync` (renova token expirado, busca até 30 atividades no Strava, filtra 10 `Run`, `upsert` em `strava_activities`), `strava-connection` (GET status / DELETE desconectar — únicas formas do cliente saber se está conectado, já que a tabela é inacessível direto).
+- **Frontend:** `useStravaConnection.ts` (hook — só `fetch` contra as Edge Functions, nunca `supabase.from('strava_connections')`), `StravaCallback.tsx` (rota pública `/strava/callback`, valida `state` CSRF via `sessionStorage`), card funcional no `AlunoPerfil.tsx` substituindo o placeholder "Em breve" (conectar, desconectar com `ConfirmModal`, sincronizar com spinner, lista de atividades), `AlunoDashboard.tsx` trata retorno `?strava=success` (muda pra aba Perfil + toast).
+- **Segurança:** client secret nunca no frontend, JWT validado em toda Edge Function antes de qualquer uso de `service_role`, filtro explícito por `user.id` mesmo com `service_role` (que ignora RLS) para nunca vazar dado entre alunos, tokens do Strava nunca retornam em nenhuma resposta ao cliente.
+- **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · commit `325c876` em `master`.

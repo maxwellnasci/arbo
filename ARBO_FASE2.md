@@ -488,3 +488,9 @@ Resultado Lighthouse antes:
 - **Fix Vercel CSP (Tela Branca do YouTube):** Corrigido o `vercel.json` adicionando a diretiva `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;` ao header `Content-Security-Policy`. Sem isso, o app bloqueava iframes de vídeos.
 - **Fix Regex do VideoPlayer:** Ampliada a regex no `VideoPlayer.tsx` para reconhecer links de YouTube Shorts (`shorts/`) e URLs contendo parâmetros extras ignorados (`?si=`).
 - **Documentação de Portfólio:** Criado o artefato `docs/PORTFOLIO_DEBUG_CASES.md` registrando a proficiência e detalhamento do debug nos casos de Tipagem RPC (TS), CSP de Infra (Vercel) e React Immutability (Linter).
+
+### Sessão 2026-07-03 (Item 6 Fase 3 — Integração Strava)
+- **Verificação prévia:** antes de gerar SQL, consultado o schema real de `strava_connections`/`strava_activities` ao vivo no Supabase — a tabela já existia com `user_id`/`token_expires_at` (não `student_id`/`expires_at`) e já estava travada (RLS ativo, zero policies, GRANT `authenticated` só REFERENCES/TRIGGER/TRUNCATE). Nenhum SQL foi aplicado — o GRANT pedido teria exposto `access_token`/`refresh_token` ao cliente.
+- **4 Edge Functions** (`strava-auth`, `strava-callback`, `strava-sync` + `strava-connection` — extra necessária pra checar status/desconectar sem acesso direto à tabela): OAuth completo, refresh automático de token, sincronização das últimas 10 corridas.
+- **Frontend:** `useStravaConnection.ts` (só `fetch` contra as Edge Functions, nunca acessa a tabela direto), `StravaCallback.tsx` (rota `/strava/callback` com proteção CSRF via `state`), card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades) substituindo o placeholder "Em breve".
+- **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · commit `325c876` em `master`.

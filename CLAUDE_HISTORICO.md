@@ -889,3 +889,33 @@ Investigação revelou um segundo problema na mesma área: o botão "+ Adicionar
 **Lição:** nem todo sintoma parecido ("aluno vê tudo bloqueado") tem a mesma causa. Na sessão anterior era dado errado sendo lido; nesta, era feature nunca implementada num dos dois branches de um componente bifurcado. Vale sempre conferir se os dois caminhos de um `if`/ternário condicional por `mode` têm paridade de funcionalidade, não só de layout.
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · commit `9535055` em `master`. Documentado como Caso 6 em `docs/PORTFOLIO_DEBUG_CASES.md` (commit `f06b5bc`).
+
+### Sessão 2026-07-03 (Integração Strava — OAuth + Edge Functions)
+
+Pedido: implementar OAuth do Strava com SQL de criação de `strava_connections`, 3 Edge Functions (`strava-auth`, `strava-callback`, `strava-sync`) e UI no `AlunoPerfil`.
+
+**Verificação antes de escrever qualquer código:** em vez de assumir que o SQL pedido estava correto, consultado o banco ao vivo via MCP Supabase (`pg_policies`, `information_schema.role_table_grants`, `pg_constraint`, `information_schema.columns`) para o projeto `jhfkflnixzivuichmkie`. Resultado:
+- `strava_connections` e `strava_activities` **já existiam**, com colunas `user_id`/`token_expires_at` — não `student_id`/`expires_at` como o pedido original assumia. Um `CREATE TABLE IF NOT EXISTS` seria um no-op silencioso, e a policy seguinte (`student_id = auth.uid()`) quebraria por coluna inexistente.
+- `strava_connections` já estava com RLS ativo, **zero policies**, e GRANT para `authenticated` só `REFERENCES/TRIGGER/TRUNCATE` (nem SELECT) — bloqueio total pro cliente, documentado no CLAUDE.md como decisão intencional ("acesso exclusivo por Edge Functions com `service_role`").
+- O SQL pedido (`GRANT SELECT, INSERT, UPDATE, DELETE ... TO authenticated` + policies de self-management) reverteria essa trava e exporia `access_token`/`refresh_token` do Strava direto ao cliente, além de permitir ao próprio usuário forjar sua conexão via INSERT/UPDATE direto.
+
+**Decisão:** nenhuma alteração de schema/RLS/GRANT foi aplicada. Toda leitura/escrita em `strava_connections` passa por Edge Functions com `service_role`, sempre filtrando explicitamente por `user.id` (nunca confiando só no bypass de RLS do `service_role` para isolar dados entre alunos — princípio aplicado em `strava-sync` e `strava-connection`).
+
+**4 Edge Functions, não 3:** como `strava_connections` está travada pro cliente, o hook do frontend não teria como saber se o aluno está conectado nem desconectá-lo sem violar essa trava. Adicionada `strava-connection` (GET = status via `{ isConnected, athleteId, connectedAt }`, nunca os tokens; DELETE = desconectar) além das 3 pedidas.
+
+**strava-auth:** monta a URL de autorização (`STRAVA_CLIENT_ID` + `SITE_URL` de `Deno.env`) e responde com `Response.redirect(url, 302)`. Chamada via `window.location.href` (navegação de página inteira, não `fetch`) — por isso não valida JWT nem tem CORS: a identidade do aluno só é resolvida depois, no `strava-callback`, através do `Authorization` header daquela chamada (essa sim via `fetch`, autenticada).
+
+**strava-callback:** valida JWT (`userClient.auth.getUser(token)`), troca `code` por tokens em `POST https://www.strava.com/oauth/token`, grava com `service_role` via `upsert({ user_id: user.id, ... }, { onConflict: 'user_id' })` — a constraint `UNIQUE(user_id)` já existia na tabela.
+
+**strava-sync:** busca a conexão do próprio usuário, renova o `access_token` via `grant_type=refresh_token` se `token_expires_at` já passou, busca até 30 atividades recentes (`per_page=30`, já que a API do Strava não filtra por tipo), filtra as últimas 10 do tipo `Run`, e grava em `strava_activities` via `upsert(..., { onConflict: 'strava_id' })` (a coluna já tem `UNIQUE`).
+
+**Frontend:**
+- `useStravaConnection.ts` — único ponto de contato do app com o Strava; só faz `fetch` contra as Edge Functions com o JWT da sessão atual, nunca `supabase.from('strava_connections')`.
+- `StravaCallback.tsx` (rota pública `/strava/callback`, fora do `ProtectedRoute`) — proteção CSRF: `state` é um `crypto.randomUUID()` gerado no clique de "Conectar" (guardado em `sessionStorage`), comparado contra o `state` que o Strava devolve na URL de retorno antes de prosseguir com a troca de código.
+- `AlunoPerfil.tsx` — placeholder "Em breve" substituído por card funcional: status real, Conectar/Desconectar (`ConfirmModal`, nunca `window.confirm`), "Sincronizar atividades" com spinner, lista das últimas atividades (nome, km, pace, data).
+- `AlunoDashboard.tsx` — trata o retorno `?strava=success` da URL: muda pra aba Perfil, mostra toast de sucesso, limpa a query string via `setSearchParams({}, { replace: true })`.
+- `useAlunoPerfil.ts` — campo `strava_connected` (placeholder hardcoded em `false`, sem consumidor após a troca) removido.
+
+**Lição de processo:** pedidos de infraestrutura que incluem SQL pronto para copiar/colar merecem verificação contra o estado real do banco antes de aplicar — especialmente quando o SQL cria policies/grants que abrem acesso. Neste caso a verificação evitou tanto um erro de sintaxe (coluna inexistente) quanto uma regressão de segurança real (exposição de tokens OAuth).
+
+**Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (após ajustar o `useEffect` de `AlunoDashboard.tsx` para rodar o `setState` dentro de uma função `async` interna, mesmo padrão já usado nos hooks do projeto, e não passar no `react-hooks/set-state-in-effect`) · `npm run build` ✅ · commit `325c876` em `master`.
