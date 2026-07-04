@@ -136,7 +136,7 @@
   font-weight: 600;
 }
 
-/* ── Strava Placeholder ─────────────────────────────────────────────────────── */
+/* ── Strava ─────────────────────────────────────────────────────────────────── */
 
 .stravaCard {
   background: var(--bg-card-orange);
@@ -144,8 +144,14 @@
   border-radius: 16px;
   padding: 16px;
   display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.stravaCardHeader {
+  display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .stravaIconWrapper {
@@ -158,6 +164,7 @@
   align-items: center;
   justify-content: center;
   color: var(--orange);
+  flex-shrink: 0;
 }
 
 .stravaContent {
@@ -165,6 +172,13 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+}
+
+.stravaTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .stravaTitle {
@@ -176,25 +190,52 @@
 .stravaSubtitle {
   font-size: 12px;
   color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.stravaBtn {
-  background: transparent;
-  border: 1px solid var(--orange);
-  color: var(--orange);
-  font-weight: 600;
-  font-size: 12px;
-  padding: 8px 16px;
-  border-radius: 8px;
+.statusBadgeConnected, .statusBadgeDisconnected {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.statusBadgeConnected {
+  background: var(--green-subtle);
+  color: var(--green-accent);
+  border: 1px solid var(--green-border);
+}
+
+.statusBadgeDisconnected {
+  background: var(--bg-surface);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-default);
+}
+
+.stravaConnectBtn {
+  background: var(--orange);
+  border: none;
+  color: var(--text-on-brand);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 12px;
+  border-radius: 10px;
   cursor: pointer;
 }
 
-.stravaBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.stravaActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .syncBtn {
+  flex: 1;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   color: var(--text-secondary);
@@ -212,6 +253,17 @@
 .syncBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.disconnectBtn {
+  flex-shrink: 0;
+  background: transparent;
+  border: none;
+  color: var(--red-accent);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 8px 4px;
+  cursor: pointer;
 }
 
 .spinning {
@@ -233,7 +285,6 @@
 
 .activityRow {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border-subtle);
@@ -242,6 +293,18 @@
 
 .activityRow:last-child {
   border-bottom: none;
+}
+
+.activityIconWrapper {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--bg-card-orange);
+  color: var(--orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .activityInfo {
@@ -263,12 +326,35 @@
 .activityMeta {
   font-size: 12px;
   color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.activityDate {
-  font-size: 12px;
+.seeMoreBtn {
+  background: transparent;
+  border: none;
+  color: var(--orange);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px;
+  cursor: pointer;
+  align-self: center;
+}
+
+.activitiesEmpty {
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-default);
+  border-radius: 16px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   color: var(--text-tertiary);
-  flex-shrink: 0;
+  font-size: 13px;
+  text-align: center;
 }
 
 /* ── Logout ────────────────────────────────────────────────────────────────── */

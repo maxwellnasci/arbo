@@ -4,10 +4,14 @@ import { useStravaConnection } from '../../hooks/useStravaConnection'
 import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { LogOut, Activity, RefreshCw } from 'lucide-react'
+import { LogOut, Activity, RefreshCw, Footprints } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import styles from './AlunoPerfil.module.css'
+
+const ACTIVITIES_PREVIEW_COUNT = 5
 
 function formatPace(secondsPerKm: number | null) {
   if (!secondsPerKm) return '--:--'
@@ -16,21 +20,39 @@ function formatPace(secondsPerKm: number | null) {
   return `${m}:${s.toString().padStart(2, '0')}`
 }
 
+function formatDuration(totalSeconds: number) {
+  const h = Math.floor(totalSeconds / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = Math.floor(totalSeconds % 60)
+  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 function formatActivityDate(iso: string) {
-  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+  const date = new Date(iso)
+  const weekday = format(date, 'EEEE', { locale: ptBR }).replace('-feira', '')
+  const dayMonth = format(date, 'd MMM', { locale: ptBR })
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${dayMonth}`
+}
+
+function formatConnectedDate(iso: string) {
+  return format(new Date(iso), "d 'de' MMM 'de' yyyy", { locale: ptBR })
 }
 
 export default function AlunoPerfil({ studentId, isPreview }: { studentId: string, isPreview?: boolean }) {
   const { perfil, isLoading } = useAlunoPerfil(studentId)
   const {
     isConnected,
+    connectedAt,
     activities,
     isLoading: isStravaLoading,
+    isLoadingActivities,
     isSyncing,
     syncActivities,
     disconnect,
   } = useStravaConnection()
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
+  const [showAllActivities, setShowAllActivities] = useState(false)
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -112,50 +134,81 @@ export default function AlunoPerfil({ studentId, isPreview }: { studentId: strin
         <h2 className={styles.sectionTitle}>Aplicativos</h2>
         <motion.div
           className={styles.stravaCard}
-          whileHover={{ scale: 1.01 }}
+          whileHover={{ scale: 1.005 }}
         >
-          <div className={styles.stravaIconWrapper}>
-            <Activity className={styles.stravaIcon} size={24} />
+          <div className={styles.stravaCardHeader}>
+            <div className={styles.stravaIconWrapper}>
+              <Activity className={styles.stravaIcon} size={22} />
+            </div>
+            <div className={styles.stravaContent}>
+              <div className={styles.stravaTitleRow}>
+                <span className={styles.stravaTitle}>Strava</span>
+                {!isStravaLoading && (
+                  <span className={isConnected ? styles.statusBadgeConnected : styles.statusBadgeDisconnected}>
+                    {isConnected ? 'Conectado' : 'Desconectado'}
+                  </span>
+                )}
+              </div>
+              <span className={styles.stravaSubtitle}>
+                {isStravaLoading
+                  ? 'Verificando...'
+                  : isConnected
+                    ? connectedAt ? `Desde ${formatConnectedDate(connectedAt)}` : 'Sincronizando suas corridas'
+                    : 'Conecte para sincronizar corridas automaticamente'}
+              </span>
+            </div>
           </div>
-          <div className={styles.stravaContent}>
-            <span className={styles.stravaTitle}>Strava</span>
-            <span className={styles.stravaSubtitle}>
-              {isStravaLoading ? 'Verificando...' : isConnected ? 'Conectado' : 'Não conectado'}
-            </span>
-          </div>
-          {!isStravaLoading && (
-            isConnected ? (
-              <button className={styles.stravaBtn} onClick={() => setShowDisconnectConfirm(true)}>
-                Desconectar
-              </button>
-            ) : (
-              <button className={styles.stravaBtn} onClick={handleStravaConnect}>
-                Conectar
-              </button>
-            )
+
+          {!isStravaLoading && !isConnected && (
+            <button className={styles.stravaConnectBtn} onClick={handleStravaConnect}>
+              Conectar com Strava
+            </button>
           )}
         </motion.div>
 
         {isConnected && (
           <>
-            <button className={styles.syncBtn} onClick={handleSync} disabled={isSyncing}>
-              <RefreshCw size={14} className={isSyncing ? styles.spinning : undefined} />
-              {isSyncing ? 'Sincronizando...' : 'Sincronizar atividades'}
-            </button>
+            <div className={styles.stravaActions}>
+              <button className={styles.syncBtn} onClick={handleSync} disabled={isSyncing}>
+                <RefreshCw size={14} className={isSyncing ? styles.spinning : undefined} />
+                {isSyncing ? 'Sincronizando...' : 'Sincronizar atividades'}
+              </button>
+              <button className={styles.disconnectBtn} onClick={() => setShowDisconnectConfirm(true)}>
+                Desconectar
+              </button>
+            </div>
 
-            {activities.length > 0 && (
-              <div className={styles.activitiesList}>
-                {activities.map(activity => (
-                  <div key={activity.id} className={styles.activityRow}>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.activityName}>{activity.name}</span>
-                      <span className={styles.activityMeta}>
-                        {activity.distanceKm} km · {formatPace(activity.paceSecondsPerKm)} /km
-                      </span>
+            {isLoadingActivities ? (
+              <div className={styles.activitiesEmpty}>
+                <span>Carregando atividades...</span>
+              </div>
+            ) : activities.length > 0 ? (
+              <>
+                <div className={styles.activitiesList}>
+                  {(showAllActivities ? activities : activities.slice(0, ACTIVITIES_PREVIEW_COUNT)).map(activity => (
+                    <div key={activity.id} className={styles.activityRow}>
+                      <div className={styles.activityIconWrapper}>
+                        <Footprints size={16} />
+                      </div>
+                      <div className={styles.activityInfo}>
+                        <span className={styles.activityName}>{activity.name}</span>
+                        <span className={styles.activityMeta}>
+                          {formatActivityDate(activity.date)} · {activity.distanceKm} km · {formatPace(activity.paceSecondsPerKm)} /km · {formatDuration(activity.durationSeconds)}
+                        </span>
+                      </div>
                     </div>
-                    <span className={styles.activityDate}>{formatActivityDate(activity.date)}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                {activities.length > ACTIVITIES_PREVIEW_COUNT && (
+                  <button className={styles.seeMoreBtn} onClick={() => setShowAllActivities(v => !v)}>
+                    {showAllActivities ? 'Ver menos' : `Ver mais (${activities.length - ACTIVITIES_PREVIEW_COUNT})`}
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className={styles.activitiesEmpty}>
+                <Footprints size={20} />
+                <span>Nenhuma atividade sincronizada ainda.</span>
               </div>
             )}
           </>

@@ -70,14 +70,31 @@ Deno.serve(async (req) => {
     })
   }
 
+  // Corpo opcional: { studentId } — só o professor (role=admin) pode sincronizar
+  // atividades de outro usuário; aluno chamando para si mesmo não envia studentId.
+  let studentId: string | null = null
+  if (req.method === 'POST') {
+    const body = await req.json().catch(() => ({}))
+    studentId = typeof body?.studentId === 'string' && body.studentId.trim() ? body.studentId.trim() : null
+  }
+
+  if (studentId && user.app_metadata?.role !== 'admin') {
+    return new Response('Acesso negado. Apenas professores podem ver atividades de outro aluno.', {
+      status: 403,
+      headers: corsHeaders,
+    })
+  }
+
+  const targetUserId = studentId ?? user.id
+
   const adminClient = createClient(supabaseUrl, serviceRoleKey)
 
-  // Filtra explicitamente por user.id mesmo usando service_role (que ignora RLS)
+  // Filtra explicitamente por targetUserId mesmo usando service_role (que ignora RLS)
   // — nunca confiar apenas no bypass de RLS para isolar dados entre alunos.
   const { data: connection, error: connError } = await adminClient
     .from('strava_connections')
     .select('access_token, refresh_token, token_expires_at')
-    .eq('user_id', user.id)
+    .eq('user_id', targetUserId)
     .maybeSingle()
 
   if (connError) {
@@ -123,7 +140,7 @@ Deno.serve(async (req) => {
         refresh_token: refreshData.refresh_token,
         token_expires_at: new Date(refreshData.expires_at * 1000).toISOString(),
       })
-      .eq('user_id', user.id)
+      .eq('user_id', targetUserId)
 
     if (updateError) {
       console.error('Erro ao atualizar token renovado:', updateError.message)
@@ -145,7 +162,7 @@ Deno.serve(async (req) => {
 
   if (runs.length > 0) {
     const rows = runs.map((a) => ({
-      user_id: user.id,
+      user_id: targetUserId,
       strava_id: a.id,
       name: a.name,
       type: a.type,
@@ -170,6 +187,7 @@ Deno.serve(async (req) => {
     name: a.name,
     distanceKm: Number((a.distance / 1000).toFixed(2)),
     paceSecondsPerKm: paceSecondsPerKm(a.distance, a.moving_time),
+    durationSeconds: a.moving_time,
     date: a.start_date,
   }))
 

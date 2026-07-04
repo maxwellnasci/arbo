@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAdminAlunoDetail } from '../../hooks/useAdminAlunoDetail'
+import { useAdminStravaActivities } from '../../hooks/useAdminStravaActivities'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { MessageSquare, RefreshCw, ChevronLeft, Trash2, Pencil } from 'lucide-react'
+import { MessageSquare, RefreshCw, ChevronLeft, Trash2, Pencil, Footprints } from 'lucide-react'
 import styles from './AdminAlunoDetail.module.css'
 import AdminChatPanel from '../../components/admin/AdminChatPanel'
 import { supabase } from '../../lib/supabase'
@@ -53,11 +54,26 @@ function formatTimeRecord(seconds: number | null): string {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
+function formatStravaDuration(totalSeconds: number): string {
+  const h = Math.floor(totalSeconds / 3600)
+  const m = Math.floor((totalSeconds % 3600) / 60)
+  const s = Math.floor(totalSeconds % 60)
+  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
 export default function AdminAlunoDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { profile, group, checkins, records, anamnesis, allGroups, metrics, isLoading, error, changeGroup, updateName, email } = useAdminAlunoDetail(id)
-  
+  const {
+    activities: stravaActivities,
+    isLoading: isStravaLoading,
+    error: stravaError,
+    notConnected: stravaNotConnected,
+    sync: syncStravaActivities,
+  } = useAdminStravaActivities(id)
+
   const [activeTab, setActiveTab] = useState<'checkins' | 'records' | 'anamnesis'>('checkins')
   const [isChangingGroup, setIsChangingGroup] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
@@ -111,6 +127,11 @@ export default function AdminAlunoDetail() {
       setDeleteError(e instanceof Error ? e.message : 'Erro ao excluir aluno')
       setIsDeleting(false)
     }
+  }
+
+  const handleSyncStrava = async () => {
+    const ok = await syncStravaActivities()
+    if (ok) toast.success('Atividades do Strava sincronizadas!')
   }
 
   if (isLoading) {
@@ -393,6 +414,54 @@ export default function AdminAlunoDetail() {
                 </div>
               </>
             )}
+          </div>
+        )}
+      </div>
+
+      {/* Atividades Strava */}
+      <div className={styles.stravaSection}>
+        <div className={styles.stravaSectionHeader}>
+          <h3 className={styles.stravaSectionTitle}>
+            <Footprints size={16} /> Atividades Strava
+          </h3>
+          {!stravaNotConnected && (
+            <button className={styles.stravaSyncBtn} onClick={handleSyncStrava} disabled={isStravaLoading}>
+              <RefreshCw size={14} className={isStravaLoading ? styles.spinning : undefined} />
+              {isStravaLoading ? 'Sincronizando...' : 'Sincronizar atividades'}
+            </button>
+          )}
+        </div>
+
+        {stravaNotConnected ? (
+          <p className={styles.stravaEmptyState}>Aluno não conectou o Strava ainda.</p>
+        ) : stravaError ? (
+          <p style={{ color: 'var(--red-accent)', fontSize: 13 }}>{stravaError}</p>
+        ) : isStravaLoading && stravaActivities.length === 0 ? (
+          <p className={styles.stravaEmptyState}>Verificando conexão com o Strava...</p>
+        ) : stravaActivities.length === 0 ? (
+          <p className={styles.stravaEmptyState}>Nenhuma atividade sincronizada ainda.</p>
+        ) : (
+          <div className={styles.stravaActivityList}>
+            {stravaActivities.map(activity => (
+              <div key={activity.id} className={styles.stravaActivityCard}>
+                <div className={styles.stravaActivityHeader}>
+                  <span className={styles.stravaActivityName}>{activity.name}</span>
+                  <span className={styles.stravaActivityDate}>
+                    {format(new Date(activity.date), "dd MMM yyyy", { locale: ptBR })}
+                  </span>
+                </div>
+                <div className={styles.stravaActivityMeta}>
+                  <span>{activity.distanceKm} km</span>
+                  <span>Pace: {formatPace(activity.paceSecondsPerKm)}</span>
+                  <span>Duração: {formatStravaDuration(activity.durationSeconds)}</span>
+                </div>
+                <textarea
+                  className={styles.stravaFeedbackInput}
+                  placeholder="Feedback do professor sobre esta atividade..."
+                  rows={2}
+                />
+              </div>
+            ))}
           </div>
         )}
       </div>
