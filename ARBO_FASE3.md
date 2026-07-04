@@ -49,7 +49,7 @@ fluxo de carga automática desses treinos no banco.
 Hoje o app suporta apenas link do YouTube (Task 61). Avaliar se o professor quer
 upload direto (Supabase Storage) ou se o link do YouTube já resolve.
 
-### 6. Integração Strava — ✅ CONCLUÍDO (2026-07-03)
+### 6. Integração Strava — ✅ TOTALMENTE CONCLUÍDO E FUNCIONANDO EM PRODUÇÃO (2026-07-04)
 OAuth completo implementado via 4 Edge Functions (`strava-auth`, `strava-callback`, `strava-sync`, `strava-connection`), hook `useStravaConnection.ts`, página de callback `StravaCallback.tsx` (rota `/strava/callback`, com proteção CSRF via `state`) e card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades), substituindo o placeholder `strava_connected: false`.
 
 **Verificação prévia (antes de escrever qualquer SQL):** consultado o schema real de `strava_connections`/`strava_activities` ao vivo no Supabase via MCP. As tabelas já existiam com `user_id`/`token_expires_at` (não `student_id`/`expires_at`, como o pedido original assumia) e `strava_connections` já estava corretamente travada — RLS ativo, zero policies, GRANT `authenticated` só `REFERENCES/TRIGGER/TRUNCATE`. Nenhuma migration foi aplicada; o `GRANT` originalmente pedido teria revertido essa trava e exposto `access_token`/`refresh_token` ao cliente.
@@ -58,16 +58,22 @@ OAuth completo implementado via 4 Edge Functions (`strava-auth`, `strava-callbac
 
 **Segurança:** client secret nunca no frontend, JWT validado em toda Edge Function antes de qualquer uso de `service_role`, filtro explícito por `user.id` mesmo com `service_role` (que ignora RLS), tokens do Strava nunca retornam em nenhuma resposta ao cliente — o hook só consome `{ isConnected, activities }`.
 
-**Pendente para produção:** criar app no Strava Developer com domínio real, configurar `STRAVA_CLIENT_ID`/`STRAVA_CLIENT_SECRET` em produção (Vercel + Supabase Edge Functions) e testar o fluxo ponta a ponta com uma conta real.
-
 Validado: `tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros/warnings. Commit `325c876` em `master`.
+
+**Atualização 2026-07-04 (deploy + fix de produção):**
+- As 4 Edge Functions deployadas via `npx supabase functions deploy <nome> --project-ref jhfkflnixzivuichmkie`. Achado pós-deploy: todas subiram com `verify_jwt: true` por padrão, o que quebrava a `strava-auth` (chamada via navegação direta do navegador, sem header `Authorization`). Corrigido com redeploy `--no-verify-jwt` só nessa function; as outras 3 continuam `verify_jwt: true` (chamadas via `fetch` com JWT, como deveria ser).
+- **Bug de produção:** ao testar o fluxo real, erro `"Erro ao salvar conexão com o Strava"` — investigação de logs (gateway + tentativas via MCP/CLI/Management API, sem sucesso em capturar o `console.error` exato por atraso de ingestão do Logflare) até o usuário confirmar no Dashboard: `"permission denied for table strava_connections"`.
+- **Causa raiz real** (não era o código — as 3 functions já usavam `SUPABASE_SERVICE_ROLE_KEY` corretamente, confirmado por grep): `service_role` tinha `rolbypassrls = true` mas **não tinha GRANT de SELECT/INSERT/UPDATE/DELETE** em `strava_connections` — só as permissões estruturais (`REFERENCES/TRIGGER/TRUNCATE`). `BYPASSRLS` só pula a checagem de *policy*; o GRANT de tabela é uma camada separada e anterior no Postgres, sem exceção para `service_role`.
+- **Fix:** `GRANT SELECT, INSERT, UPDATE, DELETE ON strava_connections TO service_role;` aplicado manualmente pelo usuário no SQL Editor do Supabase. `authenticated`/`anon` continuam sem nenhum GRANT de CRUD — a trava de segurança original permanece intacta, só a permissão que faltava pro `service_role` foi adicionada.
+- Lição registrada em `GEMINI_LESSONS.md` (item 13) e histórico completo em `CLAUDE_HISTORICO.md`.
+- **Status final:** OAuth, sincronização de atividades e desconexão testados e funcionando corretamente em produção.
 
 ### 7. Agente de resposta no Strava
 Depende do item 6 estar pronto. Definir comportamento exato com o professor
 (comentar na atividade, notificar professor, sincronizar dado no app, etc).
 
 ## Status
-Roadmap criado em 2026-06-30. Itens 1, 3 e 6 implementados e validados. Aguardando próximos passos do professor (itens 2, 4, 5, 7 pendentes; item 7 depende de decisão do professor sobre o comportamento do agente Strava).
+Roadmap criado em 2026-06-30. Itens 1, 3 e 6 implementados, validados e **funcionando em produção** (item 6 confirmado em 2026-07-04 após fix de GRANT no `service_role`). Aguardando próximos passos do professor (itens 2, 4, 5, 7 pendentes; item 7 depende de decisão do professor sobre o comportamento do agente Strava).
 
 ## Correções Adicionais (2026-07-01)
 - Corrigido corte de tela no `DayPicker` em dispositivos menores (scroll interno e max-height).

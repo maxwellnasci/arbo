@@ -73,3 +73,11 @@
 ### Timezone Bugs em Dashboards (2026-07-02)
 - **Problema**: O `getCurrentCycle` usava `new Date(startsAt)` (string YYYY-MM-DD), o que resulta em UTC. Em GMT-3 (Brasil), isso jogava a data para o dia anterior (ex: dia 29 virava dia 28), fazendo o Supabase retornar null no `group_plans`.
 - **Lição**: getMonday() e qualquer cálculo de data/semana deve usar horário LOCAL (getDay/setDate), nunca UTC (getUTCDay/setUTCDate), especialmente em apps usados no Brasil (GMT-3). Diferença de timezone pode fazer o app mostrar a semana errada. Para contornar conversões automáticas do construtor de `Date` com strings, sempre converta "YYYY-MM-DD" quebrando a string `startsAt.split('-')` e criando a data com `new Date(y, m-1, d)`.
+
+### 13. `service_role` tem BYPASSRLS mas não tem GRANT automático (2026-07-04)
+**O que aconteceu:** Integração Strava — `strava-callback`, `strava-sync` e `strava-connection` usavam corretamente o `adminClient` com `SUPABASE_SERVICE_ROLE_KEY` (código já estava certo, verificado linha a linha), mas toda chamada às 3 functions falhava com `permission denied for table strava_connections`. A tabela tinha RLS ativo e zero policies, e o GRANT pra `authenticated`/`anon` era só estrutural (`REFERENCES/TRIGGER/TRUNCATE`) — mas o `service_role` **também** só tinha essas 3 permissões estruturais, sem `SELECT/INSERT/UPDATE/DELETE`.
+**Como evitar:** Ao criar tabelas via SQL Editor no Supabase, `service_role` tem `BYPASSRLS` mas **NÃO** tem GRANT de `SELECT/INSERT/UPDATE/DELETE` automaticamente. São duas camadas separadas no Postgres: `BYPASSRLS` só pula a checagem de *policy* (linha por linha); o GRANT de tabela é uma camada anterior e independente, e nenhum role escapa dela sem ser dono da tabela ou superuser. Sempre adicionar explicitamente:
+```sql
+GRANT SELECT, INSERT, UPDATE, DELETE ON tabela TO service_role;
+```
+quando a tabela será acessada por Edge Functions com a service role key — mesmo que a tabela seja "só pra service_role" e não tenha nenhuma policy de RLS. Confirmar com `information_schema.role_table_grants` antes de assumir que "código usa a key certa" é suficiente; o erro `permission denied for table X` pode ser 100% de GRANT ausente, não de qual client/key foi usado no código.

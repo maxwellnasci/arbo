@@ -919,3 +919,27 @@ Pedido: implementar OAuth do Strava com SQL de criação de `strava_connections`
 **Lição de processo:** pedidos de infraestrutura que incluem SQL pronto para copiar/colar merecem verificação contra o estado real do banco antes de aplicar — especialmente quando o SQL cria policies/grants que abrem acesso. Neste caso a verificação evitou tanto um erro de sintaxe (coluna inexistente) quanto uma regressão de segurança real (exposição de tokens OAuth).
 
 **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ (após ajustar o `useEffect` de `AlunoDashboard.tsx` para rodar o `setState` dentro de uma função `async` interna, mesmo padrão já usado nos hooks do projeto, e não passar no `react-hooks/set-state-in-effect`) · `npm run build` ✅ · commit `325c876` em `master`.
+
+### Sessão 2026-07-04 (Deploy Strava + Bug de GRANT ausente no `service_role`)
+
+Após o deploy das 4 Edge Functions (`strava-auth`, `strava-callback`, `strava-sync`, `strava-connection` via `npx supabase functions deploy ... --project-ref jhfkflnixzivuichmkie`), o usuário reportou erro `"Erro ao salvar conexão com o Strava"` ao voltar do OAuth do Strava.
+
+**Achado 1 (deploy):** todas as 4 functions subiram com `verify_jwt: true` por padrão do CLI — o que quebra `strava-auth`, já que ela é invocada por navegação direta do navegador (`window.location.href`), sem header `Authorization`. Corrigido com redeploy `--no-verify-jwt` só nessa function. Confirmado via `list_edge_functions`: `strava-auth` v2 (`verify_jwt: false`), as outras 3 em v1 (`verify_jwt: true`, como deveria ser — chamadas via `fetch` com JWT).
+
+**Achado 2 (causa raiz do erro reportado):** investigação de logs mostrou que `strava-connection` também falhava com 500 em **100%** das chamadas, mesmo sendo a function mais simples das 4 (só um `.select()`). Tentativas de capturar o `console.error()` real via MCP `get_logs`, CLI (`supabase functions logs` — **não existe** como subcomando nesta versão do CLI) e Management API direta (`function_logs`/`edge_logs`) só retornaram logs de gateway e eventos de ciclo de vida (`shutdown`), sem o texto do erro — provável atraso de ingestão do Logflare. O usuário conferiu direto no Dashboard e trouxe o erro real: `"permission denied for table strava_connections"`.
+
+**Verificação do código antes de aceitar a hipótese inicial** (de que o `adminClient` estaria usando a `anon key` por engano): grep nas 3 functions confirmou que todas já criavam `adminClient` corretamente com `SUPABASE_SERVICE_ROLE_KEY`, nunca com a anon key — a hipótese do usuário não batia com o código real.
+
+**Causa raiz real, confirmada via SQL ao vivo:**
+```sql
+-- service_role tinha só isso em strava_connections (sem SELECT/INSERT/UPDATE/DELETE):
+service_role → REFERENCES, TRIGGER, TRUNCATE
+-- e rolbypassrls = true, rolsuper = false
+```
+`BYPASSRLS` só pula a checagem de *policy* (linha por linha) — é uma camada totalmente separada do GRANT de tabela no Postgres. Sem `GRANT SELECT, INSERT, UPDATE, DELETE ON strava_connections TO service_role`, mesmo o client correto com a service role key certa esbarra em "permission denied", porque a checagem de GRANT acontece **antes** da checagem de RLS e não tem exceção pra `BYPASSRLS`.
+
+**Correção:** `GRANT SELECT, INSERT, UPDATE, DELETE ON strava_connections TO service_role;` aplicado manualmente pelo usuário no SQL Editor do Supabase. Resolveu o erro. `authenticated`/`anon` continuam sem nenhum GRANT de CRUD na tabela — a trava de segurança original não foi alterada, só a permissão que faltava pro `service_role`.
+
+**Lição registrada em `GEMINI_LESSONS.md` (item 13):** ao criar uma tabela pensada pra ser acessada só via `service_role` (sem policies de RLS), é preciso GRANT explícito pro `service_role` também — não é automático, mesmo ele tendo `BYPASSRLS`. Verificar sempre com `information_schema.role_table_grants` antes de assumir que "o código usa a key certa" resolve um erro de permissão.
+
+**Status:** Integração Strava ✅ totalmente funcional em produção — OAuth, sincronização de atividades e desconexão testados e operando corretamente após o GRANT.
