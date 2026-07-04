@@ -45,9 +45,25 @@ Receber arquivo Word com 10 treinos do professor, processar com IA para extrair
 um padrão estruturado (tipo, distância, pace, séries, descrição), e criar
 fluxo de carga automática desses treinos no banco.
 
-### 5. Upload de vídeo no admin
-Hoje o app suporta apenas link do YouTube (Task 61). Avaliar se o professor quer
-upload direto (Supabase Storage) ou se o link do YouTube já resolve.
+### 5. Upload de vídeo no admin — ✅ IMPLEMENTADO, PENDENTE CONFIGURAÇÃO MANUAL NO CLOUDFLARE (2026-07-04)
+Decisão: upload direto para Cloudflare R2 (custom domain `videos.mxos.com.br`), mantendo o link do YouTube como alternativa — professor escolhe via toggle no formulário de treino.
+
+**Desvio de arquitetura em relação ao pedido original (documentado, não silencioso):** o pedido original previa a Edge Function `r2-upload` recebendo o arquivo via `multipart/form-data` e fazendo o proxy dos bytes até o R2. Isso foi trocado por **presigned URL**: a function valida o JWT (só `role=admin`) e devolve uma URL assinada (SigV4, via `aws4fetch`) para o navegador fazer o `PUT` **direto** no R2, sem os bytes do vídeo passarem pelo servidor. Motivo: Edge Functions (Deno Deploy) têm limites de memória e tempo de execução incompatíveis com proxiar arquivos de até 500MB — esse é também o padrão oficial recomendado pela própria Cloudflare para upload de arquivos grandes a partir do browser. Credenciais do R2 nunca saem da Edge Function.
+
+**Implementado:**
+- `supabase/functions/r2-upload/index.ts` — valida JWT + `role=admin`, valida `contentType` (mp4/webm/quicktime) e `fileSize` (≤500MB), sanitiza `filename` e `trainingId` (remove acentos/caracteres especiais, previne path traversal), gera presigned URL PUT (`aws4fetch`, `region: 'auto'`, `signQuery: true`) para `videos/{trainingId}/{filename}` e retorna `{ uploadUrl, publicUrl, key }`.
+- `src/components/admin/TreinoFormPanel.tsx` — toggle "Link YouTube" / "Upload de vídeo"; aba upload com dropzone, barra de progresso (via `XMLHttpRequest.upload.onprogress` — `fetch` não expõe progresso de upload), preview do nome do arquivo e botão remover; submit bloqueado durante upload em andamento. Para treino ainda não salvo (sem `id`), usa um `crypto.randomUUID()` gerado no client como pasta temporária no R2 — decisão pragmática já que o path pede um `training_id` mas o registro só existe após o submit.
+- `src/pages/admin/AdminTreinos.tsx` — `handleUploadVideo()` chama a Edge Function e faz o `PUT` via XHR (mantendo o padrão do projeto de responsabilidade de rede no componente pai, não no presentacional).
+- `src/components/ui/VideoPlayer.tsx` — detecta automaticamente o tipo de vídeo pela URL: `videos.mxos.com.br` → `<video>` nativo (MIME type inferido pela extensão: mp4/webm/mov); YouTube → iframe como antes. `touch-action: pan-y` no container, padrão do projeto.
+- `vercel.json` — CSP atualizada: `media-src` liberado para `videos.mxos.com.br` (necessário pro `<video>` tocar) e `connect-src` liberado para `https://*.r2.cloudflarestorage.com` (necessário pro `PUT` direto do browser).
+
+**Pendente do lado do usuário (não é possível fazer via código/MCP):**
+- Configurar **CORS no bucket R2** no Cloudflare Dashboard (ou via `wrangler r2 bucket cors put`) permitindo `PUT` a partir de `https://arbo.mxos.com.br`, `https://arbo-weld.vercel.app` e `http://localhost:5173` — sem isso, o navegador bloqueia o upload direto por CORS mesmo com a URL assinada correta.
+- Teste ponta a ponta com um vídeo real ainda não realizado nesta sessão (sem acesso a browser/Cloudflare para simular o `PUT`).
+
+**Não implementado (fora do escopo pedido):** exclusão do objeto no R2 ao clicar em "remover" — hoje o botão só limpa o campo `video_url` do treino (mesmo comportamento do link do YouTube), o arquivo permanece no bucket. Se for necessário limpar o storage também, precisa de uma function adicional de delete.
+
+Validado: `tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros/warnings. Deploy da function `r2-upload` v1 via MCP Supabase (`verify_jwt: true`).
 
 ### 6. Integração Strava — ✅ TOTALMENTE CONCLUÍDO E FUNCIONANDO EM PRODUÇÃO (2026-07-04)
 OAuth completo implementado via 4 Edge Functions (`strava-auth`, `strava-callback`, `strava-sync`, `strava-connection`), hook `useStravaConnection.ts`, página de callback `StravaCallback.tsx` (rota `/strava/callback`, com proteção CSRF via `state`) e card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades), substituindo o placeholder `strava_connected: false`.
