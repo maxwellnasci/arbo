@@ -1,11 +1,26 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Link2, Upload, Film, Trash2 } from 'lucide-react'
 import type { Tag, TrainingType, TrainingCustomType } from '../../lib/types'
 import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
 import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS } from '../../lib/trainingUtils'
 
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
+
+const YOUTUBE_REGEX = /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
+const MAX_VIDEO_BYTES = 500 * 1024 * 1024
+const UPLOADED_VIDEO_HOST = 'videos.mxos.com.br'
+
+function getFilenameFromUrl(url: string): string {
+  try {
+    const pathname = new URL(url).pathname
+    return decodeURIComponent(pathname.split('/').pop() || url)
+  } catch {
+    return url
+  }
+}
 
 interface TreinoFormPanelProps {
   isOpen: boolean
@@ -16,6 +31,7 @@ interface TreinoFormPanelProps {
   customTypes: TrainingCustomType[]
   onCreateTag: (name: string, color: string) => Promise<Tag | null>
   onCreateType: (name: string) => Promise<TrainingCustomType | null>
+  onUploadVideo: (file: File, trainingId: string, onProgress: (percent: number) => void) => Promise<string | null>
 }
 
 const inputStyle: React.CSSProperties = {
@@ -40,7 +56,7 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
 }
 
-export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, onCreateTag, onCreateType }: TreinoFormPanelProps) {
+export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, onCreateTag, onCreateType, onUploadVideo }: TreinoFormPanelProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [distanceM, setDistanceM] = useState<number | ''>('')
@@ -51,6 +67,13 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
   const [type, setType] = useState<string>('corrida')
   const [tagId, setTagId] = useState('')
   const [videoUrl, setVideoUrl] = useState('')
+
+  const [videoMode, setVideoMode] = useState<'youtube' | 'upload'>('youtube')
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [pendingUploadId, setPendingUploadId] = useState<string>(() => crypto.randomUUID())
 
   const [showNewTag, setShowNewTag] = useState(false)
   const [newTagName, setNewTagName] = useState('')
@@ -72,6 +95,11 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
     setType('corrida')
     setTagId('')
     setVideoUrl('')
+    setVideoMode('youtube')
+    setUploadedFileName(null)
+    setUploadProgress(0)
+    setUploadError(null)
+    setPendingUploadId(crypto.randomUUID())
     setShowNewTag(false)
     setShowNewType(false)
   }
@@ -96,7 +124,17 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
         setSets(treinoToEdit.sets || '')
         setType(treinoToEdit.type as TrainingType)
         setTagId(treinoToEdit.tag?.id || '')
-        setVideoUrl(treinoToEdit.video_url || '')
+        const existingUrl = treinoToEdit.video_url || ''
+        setVideoUrl(existingUrl)
+        setUploadError(null)
+        setUploadProgress(0)
+        if (existingUrl.includes(UPLOADED_VIDEO_HOST)) {
+          setVideoMode('upload')
+          setUploadedFileName(getFilenameFromUrl(existingUrl))
+        } else {
+          setVideoMode('youtube')
+          setUploadedFileName(null)
+        }
       } else {
         resetForm()
       }
@@ -105,13 +143,50 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
     return () => { cancelled = true }
   }, [treinoToEdit, isOpen])
 
+  const uploadTrainingId = treinoToEdit?.id ?? pendingUploadId
+
+  async function handleFileSelect(file: File) {
+    setUploadError(null)
+
+    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+      setUploadError('Formato não suportado. Use MP4, WebM ou MOV.')
+      return
+    }
+    if (file.size > MAX_VIDEO_BYTES) {
+      setUploadError('Arquivo maior que 500MB.')
+      return
+    }
+
+    setIsUploading(true)
+    setUploadProgress(0)
+    const publicUrl = await onUploadVideo(file, uploadTrainingId, setUploadProgress)
+    setIsUploading(false)
+
+    if (!publicUrl) {
+      setUploadError('Erro ao enviar o vídeo. Tente novamente.')
+      return
+    }
+
+    setVideoUrl(publicUrl)
+    setUploadedFileName(file.name)
+  }
+
+  function handleRemoveUploadedVideo() {
+    setVideoUrl('')
+    setUploadedFileName(null)
+    setUploadError(null)
+    setUploadProgress(0)
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const paceMin = Number(paceMinutes) || 0
     const paceSec = Number(paceSeconds) || 0
     const totalPaceSeconds = paceMin * 60 + paceSec
 
-    if (videoUrl && !/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/.test(videoUrl)) {
+    if (isUploading) return // Previne submit com upload em andamento
+
+    if (videoMode === 'youtube' && videoUrl && !YOUTUBE_REGEX.test(videoUrl)) {
       return // Previne submit se URL for inválida
     }
 
@@ -415,18 +490,110 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
 
               {/* Vídeo */}
               <div>
-                <label style={labelStyle}>URL do Vídeo (opcional)</label>
-                <input
-                  type="url"
-                  value={videoUrl}
-                  onChange={e => setVideoUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                  style={{ ...inputStyle, borderColor: (videoUrl && !/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/.test(videoUrl)) ? '#EF4444' : 'var(--border-subtle)' }}
-                />
-                {(videoUrl && !/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/.test(videoUrl)) && (
-                  <span style={{ color: '#EF4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>
-                    Insira uma URL válida do YouTube
-                  </span>
+                <label style={labelStyle}>Vídeo (opcional)</label>
+
+                {/* Toggle YouTube / Upload */}
+                <div style={{ display: 'flex', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '4px', marginBottom: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setVideoMode('youtube')}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      background: videoMode === 'youtube' ? 'var(--orange)' : 'transparent',
+                      color: videoMode === 'youtube' ? 'var(--text-on-brand)' : 'var(--text-secondary)',
+                      border: 'none', borderRadius: '8px', padding: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    <Link2 size={13} /> Link YouTube
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVideoMode('upload')}
+                    style={{
+                      flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                      background: videoMode === 'upload' ? 'var(--orange)' : 'transparent',
+                      color: videoMode === 'upload' ? 'var(--text-on-brand)' : 'var(--text-secondary)',
+                      border: 'none', borderRadius: '8px', padding: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    <Upload size={13} /> Upload de vídeo
+                  </button>
+                </div>
+
+                {videoMode === 'youtube' ? (
+                  <>
+                    <input
+                      type="url"
+                      value={videoUrl}
+                      onChange={e => setVideoUrl(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      style={{ ...inputStyle, borderColor: (videoUrl && !YOUTUBE_REGEX.test(videoUrl)) ? '#EF4444' : 'var(--border-subtle)' }}
+                    />
+                    {(videoUrl && !YOUTUBE_REGEX.test(videoUrl)) && (
+                      <span style={{ color: '#EF4444', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                        Insira uma URL válida do YouTube
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <div>
+                    {uploadedFileName && !isUploading ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--bg-input)', border: '1px solid var(--border-subtle)', borderRadius: '10px', padding: '10px 12px' }}>
+                        <Film size={16} color="var(--orange)" />
+                        <span style={{ flex: 1, fontSize: '13px', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {uploadedFileName}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveUploadedVideo}
+                          style={{ background: 'none', border: 'none', color: 'var(--red-accent)', cursor: 'pointer', padding: '4px', display: 'flex' }}
+                          title="Remover vídeo"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    ) : (
+                      <label
+                        style={{
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                          border: '1px dashed var(--border-default)', borderRadius: '10px', padding: '20px',
+                          cursor: isUploading ? 'not-allowed' : 'pointer', textAlign: 'center',
+                        }}
+                      >
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm,video/quicktime"
+                          disabled={isUploading}
+                          onChange={e => {
+                            const file = e.target.files?.[0]
+                            if (file) handleFileSelect(file)
+                            e.target.value = ''
+                          }}
+                          style={{ display: 'none' }}
+                        />
+                        <Upload size={20} color="var(--text-tertiary)" />
+                        <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                          {isUploading ? 'Enviando...' : 'Clique para selecionar um vídeo'}
+                        </span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Máximo 500MB — MP4, WebM ou MOV</span>
+                      </label>
+                    )}
+
+                    {isUploading && (
+                      <div style={{ marginTop: '10px' }}>
+                        <div style={{ width: '100%', height: '6px', background: 'var(--bg-input)', borderRadius: '4px', overflow: 'hidden' }}>
+                          <div style={{ width: `${uploadProgress}%`, height: '100%', background: 'var(--orange)', transition: 'width 0.2s' }} />
+                        </div>
+                        <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px', display: 'block' }}>{uploadProgress}%</span>
+                      </div>
+                    )}
+
+                    {uploadError && (
+                      <span style={{ color: '#EF4444', fontSize: '12px', marginTop: '6px', display: 'block' }}>
+                        {uploadError}
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -450,6 +617,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                 </button>
                 <button
                   type="submit"
+                  disabled={isUploading}
                   style={{
                     background: 'var(--orange)',
                     border: 'none',
@@ -458,7 +626,8 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                     color: 'var(--text-on-brand)',
                     fontSize: '14px',
                     fontWeight: 600,
-                    cursor: 'pointer',
+                    cursor: isUploading ? 'not-allowed' : 'pointer',
+                    opacity: isUploading ? 0.6 : 1,
                   }}
                 >
                   {treinoToEdit ? 'Salvar Alterações' : 'Criar Treino'}

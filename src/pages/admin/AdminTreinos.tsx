@@ -159,6 +159,59 @@ export function AdminTreinos() {
     return data
   }
 
+  const handleUploadVideo = async (
+    file: File,
+    trainingId: string,
+    onProgress: (percent: number) => void,
+  ): Promise<string | null> => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Sessão expirada. Faça login novamente.')
+
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/r2-upload`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          trainingId,
+          filename: file.name,
+          contentType: file.type,
+          fileSize: file.size,
+        }),
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text || 'Erro ao preparar upload do vídeo.')
+      }
+
+      const { uploadUrl, publicUrl } = await res.json()
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('PUT', uploadUrl)
+        xhr.setRequestHeader('Content-Type', file.type)
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
+        }
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve()
+          else reject(new Error('Falha no upload para o armazenamento.'))
+        }
+        xhr.onerror = () => reject(new Error('Falha de rede durante o upload.'))
+        xhr.send(file)
+      })
+
+      return publicUrl as string
+    } catch (e: unknown) {
+      console.error('Erro ao enviar vídeo:', e)
+      toast.error(e instanceof Error ? e.message : 'Erro ao enviar vídeo.')
+      return null
+    }
+  }
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
@@ -314,6 +367,7 @@ export function AdminTreinos() {
         customTypes={customTypes}
         onCreateTag={handleCreateTag}
         onCreateType={handleCreateType}
+        onUploadVideo={handleUploadVideo}
       />
 
       <ConfirmModal
