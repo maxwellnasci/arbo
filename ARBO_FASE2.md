@@ -494,3 +494,12 @@ Resultado Lighthouse antes:
 - **4 Edge Functions** (`strava-auth`, `strava-callback`, `strava-sync` + `strava-connection` — extra necessária pra checar status/desconectar sem acesso direto à tabela): OAuth completo, refresh automático de token, sincronização das últimas 10 corridas.
 - **Frontend:** `useStravaConnection.ts` (só `fetch` contra as Edge Functions, nunca acessa a tabela direto), `StravaCallback.tsx` (rota `/strava/callback` com proteção CSRF via `state`), card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades) substituindo o placeholder "Em breve".
 - **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · commit `325c876` em `master`.
+
+### Sessão 2026-07-04 (Task 68 — Strava Fase 2, Upload de Vídeo R2, Agente DeepSeek)
+
+- **Strava Fase 2:** fix de atividades sumindo ao reload, card profissional no `AlunoPerfil.tsx` (badge de status, data de conexão, ícones), seção "Atividades Strava" no `AdminAlunoDetail.tsx`, `strava-sync` v2 aceitando `{ studentId }` para admin ver atividades de qualquer aluno.
+- **Upload de Vídeo (Cloudflare R2):** bucket `arbo-videos` + domínio `videos.mxos.com.br`. Edge Function `r2-upload` com **presigned URL** (SigV4/`aws4fetch`) em vez de proxiar bytes pela function — Edge Functions não aguentam upload de até 500MB. Toggle YouTube/Upload no `TreinoFormPanel.tsx`; `VideoPlayer.tsx` detecta R2 vs YouTube automaticamente. Pendente: CORS no bucket R2.
+- **Agente DeepSeek:** tabela `strava_analysis` + Edge Function `strava-analyze` — analisa a atividade mais recente após cada sync e gera `{ summary, analysis, tip }` em PT-BR via `deepseek-chat`. Card de análise no `AlunoPerfil.tsx` e no `AdminAlunoDetail.tsx`.
+- **Bug pego na revisão do SQL antes de aplicar:** faltava `GRANT SELECT ON strava_analysis TO authenticated` — mesma classe do incidente anterior com `strava_connections`/`service_role`. Lição em `GEMINI_LESSONS.md` item 14; Caso 7 em `docs/PORTFOLIO_DEBUG_CASES.md`.
+- **Detalhes completos:** ver `ARBO_FASE3.md` (item 5, 6 e 7 do roadmap) e `CLAUDE_HISTORICO.md`.
+- **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ nas três entregas.

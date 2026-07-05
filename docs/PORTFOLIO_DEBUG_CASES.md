@@ -161,3 +161,31 @@ Adicionados chips S1–S4 no branch flexível reaproveitando a lógica existente
 ```
 
 **Conhecimento demonstrado:** Identificação de feature gap em modo alternativo via leitura direta do código (não por tentativa e erro), reuso de lógica existente sem duplicação de código.
+
+---
+
+## Estudo de Caso 7: GRANT Ausente Detectado Antes de Chegar em Produção (PostgreSQL / RLS / Prevenção)
+
+**O Cenário:**
+Ao implementar um agente de IA (DeepSeek) que analisa automaticamente as corridas sincronizadas do Strava, foi necessário criar uma nova tabela (`strava_analysis`) com Row Level Security — aluno vê a própria análise, professor vê todas. O SQL de criação já vinha com as duas `CREATE POLICY` corretas, prontas para aplicar.
+
+**O Sintoma:**
+Nenhum — este não foi um incidente de produção. O SQL nunca chegou a ser executado no banco.
+
+**O Diagnóstico:**
+Uma semana antes, a integração Strava havia sofrido exatamente este tipo de falha em produção: `strava_connections` retornava `"permission denied for table strava_connections"` mesmo com o código de acesso via `service_role` correto — porque o Postgres exige `GRANT` de tabela como uma camada *anterior e independente* de qualquer policy de RLS, e `BYPASSRLS` não cobre essa camada (ver Estudo de Caso — incidente de 2026-07-04 documentado no `CLAUDE_HISTORICO.md`).
+
+Reconhecendo o mesmo padrão estrutural — `CREATE POLICY` presente, `GRANT` ausente — a revisão do novo SQL antes de submetê-lo à aprovação aplicou o mesmo checklist mental: *toda `CREATE POLICY ... TO <role>` precisa de um `GRANT ... TO <role>` correspondente*. O rascunho da tabela `strava_analysis` tinha as duas policies (`FOR SELECT TO authenticated`) mas nenhum `GRANT SELECT ON strava_analysis TO authenticated`. Sem essa linha, tanto o aluno quanto o admin receberiam `permission denied` (42501) na primeira leitura, mesmo com as policies perfeitas — o mesmo sintoma do incidente anterior, mas do lado da leitura (`authenticated`) em vez da escrita (`service_role`).
+
+**A Solução:**
+O SQL foi corrigido antes de ser apresentado para aprovação, adicionando a linha ausente e documentando o porquê inline:
+```sql
+-- GRANT de tabela é uma camada separada da policy de RLS — sem esta linha,
+-- tanto aluno quanto admin receberiam "permission denied" (42501) mesmo com a
+-- policy acima correta. Mesma classe de bug do incidente strava_connections/
+-- service_role documentado no ARBO_FASE3.md (item 6).
+GRANT SELECT ON strava_analysis TO authenticated;
+```
+A lição foi generalizada e registrada em `GEMINI_LESSONS.md` (item 14), separada do item 13 (que cobre o lado `service_role`), como uma regra de checklist reutilizável para qualquer tabela nova: *toda `CREATE POLICY ... TO <role>` deveria ter um `GRANT` correspondente `TO <role>` logo depois — se não tiver, é bug quase certo.*
+
+**Conhecimento demonstrado:** Aprendizado transferível entre incidentes — reconhecer a mesma classe de bug (GRANT vs. RLS como camadas independentes no Postgres) em um contexto novo antes que ele se manifeste, transformando um incidente de produção resolvido em um checklist preventivo aplicado à próxima tabela criada.

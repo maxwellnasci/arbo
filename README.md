@@ -20,13 +20,14 @@
 
 ### Painel Admin (Professor)
 - Gerenciamento de turmas e alunos
-- Biblioteca de treinos com etiquetas personalizadas
+- Biblioteca de treinos com etiquetas personalizadas e vídeos (YouTube ou upload direto)
 - Plano mensal com grid de 4 semanas
 - Controle de liberação semanal do plano
 - Chat em tempo real com alunos
 - Feed de recordes pessoais (PRs)
 - Sistema de convites por email
 - Exclusão segura de alunos
+- Visualização das atividades e análises de IA do Strava de qualquer aluno
 
 ### App do Aluno
 - Dashboard com treinos da semana
@@ -35,6 +36,9 @@
 - Recordes pessoais (5km, 10km, 21km, 42km)
 - Chat direto com o professor
 - Perfil com dados pessoais
+- Integração com Strava — sincronização automática de corridas
+- Análise automática por IA (DeepSeek) da última corrida — resumo, avaliação de desempenho e dica para o próximo treino
+- Vídeos de treino (YouTube ou upload direto, via Cloudflare R2)
 - Instalável como PWA (Android + iOS)
 
 ## 🛠️ Stack
@@ -43,6 +47,8 @@
 |---|---|
 | Frontend | React 19 + TypeScript + Vite |
 | Backend | Supabase (banco, auth, RLS, Edge Functions) |
+| Armazenamento de vídeo | Cloudflare R2 |
+| IA | DeepSeek API — análise automática de corridas |
 | Deploy | Vercel (CI/CD automático) |
 | Email | Resend (smtp.resend.com) |
 | PWA | vite-plugin-pwa + Workbox |

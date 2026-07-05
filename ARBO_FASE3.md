@@ -63,6 +63,8 @@ Decisão: upload direto para Cloudflare R2 (custom domain `videos.mxos.com.br`),
 
 **Não implementado (fora do escopo pedido):** exclusão do objeto no R2 ao clicar em "remover" — hoje o botão só limpa o campo `video_url` do treino (mesmo comportamento do link do YouTube), o arquivo permanece no bucket. Se for necessário limpar o storage também, precisa de uma function adicional de delete.
 
+**Credenciais confirmadas configuradas** (Vercel + Supabase Secrets): `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`.
+
 Validado: `tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros/warnings. Deploy da function `r2-upload` v1 via MCP Supabase (`verify_jwt: true`).
 
 ### 6. Integração Strava — ✅ TOTALMENTE CONCLUÍDO E FUNCIONANDO EM PRODUÇÃO (2026-07-04)

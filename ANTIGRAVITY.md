@@ -46,11 +46,12 @@ Somos um **time de 3**:
 - **sonner** — Toasts/notificações estilo Apple
 - **date-fns** — Formatação de datas em PT-BR
 
-### Estado atual (2026-06-13)
-- **Nota geral do projeto:** 8.75/10 — Meta: 9.0+
-- **Tasks 39-61 concluídas** (incluindo Tasks 52-57, 59, 59c, 60, 61)
+### Estado atual (2026-07-04)
+- **Nota geral do projeto:** 9.0/10 — Meta: 9.0+
+- **Tasks 39-68 concluídas** (incluindo Tasks 52-57, 59, 59c, 60, 61, 67, 68)
+- **Sessão 2026-07-04 (Task 68):** Strava Fase 2 (card profissional + painel admin), Upload de Vídeo via Cloudflare R2 (presigned URL) e Agente DeepSeek de análise automática de atividades. Detalhes na seção "Sessão 2026-07-04" no fim deste arquivo e em `ARBO_FASE3.md`.
 - **Próxima sessão:**
-  - Verificar no celular se Task 60 eliminou completamente as piscadas admin.
+  - Configurar CORS no bucket R2 pro upload de vídeo funcionar ponta a ponta.
   - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos).
   - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`.
   - Acessibilidade 89 → 95+.
@@ -460,3 +461,12 @@ Resultado Lighthouse antes:
 - **4 Edge Functions** (`strava-auth`, `strava-callback`, `strava-sync` + `strava-connection` — extra necessária pra checar status/desconectar sem acesso direto à tabela): OAuth completo, refresh automático de token, sincronização das últimas 10 corridas.
 - **Frontend:** `useStravaConnection.ts` (só `fetch` contra as Edge Functions, nunca acessa a tabela direto), `StravaCallback.tsx` (rota `/strava/callback` com proteção CSRF via `state`), card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades) substituindo o placeholder "Em breve".
 - **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · commit `325c876` em `master`.
+
+### Sessão 2026-07-04 (Task 68 — Strava Fase 2, Upload de Vídeo R2, Agente DeepSeek)
+
+- **Strava Fase 2:** fix de atividades sumindo ao reload (`fetchActivities()` automática no mount quando conectado), card profissional no `AlunoPerfil.tsx` (badge de status, data de conexão, ícones lucide, pace/duração), seção "Atividades Strava" no `AdminAlunoDetail.tsx` (professor vê corridas de qualquer aluno), `strava-sync` v2 aceitando `{ studentId }` só para `role=admin`.
+- **Upload de Vídeo (Cloudflare R2):** bucket `arbo-videos` (10GB grátis) + domínio `videos.mxos.com.br`. Edge Function `r2-upload` gera **presigned URL** (SigV4/`aws4fetch`) em vez de proxiar os bytes pela function — Edge Functions não aguentam upload de até 500MB, e é o padrão que a própria Cloudflare recomenda. `TreinoFormPanel.tsx` — toggle YouTube/Upload com barra de progresso via `XMLHttpRequest`; `VideoPlayer.tsx` detecta R2 vs YouTube automaticamente. `vercel.json` — CSP com `media-src`/`connect-src` liberados para o R2. Pendente: CORS no bucket (Cloudflare Dashboard).
+- **Agente DeepSeek:** tabela `strava_analysis` (RLS via `private.is_admin()`, `UNIQUE(student_id, activity_id)` evita reanálise) + Edge Function `strava-analyze` — chama `deepseek-chat` após cada sync, gera `{ summary, analysis, tip }` em PT-BR com parsing defensivo do JSON. Card "Análise do seu último treino" no aluno e "Última análise automática" no admin.
+- **Bug pego na revisão do SQL antes de aplicar** (não incidente em produção): faltava `GRANT SELECT ON strava_analysis TO authenticated` — RLS não substitui GRANT, mesma classe do incidente anterior com `strava_connections`/`service_role`. Corrigido antes de aplicar; lição em `GEMINI_LESSONS.md` item 14; Caso 7 documentado em `docs/PORTFOLIO_DEBUG_CASES.md`.
+- **Credenciais configuradas (Vercel + Supabase Secrets):** `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`, `DEEPSEEK_API_KEY`.
+- **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ nas três entregas.

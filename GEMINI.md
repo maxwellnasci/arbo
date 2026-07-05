@@ -17,9 +17,10 @@ Para garantir estabilidade máxima e eliminar a quebra de produção por agilida
 - **Frontend Web:** React 19 + Vite + TypeScript
 - **Hospedagem:** Vercel
 - **Backend / Banco de Dados:** Supabase (PostgreSQL + Auth + Storage + Edge Functions)
+- **Armazenamento de vídeo:** Cloudflare R2 (bucket `arbo-videos`, domínio `videos.mxos.com.br`)
 - **Automações:** n8n (integração com Strava, notificações, webhooks)
 - **Mobile:** PWA (Progressive Web App) — possível migração futura para React Native/Expo
-- **Integrações externas:** Strava API
+- **Integrações externas:** Strava API, DeepSeek API (`deepseek-chat` — agente de análise automática de corridas)
 
 ## Identidade Visual
 - **Tema:** Dark mode exclusivo
@@ -94,6 +95,7 @@ comments          -- comentários em checkins e recordes (target_type + target_i
 reactions         -- reações em checkins e recordes
 strava_connections -- tokens OAuth Strava (sem acesso direto — Edge Function only)
 strava_activities  -- atividades importadas do Strava
+strava_analysis    -- análise automática (DeepSeek) por atividade: summary, analysis, tip; UNIQUE(student_id, activity_id)
 groups            -- turmas: name, goal, frequency, plan_type, mode ('fixo'|'flexivel'), starts_at, is_active
 group_plans       -- planos de ciclo por turma (group_id, starts_at, notes, created_by, released_through_week smallint DEFAULT 0 — 0=bloqueado, 1–4=semanas liberadas até N)
 group_plan_trainings -- pivot: week_number (1–4) × day_of_week (1–6) × training_id
@@ -134,6 +136,7 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `reactions` | SELECT, INSERT, DELETE |
 | `strava_activities` | SELECT |
 | `strava_connections` | **nenhum** — service_role only |
+| `strava_analysis` | SELECT |
 | `groups` | SELECT, INSERT, UPDATE, DELETE |
 | `group_plans` | SELECT, INSERT, UPDATE, DELETE |
 | `group_plan_trainings` | SELECT, INSERT, UPDATE, DELETE |
@@ -299,12 +302,13 @@ npx supabase login
 
 **Project ID:** `jhfkflnixzivuichmkie`
 
-## Estado Atual (2026-06-29)
+## Estado Atual (2026-07-04)
 
 - **Nota geral:** 9.0/10 — Meta: 9.0+
-- **Tasks 39-64 concluídas** (incluindo 52-57, 59, 59c, 60, 61, 62, 63, 64)
+- **Tasks 39-68 concluídas** (incluindo 52-57, 59, 59c, 60, 61, 62, 63, 64, 67, 68)
+- **Sessão 2026-07-04 (Task 68):** Strava Fase 2 (card profissional, painel admin, `strava-sync` v2), Upload de Vídeo via Cloudflare R2 (`r2-upload` com presigned URL) e Agente DeepSeek de análise automática (`strava-analyze` + tabela `strava_analysis`). Ver `ARBO_FASE3.md` e a seção "Sessão 2026-07-04" no fim deste arquivo.
 - **Próxima sessão:**
-  - Verificar no celular se Task 60 eliminou as piscadas admin.
+  - Configurar CORS no bucket R2 pro upload de vídeo funcionar ponta a ponta.
   - Expandir testes de 22 para 50+.
   - Service layer — `src/lib/api.ts`.
   - Acessibilidade 89 → 95+.
@@ -883,3 +887,12 @@ Resultado Lighthouse antes:
 - **4 Edge Functions** (`strava-auth`, `strava-callback`, `strava-sync` + `strava-connection` — extra necessária pra checar status/desconectar sem acesso direto à tabela): OAuth completo, refresh automático de token, sincronização das últimas 10 corridas.
 - **Frontend:** `useStravaConnection.ts` (só `fetch` contra as Edge Functions, nunca acessa a tabela direto), `StravaCallback.tsx` (rota `/strava/callback` com proteção CSRF via `state`), card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades) substituindo o placeholder "Em breve".
 - **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ · commit `325c876` em `master`.
+
+### Sessão 2026-07-04 (Task 68 — Strava Fase 2, Upload de Vídeo R2, Agente DeepSeek)
+
+- **Strava Fase 2:** fix de atividades sumindo ao reload (`fetchActivities()` agora roda automaticamente no mount quando conectado, sem exigir clique); card profissional no `AlunoPerfil.tsx` (badge de status, data de conexão, ícones lucide); seção "Atividades Strava" no `AdminAlunoDetail.tsx` (professor vê corridas de qualquer aluno); `strava-sync` v2 aceita `{ studentId }` — só pra `role=admin`, troca `user.id` por `targetUserId`.
+- **Upload de Vídeo (Cloudflare R2):** bucket `arbo-videos` (10GB grátis) + domínio `videos.mxos.com.br`. Edge Function `r2-upload` gera **presigned URL** (SigV4/`aws4fetch`) em vez de proxiar os bytes — Edge Functions não aguentam upload de até 500MB. `TreinoFormPanel.tsx` ganhou toggle YouTube/Upload com barra de progresso (`XMLHttpRequest`); `VideoPlayer.tsx` detecta R2 vs YouTube pela URL. `vercel.json` — CSP com `media-src`/`connect-src` liberados. Pendente: CORS no bucket R2 (Cloudflare Dashboard).
+- **Agente DeepSeek:** tabela `strava_analysis` (RLS via `private.is_admin()`, `UNIQUE(student_id, activity_id)`) + Edge Function `strava-analyze` — chama `deepseek-chat` após cada sync, gera `{ summary, analysis, tip }` em PT-BR, parsing defensivo do JSON. Card "Análise do seu último treino" no aluno e "Última análise automática" no admin.
+- **Bug pego na revisão do SQL antes de aplicar:** faltava `GRANT SELECT ON strava_analysis TO authenticated` — mesma classe do incidente anterior com `strava_connections`/`service_role`. Corrigido antes de aplicar; lição em `GEMINI_LESSONS.md` item 14; Caso 7 em `docs/PORTFOLIO_DEBUG_CASES.md`.
+- **Credenciais configuradas:** `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`, `DEEPSEEK_API_KEY` (Vercel + Supabase Secrets).
+- **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ nas três entregas.

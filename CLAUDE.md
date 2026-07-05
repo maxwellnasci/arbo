@@ -44,6 +44,8 @@ npx supabase login
 
 - **Frontend:** React 19 + Vite + TypeScript
 - **Backend:** Supabase — PostgreSQL, Auth, Storage, Edge Functions
+- **Armazenamento de vídeo:** Cloudflare R2 (bucket `arbo-videos`, domínio público `videos.mxos.com.br`)
+- **IA:** DeepSeek API (`deepseek-chat`) — agente de análise automática de atividades Strava
 - **Automações:** n8n (integração Strava, webhooks, notificações)
 - **Deploy:** Vercel — **https://arbo.mxos.com.br** (PWA, possível migração futura para React Native/Expo)
 - **Gráficos:** recharts `^2.x` — **não usar 3.x**: incompatível com Vite (erro `require_isUnsafeProperty` causado por `victory-vendor` CJS)
@@ -80,7 +82,7 @@ npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/da
 
 ### Banco de dados (Supabase — project: `jhfkflnixzivuichmkie`)
 
-**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `groups`, `group_plans`, `group_plan_trainings`, `messages`, `invites`, `tags`, `training_types`, `schedules`
+**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `strava_analysis`, `groups`, `group_plans`, `group_plan_trainings`, `messages`, `invites`, `tags`, `training_types`, `schedules`
 
 **Enums:** `training_type` (enum legado — `trainings.type` migrado para `text`) · `distance_category` · `user_level`
 
@@ -115,6 +117,7 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `reactions` | SELECT, INSERT, DELETE |
 | `strava_activities` | SELECT |
 | `strava_connections` | **nenhum** — service_role only |
+| `strava_analysis` | SELECT |
 | `groups` | SELECT, INSERT, UPDATE, DELETE |
 | `group_plans` | SELECT, INSERT, UPDATE, DELETE |
 | `group_plan_trainings` | SELECT, INSERT, UPDATE, DELETE |
@@ -268,24 +271,46 @@ Edge Function: `supabase/functions/delete-user/index.ts`
 - CORS restrito ao mesmo allowlist de `invite-user`  
 - Deploy: `npx supabase functions deploy delete-user --project-ref jhfkflnixzivuichmkie`
 
-### Integração Strava (implementada 2026-07-03)
+### Integração Strava (implementada 2026-07-03, estendida 2026-07-04)
 
-4 Edge Functions em `supabase/functions/`:
+5 Edge Functions em `supabase/functions/`:
 - **`strava-auth`** — monta a URL de autorização do Strava (`STRAVA_CLIENT_ID` + `SITE_URL`) e responde com `Response.redirect` 302. Chamada via `window.location.href` (navegação direta, não `fetch`) — por isso não valida JWT.
 - **`strava-callback`** — valida JWT do aluno, troca `code` por tokens em `POST https://www.strava.com/oauth/token`, grava com `service_role` em `strava_connections` via `upsert(..., { onConflict: 'user_id' })`.
-- **`strava-sync`** — valida JWT, busca a conexão do próprio usuário (`service_role` + filtro explícito `.eq('user_id', user.id)`, nunca confiando só no bypass de RLS do `service_role`), renova o token se `token_expires_at` já passou, busca até 30 atividades no Strava, filtra as últimas 10 do tipo `Run` e grava em `strava_activities` via `upsert(..., { onConflict: 'strava_id' })`.
+- **`strava-sync`** (v2) — valida JWT, aceita corpo opcional `{ studentId }`: se presente, exige `user.app_metadata.role === 'admin'` (403 caso contrário) e usa `targetUserId = studentId`; senão usa o próprio `user.id`. Busca a conexão (`service_role` + filtro explícito por `targetUserId`, nunca confiando só no bypass de RLS), renova o token se `token_expires_at` já passou, busca até 30 atividades no Strava, filtra as últimas 10 do tipo `Run` e grava em `strava_activities` via `upsert(..., { onConflict: 'strava_id' })`. Retorna `durationSeconds` em cada atividade.
 - **`strava-connection`** — GET retorna `{ isConnected, athleteId, connectedAt }` (nunca os tokens); DELETE remove a conexão (desconectar).
+- **`strava-analyze`** — recebe `{ activity }` (mesmo formato de `StravaActivitySummary`), calcula `distance_m`/`moving_time_seconds`/`average_speed`, checa se já existe análise para `(student_id, activity_id)` (evita rechamar a API), chama a API do DeepSeek (`deepseek-chat`) com prompt fixo em PT-BR, faz parsing defensivo do JSON retornado (remove ```json fences) e grava em `strava_analysis` via `upsert(..., { onConflict: 'student_id,activity_id' })`.
 
-**Por que 4 e não 3:** `strava_connections` já vinha travada de propósito — RLS ativo, zero policies, GRANT para `authenticated` é só `REFERENCES/TRIGGER/TRUNCATE` (nem SELECT). Sem uma function dedicada, o frontend não teria como checar status/desconectar sem violar essa trava.
+**Por que 5 e não 3:** `strava_connections` já vinha travada de propósito — RLS ativo, zero policies, GRANT para `authenticated` é só `REFERENCES/TRIGGER/TRUNCATE` (nem SELECT). Sem uma function dedicada, o frontend não teria como checar status/desconectar sem violar essa trava (`strava-connection`). A análise automática por IA exigiu uma quinta function (`strava-analyze`) para nunca expor `DEEPSEEK_API_KEY` ao cliente.
 
 **Schema real da tabela** (confirmado ao vivo via SQL antes de escrever qualquer código): colunas são `user_id` e `token_expires_at` — não `student_id`/`expires_at`.
 
 Frontend:
-- `src/hooks/useStravaConnection.ts` — `isConnected`, `activities`, `isLoading`, `isSyncing`, `error`, `syncActivities()`, `disconnect()`, `refresh()`. Nunca faz `supabase.from('strava_connections')` — só `fetch` contra as Edge Functions com o JWT da sessão atual.
+- `src/hooks/useStravaConnection.ts` — `isConnected`, `athleteId`, `connectedAt`, `activities`, `isLoading`, `isLoadingActivities`, `isSyncing`, `error`, `latestAnalysis`, `isAnalyzing`, `syncActivities()`, `disconnect()`, `refresh()`. Nunca faz `supabase.from('strava_connections')` — só `fetch` contra as Edge Functions com o JWT da sessão atual. Ao carregar (mount) ou sincronizar, se `isConnected`, chama `fetchActivities()` automaticamente (sem exigir clique) e, se houver atividade, dispara `analyzeActivity()` em paralelo sem bloquear a lista.
+- `src/hooks/useAdminStravaActivities.ts` — versão admin: chama `strava-sync` com `{ studentId }`, expõe `notConnected` (derivado da mensagem 404 `"Nenhuma conexão com o Strava encontrada."`) e `latestAnalysis` (leitura direta de `strava_analysis` via RLS admin).
 - `src/pages/aluno/StravaCallback.tsx` — rota `/strava/callback`, valida `state` (nonce `crypto.randomUUID()` gerado no clique de "Conectar" e guardado em `sessionStorage`) contra CSRF antes de chamar `strava-callback`.
-- `src/pages/aluno/AlunoPerfil.tsx` — card Strava com status real, Conectar/Desconectar (`ConfirmModal`, nunca `window.confirm`), botão "Sincronizar atividades", lista das últimas atividades.
+- `src/pages/aluno/AlunoPerfil.tsx` — card Strava profissional (badge de status, data de conexão, ícones lucide, pace/duração), lista de atividades com "Ver mais", e card "Análise do seu último treino" (borda esquerda laranja) com `summary`/`analysis`/`tip` do DeepSeek.
+- `src/pages/admin/AdminAlunoDetail.tsx` — seção "Atividades Strava" (professor vê corridas de qualquer aluno) + card "Última análise automática".
 
-**Segurança:** client secret nunca no frontend (só `Deno.env` nas Edge Functions); `access_token`/`refresh_token` nunca retornam em nenhuma resposta ao cliente; todas as functions validam JWT via `userClient.auth.getUser(token)` antes de qualquer operação com `service_role`.
+**Segurança:** client secret do Strava e `DEEPSEEK_API_KEY` nunca no frontend (só `Deno.env` nas Edge Functions); `access_token`/`refresh_token` nunca retornam em nenhuma resposta ao cliente; todas as functions validam JWT via `userClient.auth.getUser(token)` antes de qualquer operação com `service_role`.
+
+**Tabela `strava_analysis`:** RLS com policy única `student_id = auth.uid() OR private.is_admin()` (mesmo helper das outras tabelas, nunca subquery em `profiles`). `UNIQUE(student_id, activity_id)` evita reanálise da mesma atividade. **Lição:** `GRANT SELECT ON strava_analysis TO authenticated` é obrigatório mesmo com as policies corretas — RLS não substitui GRANT, são camadas separadas no Postgres (ver `GEMINI_LESSONS.md` item 14).
+
+### Upload de Vídeo — Cloudflare R2 (implementado 2026-07-04)
+
+Edge Function `supabase/functions/r2-upload/index.ts`:
+- Valida JWT + exige `role=admin`
+- Recebe `{ trainingId, filename, contentType, fileSize }` — valida tipo (`video/mp4`, `video/webm`, `video/quicktime`) e tamanho (≤500MB)
+- Sanitiza `filename`/`trainingId` (remove acentos/caracteres especiais, previne path traversal)
+- Gera uma **presigned URL** (SigV4 via `aws4fetch`, `region: 'auto'`) para `PUT` direto em `videos/{trainingId}/{filename}` no R2 — em vez de proxiar os bytes do vídeo pela function, porque Edge Functions têm limites de memória/tempo incompatíveis com arquivos de até 500MB. As credenciais do R2 nunca saem do servidor.
+- Retorna `{ uploadUrl, publicUrl, key }`
+
+Frontend:
+- `src/components/admin/TreinoFormPanel.tsx` — toggle "Link YouTube" / "Upload de vídeo"; upload via `XMLHttpRequest` direto para `uploadUrl` (progress bar usando `xhr.upload.onprogress` — `fetch` não expõe progresso de upload); para treino novo (sem `id` ainda), usa `crypto.randomUUID()` como pasta temporária no R2.
+- `src/pages/admin/AdminTreinos.tsx` — `handleUploadVideo()` chama `r2-upload` e faz o PUT (responsabilidade de rede no componente pai, não no presentacional, como `onCreateTag`/`onCreateType`).
+- `src/components/ui/VideoPlayer.tsx` — detecta a URL: contém `videos.mxos.com.br` → `<video>` nativo (MIME inferido pela extensão); senão tenta extrair ID do YouTube → iframe.
+- `vercel.json` — CSP com `media-src` (tocar o vídeo) e `connect-src https://*.r2.cloudflarestorage.com` (PUT direto do browser).
+
+**Pendente:** configuração manual de CORS no bucket R2 (Cloudflare Dashboard) permitindo `PUT` das origens do app — sem isso o navegador bloqueia o upload direto mesmo com a URL assinada correta. Exclusão do objeto no R2 ao remover vídeo também não implementada (só limpa `video_url`).
 
 ### Aviso SMTP
 
@@ -293,23 +318,25 @@ O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-07-02)
+## Estado atual (2026-07-04)
 
 - **Média geral:** 9.0/10 — Segurança 8.5 · Performance 8.8 · Qualidade 9.2 · UX/Bugs 9.2 · Arquitetura 8.5 · PWA/Mobile 9.0
 - **Tasks 39-55, 56, 57, 59, 59c, 60, 61, 62, 63, 64, 65, 66, 67 concluídas**
 - **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 - **Testes:** 22 testes passando (Vitest)
 - **Sessão 2026-07-02:** 2 rodadas de correção no painel do aluno — causa raiz de `groups.starts_at NULL` gerando `group_plans` duplicados (Task 65) e feature de liberação de semana ausente por completo no modo flexível (Task 66). 6 estudos de caso documentados em `docs/PORTFOLIO_DEBUG_CASES.md`, linkado no README.
-- **Sessão 2026-07-03 (Task 67):** Integração Strava completa — OAuth, 4 Edge Functions, hook e UI no `AlunoPerfil`. Ver seção "Integração Strava" acima.
+- **Sessão 2026-07-03 (Task 67):** Integração Strava completa — OAuth, 4 Edge Functions, hook e UI no `AlunoPerfil`.
+- **Sessão 2026-07-04 (Task 68):** Strava Fase 2 (card profissional + painel admin + `strava-sync` v2), Upload de Vídeo via Cloudflare R2 (`r2-upload`, presigned URL) e Agente DeepSeek de análise automática de atividades (`strava-analyze`). Ver seções "Integração Strava" e "Upload de Vídeo — Cloudflare R2" acima. 7º estudo de caso documentado em `docs/PORTFOLIO_DEBUG_CASES.md` (GRANT `authenticated` ausente, pego na revisão antes de aplicar SQL).
 - **Próxima sessão:**
+  - Configurar CORS no bucket R2 (Cloudflare Dashboard) para o upload de vídeo funcionar ponta a ponta
   - Testar no celular o fluxo completo de turma flexível ponta a ponta (liberar semana → aluno ver treino → check-in)
-  - Testar o fluxo completo de conexão Strava com uma conta real do professor (criar app no Strava Developer, configurar `STRAVA_CLIENT_ID`/`STRAVA_CLIENT_SECRET` em produção)
-  - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos) — cobrir especialmente `useWeeklyPlan.ts` (cálculo de ciclo) e o branch flexível do `AdminTurmaDetail.tsx`, que não tinham cobertura e foi onde os bugs desta sessão viveram sem detecção
+  - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos) — cobrir especialmente `useWeeklyPlan.ts` (cálculo de ciclo) e o branch flexível do `AdminTurmaDetail.tsx`
   - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`
   - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
   - Security scanning no CI (`npm audit`)
   - Push notifications (Web Push API)
   - Sentry para monitoramento de erros em produção
+  - Definir com o professor se o agente Strava também deve comentar diretamente na atividade (item 7 do `ARBO_FASE3.md`)
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
@@ -370,18 +397,20 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 65 (2026-07-02):** Correção de causa raiz — chat do aluno sem área de digitar + semanas liberadas não refletindo no aluno. Root cause real: `groups.starts_at NULL` fazia o cálculo de ciclo/semana usar âncora que muda todo dia, gerando `group_plans` duplicados por turma com `released_through_week` divergente entre admin e aluno. Corrigido `AlunoChat.module.css` (padding do `.inputArea` restaurado para não ficar atrás do `BottomNav` fixed), `useWeeklyPlan.ts` (query do ciclo ordena ascendente ao invés de pegar o registro mais recente da janela), dados de 2 turmas corrigidos via SQL direto no Supabase, e `CreateGroupModal.tsx` passou a exigir data de início (evita recorrência em turmas novas). Ver estudo de caso completo em `docs/PORTFOLIO_DEBUG_CASES.md`. ✅
 - **Task 66 (2026-07-02):** Fix crítico — modo flexível não tinha NENHUM mecanismo de liberar semana no admin (`AdminTurmaDetail.tsx`). Os chips S1–S4 (`handleChipClick`/`releaseThrough`) só existiam no branch `WeekView` do modo fixo; turmas flexíveis ficavam com `released_through_week` travado em 0 pra sempre — todo aluno via tudo bloqueado, sem forma de o professor liberar. Adicionados os mesmos chips S1–S4 no branch flexível (reuso da lógica existente, sem duplicar). Corrigido também: botão "+ Adicionar Treino" sempre criava na Semana 1 (`openSlot(1, 1)` fixo); lista agora é agrupada por semana (1–4), cada uma com seu próprio botão de adicionar. `AlunoChat.module.css` — padding do `.inputArea` alinhado a 110px (mesmo valor do resto do app) para folga real acima do `BottomNav` no celular. Ver Caso 6 em `docs/PORTFOLIO_DEBUG_CASES.md`. ✅
 - **Task 67 (2026-07-03):** Integração Strava — OAuth completo, 4 Edge Functions (`strava-auth`, `strava-callback`, `strava-sync`, `strava-connection` — a 4ª não estava no escopo original, mas foi necessária porque `strava_connections` está travada pra `authenticated` desde sempre), `useStravaConnection.ts`, `StravaCallback.tsx` (com proteção CSRF via `state`), card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades). Antes de escrever qualquer SQL, consultado o schema real via MCP Supabase — a tabela já existia com `user_id`/`token_expires_at` (não `student_id`/`expires_at` como um primeiro rascunho supôs) e RLS corretamente travada; nenhuma migration foi necessária. Tokens do Strava nunca trafegam para o cliente — todas as operações passam por `service_role` nas Edge Functions, filtrando explicitamente por `user.id`. ✅
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-07-03)
+- **Task 68 (2026-07-04):** Três entregas na mesma sessão — (1) **Strava Fase 2**: fix de atividades sumindo ao recarregar (`fetchActivities()` chamada automaticamente no mount), card profissional no `AlunoPerfil.tsx` (badge, data de conexão, ícones), seção "Atividades Strava" no `AdminAlunoDetail.tsx`, `strava-sync` v2 aceitando `{ studentId }` para admin; (2) **Upload de Vídeo via Cloudflare R2**: Edge Function `r2-upload` com presigned URL (SigV4/`aws4fetch`) em vez de proxy de bytes — Edge Functions não aguentariam 500MB; toggle YouTube/Upload no `TreinoFormPanel.tsx`, `VideoPlayer.tsx` detecta R2 vs YouTube automaticamente; (3) **Agente DeepSeek**: tabela `strava_analysis` + Edge Function `strava-analyze` gera `{ summary, analysis, tip }` em PT-BR após cada sync, exibido em card dedicado no aluno e no admin. Bug de `GRANT SELECT ON strava_analysis TO authenticated` ausente pego na revisão do SQL antes de aplicar (mesma classe do incidente da Task 67 com `service_role`) — lição registrada em `GEMINI_LESSONS.md` item 14 e Caso 7 em `docs/PORTFOLIO_DEBUG_CASES.md`. ✅
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-07-04)
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
 **Vitest:** 22 testes passando ✅
 
 ### Próximos passos
+- Configurar CORS no bucket R2 (Cloudflare Dashboard) para o upload de vídeo funcionar ponta a ponta
 - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos)
 - SMTP externo (Resend ou AWS SES) antes de produção
-- Testar fluxo Strava ponta a ponta com conta real do professor + credenciais de produção
 - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`
 - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
 - Security scanning no CI (`npm audit`)
+- Definir com o professor se o agente Strava também comenta direto na atividade (item 7 do `ARBO_FASE3.md`)
 
 ## Roadmap de telas
 

@@ -943,3 +943,43 @@ service_role → REFERENCES, TRIGGER, TRUNCATE
 **Lição registrada em `GEMINI_LESSONS.md` (item 13):** ao criar uma tabela pensada pra ser acessada só via `service_role` (sem policies de RLS), é preciso GRANT explícito pro `service_role` também — não é automático, mesmo ele tendo `BYPASSRLS`. Verificar sempre com `information_schema.role_table_grants` antes de assumir que "o código usa a key certa" resolve um erro de permissão.
 
 **Status:** Integração Strava ✅ totalmente funcional em produção — OAuth, sincronização de atividades e desconexão testados e operando corretamente após o GRANT.
+
+### Sessão 2026-07-04 (Task 68 — Strava Fase 2, Upload de Vídeo R2 e Agente DeepSeek)
+
+Três entregas na mesma sessão, cada uma validada (`tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros) e deployada antes de passar para a próxima.
+
+**1) Strava Fase 2 — card profissional + painel admin**
+
+- **Fix (atividades sumindo ao recarregar):** `checkStatus()` só populava `isConnected`, nunca `activities` — a lista existia só em memória e sumia a cada reload até o aluno clicar manualmente em "Sincronizar". Corrigido em `useStravaConnection.ts`: extraída `fetchActivities()` reutilizável, e o `useEffect` de mount agora chama `checkStatus()` e, se `isConnected === true`, dispara `fetchActivities()` automaticamente. Novo estado `isLoadingActivities` isolado de `isSyncing` (loading automático do mount ≠ loading do botão manual).
+- **Card profissional no `AlunoPerfil.tsx`:** header com ícone + badge de status (verde "Conectado"/cinza "Desconectado") + "Desde [data]" (usa `connectedAt`, que a Edge Function já retornava mas o hook descartava). Lista de atividades com ícone `Footprints`, data PT-BR sem sufixo "-feira" (ex: "Segunda, 30 jun"), distância/pace/duração, máximo 5 + "Ver mais". Botão "Desconectar" discreto (texto vermelho) separado do botão de sync.
+- **Painel admin (`AdminAlunoDetail.tsx`):** nova seção "Atividades Strava". `strava-sync` v2 aceita corpo opcional `{ studentId }` — exige `role=admin` no JWT do chamador (403 caso contrário) e troca `user.id` por `targetUserId` nas 3 operações (leitura de conexão, refresh de token, upsert de atividades). Hook novo `useAdminStravaActivities.ts` expõe `notConnected` (derivado da mensagem 404 `"Nenhuma conexão com o Strava encontrada."`) para diferenciar "aluno nunca conectou" de falha de rede.
+- **Nota de arquitetura:** o pedido previa "admin só acessa alunos da sua turma", mas o app não tem esse conceito — é modelo de professor único, `/admin/*` já é global por `role=admin`. Implementada checagem por role, consistente com o resto do painel.
+- Deploy `strava-sync` v2 via MCP Supabase (`verify_jwt: true` mantido) — CLI local seguia sem login.
+
+**2) Upload de Vídeo — Cloudflare R2**
+
+- Bucket `arbo-videos` criado no R2 (10GB grátis), domínio público `videos.mxos.com.br` configurado e ativo.
+- **Desvio de arquitetura documentado:** o pedido original previa a Edge Function `r2-upload` recebendo o arquivo via `multipart/form-data` e proxiando os bytes até o R2. Trocado por **presigned URL** (SigV4 via `aws4fetch`, `region: 'auto'`) — o browser faz o `PUT` direto no R2. Motivo: Edge Functions (Deno Deploy) têm limites de memória/tempo incompatíveis com proxiar até 500MB; é também o padrão que a própria Cloudflare recomenda para upload de arquivos grandes do browser. Credenciais nunca saem do servidor.
+- `r2-upload/index.ts`: valida JWT + `role=admin`, valida `contentType`/`fileSize` (≤500MB), sanitiza `filename`/`trainingId` (remove acentos, previne path traversal), retorna `{ uploadUrl, publicUrl, key }` para `videos/{trainingId}/{filename}`.
+- `TreinoFormPanel.tsx`: toggle "Link YouTube"/"Upload de vídeo", dropzone com progresso via `XMLHttpRequest` (`fetch` não expõe progresso de upload), preview do nome + botão remover. Para treino ainda não salvo (sem `id`), usa `crypto.randomUUID()` como pasta temporária no R2 — decisão pragmática documentada.
+- `VideoPlayer.tsx`: detecta `videos.mxos.com.br` → `<video>` nativo (MIME inferido pela extensão: mp4/webm/mov); YouTube → iframe como antes.
+- `vercel.json`: CSP atualizada — `media-src` para tocar o vídeo, `connect-src https://*.r2.cloudflarestorage.com` para o PUT direto do browser (sem isso ambos seriam bloqueados pelo navegador).
+- **Pendências fora do meu acesso:** configurar CORS no bucket R2 (Cloudflare Dashboard) permitindo `PUT` das origens do app; teste ponta a ponta com vídeo real. Exclusão do objeto no R2 ao remover vídeo não implementada (só limpa `video_url`, igual ao YouTube) — fora do escopo pedido.
+
+**3) Agente DeepSeek — análise automática de atividades Strava**
+
+- Tabela `strava_analysis` (`student_id`, `activity_id` bigint, `activity_name`, `distance_m` integer, `moving_time_seconds`, `average_speed`, `summary`/`analysis`/`tip` text, `UNIQUE(student_id, activity_id)`), RLS com policy única `student_id = auth.uid() OR private.is_admin()` — mesmo helper usado em `profiles`/`anamnesis`, nunca reimplementado com subquery em `profiles`.
+- **Bug pego na revisão do SQL antes de aplicar (não incidente em produção):** o rascunho original tinha as `CREATE POLICY` corretas mas faltava `GRANT SELECT ON strava_analysis TO authenticated`. RLS não substitui GRANT — são camadas separadas no Postgres, exatamente a mesma classe do incidente da sessão anterior com `strava_connections`/`service_role` (acima). Sem essa linha, tanto aluno quanto admin receberiam `permission denied` (42501) mesmo com as policies certas. Corrigido e apresentado para aprovação antes de aplicar — só depois de "SQL aplicado" + `DEEPSEEK_API_KEY` confirmada é que a function foi deployada e o código commitado. Lição registrada em `GEMINI_LESSONS.md` item 14.
+- `strava-analyze/index.ts`: recebe `{ activity }` no formato já usado pelo app (`StravaActivitySummary` — não os campos brutos do Strava), calcula `distance_m`/`moving_time_seconds`/`average_speed` server-side, checa se já existe análise para `(student_id, activity_id)` antes de gastar uma chamada de API, chama `https://api.deepseek.com/chat/completions` (`deepseek-chat`) com prompt fixo em PT-BR pedindo JSON com `summary`/`analysis`/`tip`, faz parsing defensivo (remove ```json fences que o modelo às vezes inclui mesmo instruído a não usar markdown) e grava via `upsert(..., { onConflict: 'student_id,activity_id' })`.
+- `useStravaConnection.ts`: após `fetchActivities()` (mount automático ou "Sincronizar" manual), dispara análise da atividade mais recente em paralelo sem bloquear a lista (`latestAnalysis`, `isAnalyzing`).
+- `useAdminStravaActivities.ts`: leitura direta de `strava_analysis` via RLS admin (`latestAnalysis`).
+- Card "Análise do seu último treino" (`AlunoPerfil.tsx`) e "Última análise automática" (`AdminAlunoDetail.tsx`) — borda esquerda laranja, ícones lucide (`Bot`, `BarChart3`, `Lightbulb`, `Target`).
+- Depois do SQL aplicado: `database.types.ts` regenerado via MCP Supabase (`generate_typescript_types`, CLI local sem login) e removido o cast `as any` temporário que existia em `useAdminStravaActivities.ts` enquanto a tabela não estava nos tipos gerados.
+- **Incidente evitado durante a regeneração de tipos:** `npx supabase gen types ... > database.types.ts` falhou por falta de login no CLI, e o redirect (`2>&1`) sobrescreveu o arquivo inteiro (1032 linhas) com a mensagem de erro antes de eu notar. Recuperado na hora com `git checkout -- src/lib/database.types.ts` — nada tinha sido commitado ainda, zero perda. Lição: `2>&1 > arquivo` é perigoso quando o comando pode falhar; preferir rodar sem redirect primeiro ou usar a tool MCP equivalente quando disponível.
+- Testado e funcionando em produção com dados reais.
+
+**Credenciais configuradas nesta sessão (Vercel + Supabase Secrets):** `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`, `DEEPSEEK_API_KEY`.
+
+**Caso de portfólio:** 7º estudo de caso adicionado em `docs/PORTFOLIO_DEBUG_CASES.md` — GRANT `authenticated` ausente identificado preventivamente na revisão do SQL, antes de aplicar, com base no padrão do incidente anterior.
+
+**Status:** Strava Fase 2 ✅ · Upload de Vídeo R2 ✅ (pendente CORS no bucket) · Agente DeepSeek ✅ em produção.
