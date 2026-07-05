@@ -81,3 +81,11 @@
 GRANT SELECT, INSERT, UPDATE, DELETE ON tabela TO service_role;
 ```
 quando a tabela será acessada por Edge Functions com a service role key — mesmo que a tabela seja "só pra service_role" e não tenha nenhuma policy de RLS. Confirmar com `information_schema.role_table_grants` antes de assumir que "código usa a key certa" é suficiente; o erro `permission denied for table X` pode ser 100% de GRANT ausente, não de qual client/key foi usado no código.
+
+### 14. GRANT SELECT ON tabela TO authenticated é necessário mesmo com RLS (2026-07-04)
+**O que aconteceu:** ao revisar o SQL de criação da tabela `strava_analysis` (agente de análise DeepSeek do Strava) antes de aplicar, o rascunho tinha duas `CREATE POLICY` corretas — aluno vê a própria análise, admin vê todas via `private.is_admin()` — mas nenhum `GRANT` explícito para `authenticated`. Pego na revisão, não em produção (mesma classe de bug do item 13, mas do lado de `authenticated`/RLS de leitura em vez de `service_role`).
+**Como evitar:** GRANT SELECT ON tabela TO authenticated é necessário mesmo com RLS — são camadas separadas. Sem isso aluno/admin recebem permission denied mesmo com policies corretas. `ENABLE ROW LEVEL SECURITY` + `CREATE POLICY` só definem **quais linhas** um role pode ver depois que o acesso à tabela já foi concedido; RLS nunca substitui o `GRANT` de tabela do Postgres. Sempre que criar uma tabela nova com policies para `authenticated`, adicionar explicitamente:
+```sql
+GRANT SELECT ON tabela TO authenticated;
+```
+(ou `SELECT, INSERT, UPDATE, DELETE` conforme as policies previstas). Checklist mental ao ler/escrever qualquer SQL de tabela nova neste projeto: toda `CREATE POLICY ... TO <role>` deveria ter um `GRANT` correspondente `TO <role>` logo depois — se não tiver, é bug quase certo.

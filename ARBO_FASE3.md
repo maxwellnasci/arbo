@@ -93,12 +93,24 @@ Validado: `tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros/warnings. 
 - **Deploy:** `strava-sync` v2 publicada via MCP Supabase (`verify_jwt: true` mantido, igual à v1) — `npx supabase functions deploy` local falhou por falta de login no CLI (`SUPABASE_ACCESS_TOKEN`/`supabase login` pendente na máquina).
 - Validado: `tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros/warnings.
 
+**Atualização 2026-07-04 (Agente de análise DeepSeek) — ✅ CONCLUÍDO E EM PRODUÇÃO:**
+
+- **O que faz:** após cada sincronização (automática no mount ou manual), a atividade de corrida mais recente do aluno é enviada para a Edge Function `strava-analyze`, que chama a API do DeepSeek (`deepseek-chat`) e devolve `{ summary, analysis, tip }` — resumo objetivo, análise de desempenho e uma dica motivadora, sempre em PT-BR. Resultado exibido em card dedicado (borda laranja, ícones lucide) tanto no `AlunoPerfil.tsx` do aluno quanto na seção Strava do `AdminAlunoDetail.tsx` (label "Última análise automática").
+- **Tabela `strava_analysis`:** criada com RLS — aluno vê a própria análise, admin vê todas via `private.is_admin()` (mesmo helper usado em `profiles`/`anamnesis`/etc, nunca reimplementado com subquery em `profiles`). `UNIQUE(student_id, activity_id)` evita rechamar a API do DeepSeek para uma atividade já analisada — a function checa a tabela antes de gastar uma chamada.
+- **Bug pego antes de aplicar o SQL (revisão prévia, não incidente em produção):** o rascunho original tinha as `CREATE POLICY` corretas mas **faltava `GRANT SELECT ON strava_analysis TO authenticated`**. RLS não substitui GRANT — são camadas independentes no Postgres (mesma classe do incidente do item 6 acima com `strava_connections`/`service_role`). Sem essa linha, tanto aluno quanto admin teriam recebido `permission denied` (42501) mesmo com as policies certas. Corrigido antes de aplicar; lição registrada em `GEMINI_LESSONS.md` (item 14).
+- **Segurança:** `DEEPSEEK_API_KEY` só nos Supabase Secrets, nunca no frontend. Toda escrita em `strava_analysis` é via `service_role` na Edge Function; `authenticated` só tem `SELECT`. Parsing defensivo do JSON retornado pelo DeepSeek (remove ```json fences que o modelo às vezes inclui mesmo instruído a não usar markdown).
+- **Fluxo de entrega:** SQL revisado e apresentado para aprovação antes de aplicar (conforme solicitado); só depois de "SQL aplicado" + `DEEPSEEK_API_KEY` confirmada é que a function foi deployada (MCP Supabase, `verify_jwt: true`) e o código commitado.
+- `database.types.ts` regenerado via MCP Supabase (`generate_typescript_types`) após a migration — CLI local segue sem login, mesma limitação já registrada nas sessões anteriores.
+- Validado: `tsc --noEmit`, `npm run lint`, `npm run build` — 0 erros/warnings.
+
 ### 7. Agente de resposta no Strava
 Depende do item 6 estar pronto. Definir comportamento exato com o professor
 (comentar na atividade, notificar professor, sincronizar dado no app, etc).
 
+**Atualização 2026-07-04:** a parte de "sincronizar dado no app" está resolvida pelo Agente de análise DeepSeek acima (feedback automático visível para aluno e professor). Ainda em aberto: decidir com o professor se o agente deve também comentar diretamente na atividade do Strava ou notificar por outro canal.
+
 ## Status
-Roadmap criado em 2026-06-30. Itens 1, 3 e 6 implementados, validados e **funcionando em produção** (item 6 confirmado em 2026-07-04 após fix de GRANT no `service_role`). Aguardando próximos passos do professor (itens 2, 4, 5, 7 pendentes; item 7 depende de decisão do professor sobre o comportamento do agente Strava).
+Roadmap criado em 2026-06-30. Itens 1, 3 e 6 implementados, validados e **funcionando em produção** (item 6 confirmado em 2026-07-04 após fix de GRANT no `service_role`; agente de análise DeepSeek do item 6 deployado em 2026-07-04). Item 5 (upload de vídeo) implementado, pendente apenas configuração manual de CORS no bucket R2. Item 7 parcialmente resolvido pelo agente de análise (feedback em app); falta decidir com o professor se o agente também comenta direto na atividade do Strava. Aguardando próximos passos do professor (itens 2, 4 pendentes).
 
 ## Correções Adicionais (2026-07-01)
 - Corrigido corte de tela no `DayPicker` em dispositivos menores (scroll interno e max-height).
