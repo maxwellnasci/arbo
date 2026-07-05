@@ -631,6 +631,56 @@ export type Database = {
           },
         ]
       }
+      strava_analysis: {
+        Row: {
+          activity_id: number
+          activity_name: string
+          analysis: string
+          average_speed: number
+          created_at: string
+          distance_m: number
+          id: string
+          moving_time_seconds: number
+          student_id: string
+          summary: string
+          tip: string
+        }
+        Insert: {
+          activity_id: number
+          activity_name: string
+          analysis: string
+          average_speed: number
+          created_at?: string
+          distance_m: number
+          id?: string
+          moving_time_seconds: number
+          student_id: string
+          summary: string
+          tip: string
+        }
+        Update: {
+          activity_id?: number
+          activity_name?: string
+          analysis?: string
+          average_speed?: number
+          created_at?: string
+          distance_m?: number
+          id?: string
+          moving_time_seconds?: number
+          student_id?: string
+          summary?: string
+          tip?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "strava_analysis_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       strava_connections: {
         Row: {
           access_token: string
@@ -755,8 +805,8 @@ export type Database = {
           target_pace_seconds_per_km: number | null
           title: string
           type: string
-          video_url: string | null
           updated_at: string | null
+          video_url: string | null
         }
         Insert: {
           created_at?: string | null
@@ -770,8 +820,8 @@ export type Database = {
           target_pace_seconds_per_km?: number | null
           title: string
           type: string
-          video_url?: string | null
           updated_at?: string | null
+          video_url?: string | null
         }
         Update: {
           created_at?: string | null
@@ -785,8 +835,8 @@ export type Database = {
           target_pace_seconds_per_km?: number | null
           title?: string
           type?: string
-          video_url?: string | null
           updated_at?: string | null
+          video_url?: string | null
         }
         Relationships: [
           {
@@ -891,7 +941,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_email: { Args: { user_id: string }; Returns: string }
     }
     Enums: {
       distance_category: "1km" | "5km" | "10km" | "21km" | "42km"

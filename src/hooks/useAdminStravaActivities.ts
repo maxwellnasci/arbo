@@ -1,15 +1,33 @@
 import { useCallback, useEffect, useState } from 'react'
-import { callStravaFunction, type StravaActivitySummary } from './useStravaConnection'
+import { supabase } from '../lib/supabase'
+import { callStravaFunction, type StravaActivitySummary, type StravaActivityAnalysis } from './useStravaConnection'
 
 // strava-sync retorna texto puro (não JSON) para respostas de erro — usado
 // para distinguir "aluno nunca conectou o Strava" de outras falhas (rede, 500).
 const NOT_CONNECTED_MESSAGE = 'Nenhuma conexão com o Strava encontrada.'
+
+async function fetchLatestStravaAnalysis(studentId: string): Promise<StravaActivityAnalysis | null> {
+  const { data, error } = await supabase
+    .from('strava_analysis')
+    .select('summary, analysis, tip')
+    .eq('student_id', studentId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error) {
+    console.error('Erro ao buscar análise Strava do aluno:', error.message)
+    return null
+  }
+  return data ?? null
+}
 
 export function useAdminStravaActivities(studentId: string | undefined) {
   const [activities, setActivities] = useState<StravaActivitySummary[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notConnected, setNotConnected] = useState(false)
+  const [latestAnalysis, setLatestAnalysis] = useState<StravaActivityAnalysis | null>(null)
 
   const sync = useCallback(async (): Promise<boolean> => {
     if (!studentId) return false
@@ -48,5 +66,18 @@ export function useAdminStravaActivities(studentId: string | undefined) {
     return () => { cancelled = true }
   }, [studentId, sync])
 
-  return { activities, isLoading, error, notConnected, sync }
+  // Leitura direta da tabela (RLS: admin vê todas) — independente do sync,
+  // mostra a última análise já persistida assim que a página do aluno abre.
+  useEffect(() => {
+    let cancelled = false
+    async function loadAnalysis() {
+      if (!studentId) return
+      const analysis = await fetchLatestStravaAnalysis(studentId)
+      if (!cancelled) setLatestAnalysis(analysis)
+    }
+    loadAnalysis()
+    return () => { cancelled = true }
+  }, [studentId])
+
+  return { activities, isLoading, error, notConnected, latestAnalysis, sync }
 }

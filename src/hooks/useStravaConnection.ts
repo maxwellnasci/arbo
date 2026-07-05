@@ -10,6 +10,12 @@ export type StravaActivitySummary = {
   date: string
 }
 
+export type StravaActivityAnalysis = {
+  summary: string
+  analysis: string
+  tip: string
+}
+
 // Exportado para reuso em useAdminStravaActivities.ts — mesma forma de chamada
 // autenticada contra as Edge Functions do Strava, só muda o path/body.
 export async function callStravaFunction(path: string, options: RequestInit = {}) {
@@ -42,19 +48,40 @@ export function useStravaConnection() {
   const [isLoadingActivities, setIsLoadingActivities] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [latestAnalysis, setLatestAnalysis] = useState<StravaActivityAnalysis | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+
+  const analyzeActivity = useCallback(async (activity: StravaActivitySummary) => {
+    setIsAnalyzing(true)
+    try {
+      const data = await callStravaFunction('strava-analyze', {
+        method: 'POST',
+        body: JSON.stringify({ activity }),
+      })
+      setLatestAnalysis({ summary: data.summary, analysis: data.analysis, tip: data.tip })
+    } catch (e: unknown) {
+      console.error('Erro ao analisar atividade do Strava:', e)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }, [])
 
   const fetchActivities = useCallback(async (): Promise<boolean> => {
     setError(null)
     try {
       const data = await callStravaFunction('strava-sync', { method: 'POST' })
-      setActivities(data.activities ?? [])
+      const fetchedActivities: StravaActivitySummary[] = data.activities ?? []
+      setActivities(fetchedActivities)
+      if (fetchedActivities.length > 0) {
+        void analyzeActivity(fetchedActivities[0])
+      }
       return true
     } catch (e: unknown) {
       console.error('Erro ao sincronizar atividades do Strava:', e)
       setError(e instanceof Error ? e.message : 'Erro ao sincronizar atividades.')
       return false
     }
-  }, [])
+  }, [analyzeActivity])
 
   const checkStatus = useCallback(async (): Promise<boolean> => {
     setIsLoading(true)
@@ -102,6 +129,7 @@ export function useStravaConnection() {
       setAthleteId(null)
       setConnectedAt(null)
       setActivities([])
+      setLatestAnalysis(null)
       return true
     } catch (e: unknown) {
       console.error('Erro ao desconectar do Strava:', e)
@@ -119,6 +147,8 @@ export function useStravaConnection() {
     isLoadingActivities,
     isSyncing,
     error,
+    latestAnalysis,
+    isAnalyzing,
     syncActivities,
     disconnect,
     refresh: checkStatus,

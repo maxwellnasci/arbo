@@ -357,6 +357,56 @@
   text-align: center;
 }
 
+/* ── Análise IA ────────────────────────────────────────────────────────────── */
+
+.analysisCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-left: 4px solid var(--orange);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.analysisHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.analysisLoading {
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+.analysisBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.analysisRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.analysisRow svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-tertiary);
+}
+
 /* ── Logout ────────────────────────────────────────────────────────────────── */
 
 .logoutBtn {

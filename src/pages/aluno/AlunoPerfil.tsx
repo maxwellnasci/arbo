@@ -4,7 +4,7 @@ import { useStravaConnection } from '../../hooks/useStravaConnection'
 import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { LogOut, Activity, RefreshCw, Footprints } from 'lucide-react'
+import { LogOut, Activity, RefreshCw, Footprints, Bot, BarChart3, Lightbulb, Target } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -48,6 +48,8 @@ export default function AlunoPerfil({ studentId, isPreview }: { studentId: strin
     isLoading: isStravaLoading,
     isLoadingActivities,
     isSyncing,
+    latestAnalysis,
+    isAnalyzing,
     syncActivities,
     disconnect,
   } = useStravaConnection()
@@ -209,6 +211,33 @@ export default function AlunoPerfil({ studentId, isPreview }: { studentId: strin
               <div className={styles.activitiesEmpty}>
                 <Footprints size={20} />
                 <span>Nenhuma atividade sincronizada ainda.</span>
+              </div>
+            )}
+
+            {(isAnalyzing || latestAnalysis) && (
+              <div className={styles.analysisCard}>
+                <div className={styles.analysisHeader}>
+                  <Bot size={16} />
+                  <span>Análise do seu último treino</span>
+                </div>
+                {isAnalyzing && !latestAnalysis ? (
+                  <span className={styles.analysisLoading}>Analisando sua última corrida...</span>
+                ) : latestAnalysis && (
+                  <div className={styles.analysisBody}>
+                    <div className={styles.analysisRow}>
+                      <BarChart3 size={14} />
+                      <span>{latestAnalysis.summary}</span>
+                    </div>
+                    <div className={styles.analysisRow}>
+                      <Lightbulb size={14} />
+                      <span>{latestAnalysis.analysis}</span>
+                    </div>
+                    <div className={styles.analysisRow}>
+                      <Target size={14} />
+                      <span>{latestAnalysis.tip}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </>
