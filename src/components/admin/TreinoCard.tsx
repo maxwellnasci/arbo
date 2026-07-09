@@ -3,10 +3,12 @@ import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PlayCircle } from 'lucide-react'
 import { VideoPlayer } from '../ui/VideoPlayer'
-import { PROGRAM_LABELS, PROGRAM_COLORS, PROGRAM_BG_COLORS, PROGRAM_BORDER_COLORS, CATEGORY_LABELS } from '../../lib/trainingUtils'
+import { PROGRAM_COLOR_VAR_MAP, CATEGORY_LABELS } from '../../lib/trainingUtils'
+import type { TrainingProgram } from '../../lib/types'
 
 interface TreinoCardProps {
   treino: TrainingWithTag
+  program?: TrainingProgram | null
   onClickEdit?: () => void
   onClickDelete?: () => void
 }
@@ -61,7 +63,7 @@ function formatDistance(meters: number | null): string {
   return meters >= 1000 ? `${(meters / 1000).toFixed(1)} km` : `${meters} m`
 }
 
-export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardProps) {
+export function TreinoCard({ treino, program, onClickEdit, onClickDelete }: TreinoCardProps) {
   const [isVideoExpanded, setIsVideoExpanded] = useState(false)
   const color = typeColor[treino.type] ?? 'var(--text-secondary)'
   const bgColor = typeBgColor[treino.type] ?? 'var(--bg-surface-hover)'
@@ -110,19 +112,19 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
         >
           {label}
         </span>
-        {treino.program && (
+        {program && (
           <span
             style={{
-              background: PROGRAM_BG_COLORS[treino.program] ?? 'var(--bg-surface-hover)',
-              color: PROGRAM_COLORS[treino.program] ?? 'var(--text-secondary)',
+              background: PROGRAM_COLOR_VAR_MAP[program.color]?.bg ?? 'var(--bg-surface-hover)',
+              color: PROGRAM_COLOR_VAR_MAP[program.color]?.accent ?? 'var(--text-secondary)',
               borderRadius: '20px',
               padding: '4px 10px',
               fontSize: '11px',
               fontWeight: 700,
-              border: `1px solid ${PROGRAM_BORDER_COLORS[treino.program] ?? 'var(--border-default)'}`
+              border: `1px solid ${PROGRAM_COLOR_VAR_MAP[program.color]?.border ?? 'var(--border-default)'}`
             }}
           >
-            {PROGRAM_LABELS[treino.program] ?? treino.program}
+            {program.name}
           </span>
         )}
         {treino.category && (

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link2, Upload, Film, Trash2 } from 'lucide-react'
-import type { Tag, TrainingType, TrainingCustomType } from '../../lib/types'
+import type { Tag, TrainingType, TrainingCustomType, TrainingProgram } from '../../lib/types'
 import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
 import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS } from '../../lib/trainingUtils'
@@ -29,6 +29,7 @@ interface TreinoFormPanelProps {
   onSubmit: (data: Omit<TrainingInsert, 'created_by'>) => void
   tags: Tag[]
   customTypes: TrainingCustomType[]
+  programs: TrainingProgram[]
   onCreateTag: (name: string, color: string) => Promise<Tag | null>
   onCreateType: (name: string) => Promise<TrainingCustomType | null>
   onUploadVideo: (file: File, trainingId: string, onProgress: (percent: number) => void) => Promise<string | null>
@@ -56,7 +57,7 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
 }
 
-export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, onCreateTag, onCreateType, onUploadVideo }: TreinoFormPanelProps) {
+export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, programs, onCreateTag, onCreateType, onUploadVideo }: TreinoFormPanelProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [distanceM, setDistanceM] = useState<number | ''>('')
@@ -66,6 +67,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
   const [sets, setSets] = useState<number | ''>('')
   const [type, setType] = useState<string>('corrida')
   const [tagId, setTagId] = useState('')
+  const [programSlug, setProgramSlug] = useState('')
   const [videoUrl, setVideoUrl] = useState('')
 
   const [videoMode, setVideoMode] = useState<'youtube' | 'upload'>('youtube')
@@ -94,6 +96,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
     setSets('')
     setType('corrida')
     setTagId('')
+    setProgramSlug('')
     setVideoUrl('')
     setVideoMode('youtube')
     setUploadedFileName(null)
@@ -124,6 +127,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
         setSets(treinoToEdit.sets || '')
         setType(treinoToEdit.type as TrainingType)
         setTagId(treinoToEdit.tag?.id || '')
+        setProgramSlug(treinoToEdit.program || '')
         const existingUrl = treinoToEdit.video_url || ''
         setVideoUrl(existingUrl)
         setUploadError(null)
@@ -199,6 +203,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
       sets: sets ? Number(sets) : null,
       type,
       tag_id: tagId || null,
+      program: programSlug || null,
       video_url: videoUrl ? videoUrl : null,
     }
 
@@ -421,6 +426,21 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                     </select>
                   )}
                 </div>
+              </div>
+
+              {/* Biblioteca */}
+              <div>
+                <label style={labelStyle}>Biblioteca</label>
+                <select
+                  value={programSlug}
+                  onChange={e => setProgramSlug(e.target.value)}
+                  style={{ ...inputStyle, cursor: 'pointer' }}
+                >
+                  <option value="">Nenhuma biblioteca</option>
+                  {programs.map(program => (
+                    <option key={program.id} value={program.slug}>{program.name}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Distância + Duração */}

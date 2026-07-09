@@ -1,24 +1,27 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useAdminTreinos } from '../../hooks/useAdminTreinos'
 import { useTreinoMutations } from '../../hooks/useTreinoMutations'
+import { useTrainingPrograms } from '../../hooks/useTrainingPrograms'
 import { TreinoCard } from '../../components/admin/TreinoCard'
 import { TreinoFormPanel } from '../../components/admin/TreinoFormPanel'
+import { NewProgramModal } from '../../components/admin/NewProgramModal'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
 import { supabase } from '../../lib/supabase'
 import type { Tag, TrainingCustomType } from '../../lib/types'
-import { insertTag, insertTrainingType, PROGRAM_OPTIONS, PROGRAM_LABELS, PROGRAM_COLORS, CATEGORY_OPTIONS, CATEGORY_LABELS } from '../../lib/trainingUtils'
+import { insertTag, insertTrainingType, PROGRAM_COLOR_VAR_MAP, CATEGORY_OPTIONS, CATEGORY_LABELS } from '../../lib/trainingUtils'
 import { useAuth } from '../../contexts/AuthContext'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, ChevronDown, Trash2 } from 'lucide-react'
+import { Search, ChevronDown, Trash2, Plus } from 'lucide-react'
 
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
 
 export function AdminTreinos() {
   const { treinos, loading, error, refetch } = useAdminTreinos()
   const { createTraining, updateTraining, deleteTraining } = useTreinoMutations()
+  const { programs, error: programsError, createProgram, deleteProgram } = useTrainingPrograms()
   const { user } = useAuth()
   const [tags, setTags] = useState<Tag[]>([])
   const [customTypes, setCustomTypes] = useState<TrainingCustomType[]>([])
@@ -28,12 +31,36 @@ export function AdminTreinos() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [treinoToEdit, setTreinoToEdit] = useState<TrainingWithTag | null>(null)
   const [isManageOpen, setIsManageOpen] = useState(false)
+  const [isProgramMenuOpen, setIsProgramMenuOpen] = useState(false)
+  const [isNewProgramModalOpen, setIsNewProgramModalOpen] = useState(false)
+  const programMenuRef = useRef<HTMLDivElement>(null)
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean
     title: string
     description: string
     onConfirm: () => void
   }>({ isOpen: false, title: '', description: '', onConfirm: () => {} })
+
+  const programsBySlug = useMemo(() => {
+    const map = new Map<string, typeof programs[number]>()
+    programs.forEach(p => map.set(p.slug, p))
+    return map
+  }, [programs])
+
+  useEffect(() => {
+    if (!isProgramMenuOpen) return
+    function handleClickOutside(event: MouseEvent) {
+      if (programMenuRef.current && !programMenuRef.current.contains(event.target as Node)) {
+        setIsProgramMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isProgramMenuOpen])
+
+  useEffect(() => {
+    if (programsError) toast.error(programsError)
+  }, [programsError])
 
   useEffect(() => {
     let cancelled = false
@@ -135,6 +162,21 @@ export function AdminTreinos() {
         if (error) { toast.error(error.message); return }
         setCustomTypes(prev => prev.filter(t => t.id !== id))
         toast.success('Tipo excluído')
+      }
+    })
+  }
+
+  const handleDeleteProgram = (id: string, slug: string) => {
+    setConfirmState({
+      isOpen: true,
+      title: 'Excluir Biblioteca',
+      description: 'Excluir esta biblioteca? Os treinos que pertencem a ela não serão excluídos, apenas deixarão de aparecer no filtro e perderão a etiqueta de biblioteca.',
+      onConfirm: async () => {
+        setConfirmState(prev => ({ ...prev, isOpen: false }))
+        const { error: deleteError } = await deleteProgram(id)
+        if (deleteError) { toast.error(deleteError); return }
+        if (programFilter === slug) setProgramFilter('todos')
+        toast.success('Biblioteca excluída')
       }
     })
   }
@@ -267,13 +309,14 @@ export function AdminTreinos() {
       </div>
 
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div ref={programMenuRef} style={{ position: 'relative' }}>
           <button
-            onClick={() => setProgramFilter('todos')}
+            onClick={() => setIsProgramMenuOpen(prev => !prev)}
             style={{
-              background: programFilter === 'todos' ? 'var(--orange)' : 'var(--bg-surface)',
-              color: programFilter === 'todos' ? 'var(--text-on-brand)' : 'var(--text-secondary)',
-              border: `1px solid ${programFilter === 'todos' ? 'var(--orange)' : 'var(--border-default)'}`,
+              display: 'flex', alignItems: 'center', gap: '8px',
+              background: 'var(--bg-surface)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-default)',
               borderRadius: '20px',
               padding: '8px 16px',
               fontSize: '12px',
@@ -282,27 +325,79 @@ export function AdminTreinos() {
               transition: 'all 0.15s'
             }}
           >
-            Todos os Programas
+            {programFilter !== 'todos' && (
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: PROGRAM_COLOR_VAR_MAP[programsBySlug.get(programFilter)?.color ?? '']?.accent ?? 'var(--text-secondary)'
+              }} />
+            )}
+            {programFilter === 'todos' ? 'Biblioteca de Treinos' : (programsBySlug.get(programFilter)?.name ?? 'Biblioteca de Treinos')}
+            <ChevronDown size={14} style={{ transform: isProgramMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
           </button>
-          {PROGRAM_OPTIONS.map(program => (
-            <button
-              key={program}
-              onClick={() => setProgramFilter(program)}
-              style={{
-                background: programFilter === program ? PROGRAM_COLORS[program] : 'var(--bg-surface)',
-                color: programFilter === program ? 'var(--text-on-brand)' : 'var(--text-secondary)',
-                border: `1px solid ${programFilter === program ? PROGRAM_COLORS[program] : 'var(--border-default)'}`,
-                borderRadius: '20px',
-                padding: '8px 16px',
-                fontSize: '12px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                transition: 'all 0.15s'
-              }}
-            >
-              {PROGRAM_LABELS[program]}
-            </button>
-          ))}
+
+          <AnimatePresence>
+            {isProgramMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.15 }}
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  left: 0,
+                  minWidth: '220px',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: '12px',
+                  boxShadow: 'var(--shadow-modal)',
+                  padding: '6px',
+                  zIndex: 20,
+                }}
+              >
+                <button
+                  onClick={() => { setProgramFilter('todos'); setIsProgramMenuOpen(false) }}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left',
+                    background: programFilter === 'todos' ? 'var(--bg-surface-hover)' : 'transparent',
+                    color: 'var(--text-primary)', border: 'none', borderRadius: '8px',
+                    padding: '8px 10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+                  }}
+                >
+                  Todas as Bibliotecas
+                </button>
+                {programs.map(program => (
+                  <button
+                    key={program.id}
+                    onClick={() => { setProgramFilter(program.slug); setIsProgramMenuOpen(false) }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px', width: '100%', textAlign: 'left',
+                      background: programFilter === program.slug ? 'var(--bg-surface-hover)' : 'transparent',
+                      color: 'var(--text-primary)', border: 'none', borderRadius: '8px',
+                      padding: '8px 10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+                    }}
+                  >
+                    <span style={{
+                      width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                      background: PROGRAM_COLOR_VAR_MAP[program.color]?.accent ?? 'var(--text-secondary)'
+                    }} />
+                    {program.name}
+                  </button>
+                ))}
+                <div style={{ height: '1px', background: 'var(--border-default)', margin: '6px 0' }} />
+                <button
+                  onClick={() => { setIsProgramMenuOpen(false); setIsNewProgramModalOpen(true) }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px', width: '100%', textAlign: 'left',
+                    background: 'transparent', color: 'var(--orange)', border: 'none', borderRadius: '8px',
+                    padding: '8px 10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  <Plus size={14} /> Nova Biblioteca
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <select
@@ -337,7 +432,7 @@ export function AdminTreinos() {
             fontSize: '14px', fontWeight: 600, cursor: 'pointer', padding: 0
           }}
         >
-          Gerenciar Etiquetas e Tipos
+          Gerenciar Etiquetas, Tipos e Bibliotecas
           <ChevronDown size={16} style={{ transform: isManageOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
         </button>
 
@@ -380,6 +475,23 @@ export function AdminTreinos() {
                     </div>
                   )}
                 </div>
+                <div style={{ width: '1px', background: 'var(--border-default)' }}></div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: '13px', color: 'var(--text-primary)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Bibliotecas</h3>
+                  {programs.length === 0 ? <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Nenhuma biblioteca</p> : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {programs.map(program => (
+                        <div key={program.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-input)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: 12, height: 12, borderRadius: '50%', background: PROGRAM_COLOR_VAR_MAP[program.color]?.accent ?? 'var(--text-secondary)' }}></div>
+                            <span style={{ fontSize: '13px', color: 'var(--text-primary)' }}>{program.name}</span>
+                          </div>
+                          <button onClick={() => handleDeleteProgram(program.id, program.slug)} style={{ background: 'none', border: 'none', color: 'var(--red-accent)', cursor: 'pointer', padding: '4px' }}><Trash2 size={14} /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}
@@ -417,6 +529,7 @@ export function AdminTreinos() {
             <TreinoCard
               key={treino.id}
               treino={treino}
+              program={treino.program ? programsBySlug.get(treino.program) : null}
               onClickEdit={() => handleEdit(treino)}
               onClickDelete={() => handleDelete(treino.id)}
             />
@@ -431,9 +544,16 @@ export function AdminTreinos() {
         onClose={handleClosePanel}
         tags={tags}
         customTypes={customTypes}
+        programs={programs}
         onCreateTag={handleCreateTag}
         onCreateType={handleCreateType}
         onUploadVideo={handleUploadVideo}
+      />
+
+      <NewProgramModal
+        isOpen={isNewProgramModalOpen}
+        onClose={() => setIsNewProgramModalOpen(false)}
+        onCreate={createProgram}
       />
 
       <ConfirmModal

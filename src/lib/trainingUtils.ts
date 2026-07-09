@@ -23,31 +23,22 @@ export const TRAINING_TYPE_LABELS: Record<string, string> = {
   mobilidade: 'Mobilidade',
 }
 
-// Programas da biblioteca de treinos do professor (trainings.program)
-export const PROGRAM_OPTIONS = ['do_zero_5k', 'aperfeicoando_5k', 'rumo_10k'] as const
+// Cores selecionáveis para bibliotecas de treino (training_programs.color) —
+// mesmas 4 opções do CHECK constraint no banco.
+export const PROGRAM_COLOR_OPTIONS = ['green', 'yellow', 'orange', 'red'] as const
 
-export const PROGRAM_LABELS: Record<string, string> = {
-  do_zero_5k: 'Do Zero aos 5km',
-  aperfeicoando_5k: 'Aperfeiçoando os 5km',
-  rumo_10k: 'Rumo aos 10km',
+export const PROGRAM_COLOR_LABELS: Record<string, string> = {
+  green: 'Verde',
+  yellow: 'Amarelo',
+  orange: 'Laranja',
+  red: 'Vermelho',
 }
 
-export const PROGRAM_COLORS: Record<string, string> = {
-  do_zero_5k: 'var(--green-accent)',
-  aperfeicoando_5k: 'var(--yellow-accent)',
-  rumo_10k: 'var(--red-accent)',
-}
-
-export const PROGRAM_BG_COLORS: Record<string, string> = {
-  do_zero_5k: 'var(--green-subtle)',
-  aperfeicoando_5k: 'var(--yellow-subtle)',
-  rumo_10k: 'var(--red-subtle)',
-}
-
-export const PROGRAM_BORDER_COLORS: Record<string, string> = {
-  do_zero_5k: 'var(--green-border)',
-  aperfeicoando_5k: 'var(--yellow-border)',
-  rumo_10k: 'var(--red-border)',
+export const PROGRAM_COLOR_VAR_MAP: Record<string, { accent: string; bg: string; border: string }> = {
+  green: { accent: 'var(--green-accent)', bg: 'var(--green-subtle)', border: 'var(--green-border)' },
+  yellow: { accent: 'var(--yellow-accent)', bg: 'var(--yellow-subtle)', border: 'var(--yellow-border)' },
+  orange: { accent: 'var(--orange)', bg: 'var(--orange-subtle)', border: 'var(--orange-border)' },
+  red: { accent: 'var(--red-accent)', bg: 'var(--red-subtle)', border: 'var(--red-border)' },
 }
 
 // Métodos/categorias de treino de corrida (trainings.category)

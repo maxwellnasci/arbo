@@ -16,6 +16,7 @@ export type GroupPlan       = Database['public']['Tables']['group_plans']['Row']
 export type GroupPlanTraining = Database['public']['Tables']['group_plan_trainings']['Row']
 export type Tag             = Database['public']['Tables']['tags']['Row']
 export type TrainingCustomType = Database['public']['Tables']['training_types']['Row']
+export type TrainingProgram = Database['public']['Tables']['training_programs']['Row']
 
 // Enums
 // trainings.type was converted from enum to text (migration 20260606010118).
