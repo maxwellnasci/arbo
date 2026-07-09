@@ -1,0 +1,119 @@
+.wrapper {
+  position: relative;
+  flex: 1 1 200px;
+  min-width: 200px;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-width: 200px;
+  height: 44px;
+  box-sizing: border-box;
+  background: var(--orange-subtle);
+  color: var(--orange);
+  border: 1.5px solid var(--orange);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(232, 82, 26, 0.12);
+  transition: all 0.15s ease;
+}
+
+.trigger:hover {
+  border-color: var(--orange-border);
+}
+
+.triggerOpen,
+.triggerOpen:hover {
+  border: 2px solid var(--orange);
+  padding: calc(10px - 0.5px) calc(16px - 0.5px);
+}
+
+.triggerLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chevron {
+  color: var(--orange);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 220px;
+  width: max-content;
+  max-width: 280px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  box-shadow: var(--shadow-modal);
+  padding: 6px;
+  z-index: 20;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: var(--text-primary);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--bg-surface-hover);
+}
+
+.optionActive {
+  background: var(--bg-surface-hover);
+}
+
+.divider {
+  height: 1px;
+  background: var(--border-default);
+  margin: 6px 0;
+}
+
+.footerOption {
+  composes: option;
+  color: var(--orange);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .wrapper {
+    flex: 1 1 100%;
+  }
+}

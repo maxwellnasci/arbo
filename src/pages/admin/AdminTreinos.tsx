@@ -1,10 +1,11 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useAdminTreinos } from '../../hooks/useAdminTreinos'
 import { useTreinoMutations } from '../../hooks/useTreinoMutations'
 import { useTrainingPrograms } from '../../hooks/useTrainingPrograms'
 import { TreinoCard } from '../../components/admin/TreinoCard'
 import { TreinoFormPanel } from '../../components/admin/TreinoFormPanel'
 import { NewProgramModal } from '../../components/admin/NewProgramModal'
+import { FilterDropdown } from '../../components/admin/FilterDropdown'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
@@ -14,7 +15,7 @@ import { insertTag, insertTrainingType, PROGRAM_COLOR_VAR_MAP, CATEGORY_OPTIONS,
 import { useAuth } from '../../contexts/AuthContext'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, ChevronDown, Trash2, Plus } from 'lucide-react'
+import { Search, ChevronDown, Trash2 } from 'lucide-react'
 
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
 
@@ -31,9 +32,7 @@ export function AdminTreinos() {
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [treinoToEdit, setTreinoToEdit] = useState<TrainingWithTag | null>(null)
   const [isManageOpen, setIsManageOpen] = useState(false)
-  const [isProgramMenuOpen, setIsProgramMenuOpen] = useState(false)
   const [isNewProgramModalOpen, setIsNewProgramModalOpen] = useState(false)
-  const programMenuRef = useRef<HTMLDivElement>(null)
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean
     title: string
@@ -46,17 +45,6 @@ export function AdminTreinos() {
     programs.forEach(p => map.set(p.slug, p))
     return map
   }, [programs])
-
-  useEffect(() => {
-    if (!isProgramMenuOpen) return
-    function handleClickOutside(event: MouseEvent) {
-      if (programMenuRef.current && !programMenuRef.current.contains(event.target as Node)) {
-        setIsProgramMenuOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isProgramMenuOpen])
 
   useEffect(() => {
     if (programsError) toast.error(programsError)
@@ -309,118 +297,26 @@ export function AdminTreinos() {
       </div>
 
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}>
-        <div ref={programMenuRef} style={{ position: 'relative' }}>
-          <button
-            onClick={() => setIsProgramMenuOpen(prev => !prev)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              background: 'var(--bg-surface)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border-default)',
-              borderRadius: '20px',
-              padding: '8px 16px',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'all 0.15s'
-            }}
-          >
-            {programFilter !== 'todos' && (
-              <span style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: PROGRAM_COLOR_VAR_MAP[programsBySlug.get(programFilter)?.color ?? '']?.accent ?? 'var(--text-secondary)'
-              }} />
-            )}
-            {programFilter === 'todos' ? 'Biblioteca de Treinos' : (programsBySlug.get(programFilter)?.name ?? 'Biblioteca de Treinos')}
-            <ChevronDown size={14} style={{ transform: isProgramMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-          </button>
+        <FilterDropdown
+          idleLabel="Biblioteca de Treinos"
+          allOptionLabel="Todas as Bibliotecas"
+          selectedKey={programFilter}
+          onSelect={setProgramFilter}
+          options={programs.map(program => ({
+            key: program.slug,
+            label: program.name,
+            dotColor: PROGRAM_COLOR_VAR_MAP[program.color]?.accent ?? 'var(--text-secondary)',
+          }))}
+          footer={{ label: '+ Nova Biblioteca', onClick: () => setIsNewProgramModalOpen(true) }}
+        />
 
-          <AnimatePresence>
-            {isProgramMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.15 }}
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 6px)',
-                  left: 0,
-                  minWidth: '220px',
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border-default)',
-                  borderRadius: '12px',
-                  boxShadow: 'var(--shadow-modal)',
-                  padding: '6px',
-                  zIndex: 20,
-                }}
-              >
-                <button
-                  onClick={() => { setProgramFilter('todos'); setIsProgramMenuOpen(false) }}
-                  style={{
-                    display: 'block', width: '100%', textAlign: 'left',
-                    background: programFilter === 'todos' ? 'var(--bg-surface-hover)' : 'transparent',
-                    color: 'var(--text-primary)', border: 'none', borderRadius: '8px',
-                    padding: '8px 10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
-                  }}
-                >
-                  Todas as Bibliotecas
-                </button>
-                {programs.map(program => (
-                  <button
-                    key={program.id}
-                    onClick={() => { setProgramFilter(program.slug); setIsProgramMenuOpen(false) }}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '8px', width: '100%', textAlign: 'left',
-                      background: programFilter === program.slug ? 'var(--bg-surface-hover)' : 'transparent',
-                      color: 'var(--text-primary)', border: 'none', borderRadius: '8px',
-                      padding: '8px 10px', fontSize: '13px', fontWeight: 600, cursor: 'pointer'
-                    }}
-                  >
-                    <span style={{
-                      width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                      background: PROGRAM_COLOR_VAR_MAP[program.color]?.accent ?? 'var(--text-secondary)'
-                    }} />
-                    {program.name}
-                  </button>
-                ))}
-                <div style={{ height: '1px', background: 'var(--border-default)', margin: '6px 0' }} />
-                <button
-                  onClick={() => { setIsProgramMenuOpen(false); setIsNewProgramModalOpen(true) }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '8px', width: '100%', textAlign: 'left',
-                    background: 'transparent', color: 'var(--orange)', border: 'none', borderRadius: '8px',
-                    padding: '8px 10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer'
-                  }}
-                >
-                  <Plus size={14} /> Nova Biblioteca
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <select
-          value={categoryFilter}
-          onChange={e => setCategoryFilter(e.target.value)}
-          style={{
-            background: 'var(--bg-input)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-subtle)',
-            padding: '8px 14px',
-            borderRadius: '20px',
-            fontSize: '12px',
-            fontWeight: 600,
-            outline: 'none',
-            cursor: 'pointer',
-            marginLeft: 'auto'
-          }}
-        >
-          <option value="todos">Todas as Categorias</option>
-          {CATEGORY_OPTIONS.map(category => (
-            <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>
-          ))}
-        </select>
+        <FilterDropdown
+          idleLabel="Todas as Categorias"
+          allOptionLabel="Todas as Categorias"
+          selectedKey={categoryFilter}
+          onSelect={setCategoryFilter}
+          options={CATEGORY_OPTIONS.map(category => ({ key: category, label: CATEGORY_LABELS[category] }))}
+        />
       </div>
 
       <div style={{ marginBottom: '32px' }}>
