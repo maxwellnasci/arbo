@@ -8,7 +8,7 @@ import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
 import { supabase } from '../../lib/supabase'
 import type { Tag, TrainingCustomType } from '../../lib/types'
-import { insertTag, insertTrainingType } from '../../lib/trainingUtils'
+import { insertTag, insertTrainingType, PROGRAM_OPTIONS, PROGRAM_LABELS, PROGRAM_COLORS, CATEGORY_OPTIONS, CATEGORY_LABELS } from '../../lib/trainingUtils'
 import { useAuth } from '../../contexts/AuthContext'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -23,6 +23,8 @@ export function AdminTreinos() {
   const [tags, setTags] = useState<Tag[]>([])
   const [customTypes, setCustomTypes] = useState<TrainingCustomType[]>([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [programFilter, setProgramFilter] = useState<string>('todos')
+  const [categoryFilter, setCategoryFilter] = useState<string>('todos')
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [treinoToEdit, setTreinoToEdit] = useState<TrainingWithTag | null>(null)
   const [isManageOpen, setIsManageOpen] = useState(false)
@@ -51,11 +53,13 @@ export function AdminTreinos() {
   }, [])
 
   const filteredTreinos = useMemo(() => {
-    if (!searchTerm.trim()) return treinos
-    return treinos.filter(t =>
-      t.title.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [treinos, searchTerm])
+    return treinos.filter(t => {
+      const matchesSearch = !searchTerm.trim() || t.title.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesProgram = programFilter === 'todos' || t.program === programFilter
+      const matchesCategory = categoryFilter === 'todos' || t.category === categoryFilter
+      return matchesSearch && matchesProgram && matchesCategory
+    })
+  }, [treinos, searchTerm, programFilter, categoryFilter])
 
   const handleEdit = (treino: TrainingWithTag) => {
     setTreinoToEdit(treino)
@@ -260,6 +264,68 @@ export function AdminTreinos() {
           onFocus={e => e.target.style.borderColor = 'var(--orange)'}
           onBlur={e => e.target.style.borderColor = 'var(--border-subtle)'}
         />
+      </div>
+
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '32px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setProgramFilter('todos')}
+            style={{
+              background: programFilter === 'todos' ? 'var(--orange)' : 'var(--bg-surface)',
+              color: programFilter === 'todos' ? 'var(--text-on-brand)' : 'var(--text-secondary)',
+              border: `1px solid ${programFilter === 'todos' ? 'var(--orange)' : 'var(--border-default)'}`,
+              borderRadius: '20px',
+              padding: '8px 16px',
+              fontSize: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              transition: 'all 0.15s'
+            }}
+          >
+            Todos os Programas
+          </button>
+          {PROGRAM_OPTIONS.map(program => (
+            <button
+              key={program}
+              onClick={() => setProgramFilter(program)}
+              style={{
+                background: programFilter === program ? PROGRAM_COLORS[program] : 'var(--bg-surface)',
+                color: programFilter === program ? 'var(--text-on-brand)' : 'var(--text-secondary)',
+                border: `1px solid ${programFilter === program ? PROGRAM_COLORS[program] : 'var(--border-default)'}`,
+                borderRadius: '20px',
+                padding: '8px 16px',
+                fontSize: '12px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s'
+              }}
+            >
+              {PROGRAM_LABELS[program]}
+            </button>
+          ))}
+        </div>
+
+        <select
+          value={categoryFilter}
+          onChange={e => setCategoryFilter(e.target.value)}
+          style={{
+            background: 'var(--bg-input)',
+            color: 'var(--text-primary)',
+            border: '1px solid var(--border-subtle)',
+            padding: '8px 14px',
+            borderRadius: '20px',
+            fontSize: '12px',
+            fontWeight: 600,
+            outline: 'none',
+            cursor: 'pointer',
+            marginLeft: 'auto'
+          }}
+        >
+          <option value="todos">Todas as Categorias</option>
+          {CATEGORY_OPTIONS.map(category => (
+            <option key={category} value={category}>{CATEGORY_LABELS[category]}</option>
+          ))}
+        </select>
       </div>
 
       <div style={{ marginBottom: '32px' }}>

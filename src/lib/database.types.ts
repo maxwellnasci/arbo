@@ -794,12 +794,14 @@ export type Database = {
       }
       trainings: {
         Row: {
+          category: string | null
           created_at: string | null
           created_by: string
           description: string | null
           distance_m: number | null
           duration_minutes: number | null
           id: string
+          program: string | null
           sets: number | null
           tag_id: string | null
           target_pace_seconds_per_km: number | null
@@ -809,12 +811,14 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           created_by: string
           description?: string | null
           distance_m?: number | null
           duration_minutes?: number | null
           id?: string
+          program?: string | null
           sets?: number | null
           tag_id?: string | null
           target_pace_seconds_per_km?: number | null
@@ -824,12 +828,14 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           created_by?: string
           description?: string | null
           distance_m?: number | null
           duration_minutes?: number | null
           id?: string
+          program?: string | null
           sets?: number | null
           tag_id?: string | null
           target_pace_seconds_per_km?: number | null

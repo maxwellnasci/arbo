@@ -3,6 +3,7 @@ import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PlayCircle } from 'lucide-react'
 import { VideoPlayer } from '../ui/VideoPlayer'
+import { PROGRAM_LABELS, PROGRAM_COLORS, PROGRAM_BG_COLORS, PROGRAM_BORDER_COLORS, CATEGORY_LABELS } from '../../lib/trainingUtils'
 
 interface TreinoCardProps {
   treino: TrainingWithTag
@@ -92,8 +93,8 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      {/* Pills: tipo + etiqueta */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+      {/* Pills: tipo + programa + categoria + etiqueta */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
         <span
           style={{
             background: bgColor,
@@ -109,6 +110,36 @@ export function TreinoCard({ treino, onClickEdit, onClickDelete }: TreinoCardPro
         >
           {label}
         </span>
+        {treino.program && (
+          <span
+            style={{
+              background: PROGRAM_BG_COLORS[treino.program] ?? 'var(--bg-surface-hover)',
+              color: PROGRAM_COLORS[treino.program] ?? 'var(--text-secondary)',
+              borderRadius: '20px',
+              padding: '4px 10px',
+              fontSize: '11px',
+              fontWeight: 700,
+              border: `1px solid ${PROGRAM_BORDER_COLORS[treino.program] ?? 'var(--border-default)'}`
+            }}
+          >
+            {PROGRAM_LABELS[treino.program] ?? treino.program}
+          </span>
+        )}
+        {treino.category && (
+          <span
+            style={{
+              background: 'var(--bg-surface-hover)',
+              color: 'var(--text-secondary)',
+              borderRadius: '20px',
+              padding: '4px 10px',
+              fontSize: '11px',
+              fontWeight: 700,
+              border: '1px solid var(--border-default)'
+            }}
+          >
+            {CATEGORY_LABELS[treino.category] ?? treino.category}
+          </span>
+        )}
         {treino.tag && (
           <span
             style={{

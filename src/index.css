@@ -32,6 +32,7 @@
   --purple-border:     rgba(168, 85, 247, 0.25);
   --yellow-accent:     #eab308;
   --yellow-subtle:     rgba(234, 179, 8, 0.08);
+  --yellow-border:     rgba(234, 179, 8, 0.25);
 
   /* Texto */
   --text-primary:      #ffffff;
@@ -88,6 +89,7 @@
   --purple-border:     rgba(124, 58, 237, 0.25);
   --yellow-accent:     #ca8a04;
   --yellow-subtle:     rgba(202, 138, 4, 0.08);
+  --yellow-border:     rgba(202, 138, 4, 0.25);
 
   /* Texto */
   --text-primary:      #18181b;
