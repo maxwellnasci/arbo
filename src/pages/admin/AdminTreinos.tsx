@@ -296,7 +296,7 @@ export function AdminTreinos() {
         />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'row', gap: '12px', flexWrap: 'nowrap', marginBottom: '32px', padding: '0 16px' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '12px', flexWrap: 'nowrap', marginBottom: '32px', overflowX: 'auto' }}>
         <FilterDropdown
           idleLabel="Biblioteca de Treinos"
           allOptionLabel="Todas as Bibliotecas"
