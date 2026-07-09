@@ -36,14 +36,31 @@ Implementado componente standalone (`PaceCalculator.tsx`) com cálculos de Pace,
 ### 2. Biblioteca de treinos — ajustes finais
 Já existe em /admin/treinos. Revisar e ajustar com base no feedback real de uso.
 
+**Atualização 2026-07-09 (filtros por programa/categoria):** `/admin/treinos` ganhou pills de filtro por programa (Todos / Do Zero aos 5km / Aperfeiçoando os 5km / Rumo aos 10km) e um dropdown de filtro por categoria/método de treino (Intervalado, Fartlek, Contínuo, Progressivo, Pirâmide, Ritmo, Regenerativo, Teste). `TreinoCard.tsx` ganhou badges coloridos por programa — 🟢 verde (Do Zero), 🟡 amarelo (Aperfeiçoando), 🔴 vermelho (Rumo), usando as novas variáveis CSS `--green/yellow/red-accent/subtle/border` (`--yellow-border` foi adicionada ao `index.css`, faltava). Constantes `PROGRAM_OPTIONS/LABELS/COLORS` e `CATEGORY_OPTIONS/LABELS` centralizadas em `trainingUtils.ts`, mesmo padrão de fonte única já usado por `TAG_COLORS`/`TRAINING_TYPE_OPTIONS`.
+
 ### 3. Botão "Testar como Aluno" (admin) — ✅ CONCLUÍDO (2026-06-30)
 Admin consegue ver o app como um aluno veria, sem sair do contexto admin.
 Implementado criando uma rota `/preview-aluno` acessível pelo menu do Admin, injetando um `previewStudentId` (conta demo previamente inserida no banco) no `AlunoDashboard`. Adicionado um botão flutuante discreto (FAB) "Voltar ao Admin" e bloqueado o botão de logout na aba Perfil, isolando a experiência e evitando distorções no layout com zero risco de acessar dado real de aluno.
 
-### 4. Padronização de treinos via IA
+### 4. Padronização de treinos via IA — ✅ CONCLUÍDO (2026-07-09)
 Receber arquivo Word com 10 treinos do professor, processar com IA para extrair
 um padrão estruturado (tipo, distância, pace, séries, descrição), e criar
 fluxo de carga automática desses treinos no banco.
+
+**Entrega real — 48 treinos em 3 programas, não 10:** o professor enviou 3 arquivos Word (`DO ZERO AOS 5 KM.docx`, `APERFEIÇOANDO OS 5 KM.docx`, `RUMO AOS 10 KM.docx`), extraídos com `python-docx` e parseados via regex (método de treino, tempo/distância, execução) para um JSON estruturado, depois convertido em SQL. Carga final:
+
+| Programa | `program` | Treinos |
+|---|---|---|
+| Do Zero aos 5km | `do_zero_5k` | 12 |
+| Aperfeiçoando os 5km | `aperfeicoando_5k` | 12 |
+| Rumo aos 10km | `rumo_10k` | 24 |
+| **Total** | | **48** |
+
+**Schema:** duas colunas novas em `trainings` — `category text` (método: intervalado, fartlek, contínuo, progressivo, pirâmide, regenerativo, teste, **e ritmo** — categoria adicional encontrada nos treinos de "Rumo aos 10km" e não prevista no pedido original, mantida como categoria própria em vez de forçada em um rótulo existente) e `program text` (programa de origem), mais índices `idx_trainings_program`/`idx_trainings_category`. `created_by` de todos os 48 registros aponta para o primeiro profile com `role='admin'` via subquery — sem precisar hardcodar UUID.
+
+**Decisões de parsing:** faixas de tempo/distância (ex: "25 a 30 minutos", "4 a 5 km") gravadas usando o limite superior em `duration_minutes`/`distance_m`; o texto original completo (com a faixa) permanece na `description`. Dois treinos de "Rumo aos 10km" (19 e 23) mantêm um parêntese não fechado na descrição — erro de digitação do professor no Word original, preservado verbatim.
+
+**Fluxo de aplicação:** SQL gerado e revisado no chat antes de qualquer execução (`sql_biblioteca_treinos_1_alter.sql` + `sql_biblioteca_treinos_2_inserts.sql`, depois apagados do repo pós-commit); ALTER TABLE aplicado pelo Maxwell via Dashboard, INSERTs rodados via MCP Supabase a pedido explícito dele (confirmada a existência das colunas e de um profile admin antes de rodar). `database.types.ts` regenerado via MCP (`generate_typescript_types`) — um patch manual prévio no arquivo (necessário porque o `ALTER TABLE` ainda não tinha sido aplicado no momento de escrever o frontend) bateu 100% com o schema real, exceto por um bug de transcrição no helper `CompositeTypes<>` (indexação por `CompositeTypeName` em vez de `PublicCompositeTypeNameOrOptions` quando o schema não tem nenhum composite type — `{ [_ in never]: never }` não é indexável por um generic não estreitado a `never`), corrigido antes do commit.
 
 ### 5. Upload de vídeo no admin — ✅ IMPLEMENTADO, PENDENTE CONFIGURAÇÃO MANUAL NO CLOUDFLARE (2026-07-04)
 Decisão: upload direto para Cloudflare R2 (custom domain `videos.mxos.com.br`), mantendo o link do YouTube como alternativa — professor escolhe via toggle no formulário de treino.
@@ -112,7 +129,7 @@ Depende do item 6 estar pronto. Definir comportamento exato com o professor
 **Atualização 2026-07-04:** a parte de "sincronizar dado no app" está resolvida pelo Agente de análise DeepSeek acima (feedback automático visível para aluno e professor). Ainda em aberto: decidir com o professor se o agente deve também comentar diretamente na atividade do Strava ou notificar por outro canal.
 
 ## Status
-Roadmap criado em 2026-06-30. Itens 1, 3 e 6 implementados, validados e **funcionando em produção** (item 6 confirmado em 2026-07-04 após fix de GRANT no `service_role`; agente de análise DeepSeek do item 6 deployado em 2026-07-04). Item 5 (upload de vídeo) implementado, pendente apenas configuração manual de CORS no bucket R2. Item 7 parcialmente resolvido pelo agente de análise (feedback em app); falta decidir com o professor se o agente também comenta direto na atividade do Strava. Aguardando próximos passos do professor (itens 2, 4 pendentes).
+Roadmap criado em 2026-06-30. Itens 1, 3, 4 e 6 implementados, validados e **funcionando em produção** (item 6 confirmado em 2026-07-04 após fix de GRANT no `service_role`; agente de análise DeepSeek do item 6 deployado em 2026-07-04; item 4 concluído em 2026-07-09 com os 48 treinos carregados e filtros no item 2). Item 5 (upload de vídeo) implementado, pendente apenas configuração manual de CORS no bucket R2. Item 7 parcialmente resolvido pelo agente de análise (feedback em app); falta decidir com o professor se o agente também comenta direto na atividade do Strava.
 
 ## Correções Adicionais (2026-07-01)
 - Corrigido corte de tela no `DayPicker` em dispositivos menores (scroll interno e max-height).
