@@ -247,7 +247,7 @@ export function AdminTreinos() {
   }
 
   return (
-    <div>
+    <div style={{ overflowX: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
         <h1 style={{ fontFamily: 'var(--heading)', margin: 0 }}>Treinos</h1>
         <button
@@ -296,7 +296,7 @@ export function AdminTreinos() {
         />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'row', gap: '12px', flexWrap: 'nowrap', marginBottom: '32px', overflowX: 'auto' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '12px', flexWrap: 'nowrap', marginBottom: '32px', padding: '0 16px' }}>
         <FilterDropdown
           idleLabel="Biblioteca de Treinos"
           allOptionLabel="Todas as Bibliotecas"
