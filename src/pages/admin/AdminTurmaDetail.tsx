@@ -4,10 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAdminTurmaDetail, type GroupDayTraining } from '../../hooks/useAdminTurmaDetail'
 import { useGroupPlanMutations, type NewTrainingInput } from '../../hooks/useGroupPlanMutations'
+import { useTrainingPrograms } from '../../hooks/useTrainingPrograms'
+import { useTreinoMutations } from '../../hooks/useTreinoMutations'
 import { useAuth } from '../../contexts/AuthContext'
-import type { Tag, Training, TrainingCustomType } from '../../lib/types'
-import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS, insertTag, insertTrainingType } from '../../lib/trainingUtils'
+import type { Tag, Training, TrainingCustomType, TrainingProgram } from '../../lib/types'
+import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS, PROGRAM_COLOR_VAR_MAP, insertTag, insertTrainingType } from '../../lib/trainingUtils'
 import { EditGroupModal } from '../../components/admin/EditGroupModal'
+import { ManageProgramsModal } from '../../components/admin/ManageProgramsModal'
 import { Edit2 } from 'lucide-react'
 import { ProfessorStatusGrid } from '../../components/admin/ProfessorStatusGrid'
 import { VideoPlayer } from '../../components/ui/VideoPlayer'
@@ -64,6 +67,8 @@ export default function AdminTurmaDetail() {
     useAdminTurmaDetail(id ?? '')
   const { addTraining, removeTraining, createAndAddTraining, releaseThrough } =
     useGroupPlanMutations(id ?? '', cycleStart, plan?.id ?? null)
+  const { programs, createProgram, updateProgramName } = useTrainingPrograms()
+  const { updateTraining } = useTreinoMutations()
   const { user } = useAuth()
 
   const [activeTab, setActiveTab] = useState<'treinos' | 'status'>('treinos')
@@ -78,6 +83,7 @@ export default function AdminTurmaDetail() {
   const [releasing, setReleasing] = useState(false)
 
   const [showEditModal, setShowEditModal] = useState(false)
+  const [showManagePastas, setShowManagePastas] = useState(false)
 
   // 0 = user hasn't navigated yet → fall back to the hook's default (current week in cycle)
   const effectiveWeek = selectedWeek > 0 ? selectedWeek : defaultWeekNumber
@@ -181,6 +187,16 @@ export default function AdminTurmaDetail() {
     }
     setAllCustomTypes(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
     return data
+  }
+
+  async function handleMoveTraining(trainingId: string, newProgramSlug: string) {
+    try {
+      await updateTraining({ id: trainingId, program: newProgramSlug })
+      setAllTrainings(prev => prev.map(t => t.id === trainingId ? { ...t, program: newProgramSlug } : t))
+      toast.success('Treino movido de pasta')
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao mover treino')
+    }
   }
 
   async function handleSetRelease(target: 0 | 1 | 2 | 3 | 4) {
@@ -424,10 +440,10 @@ export default function AdminTurmaDetail() {
             <SidePanel
               cycleStart={cycleStart}
               panelState={panel}
-              cycleTrainings={trainings}
               allTrainings={allTrainings}
               allTags={allTags}
               allCustomTypes={allCustomTypes}
+              allPrograms={programs}
               mutating={mutating}
               mutationError={mutationError}
               onModeChange={mode => setPanel(p => p ? { ...p, mode } : null)}
@@ -437,6 +453,7 @@ export default function AdminTurmaDetail() {
               onClose={() => { setMutationError(null); setPanel(null) }}
               onCreateTag={handleCreateTagMutation}
               onCreateType={handleCreateTypeMutation}
+              onOpenManagePastas={() => setShowManagePastas(true)}
             />
           )}
         </div>
@@ -452,6 +469,16 @@ export default function AdminTurmaDetail() {
           }}
         />
       )}
+
+      <ManageProgramsModal
+        isOpen={showManagePastas}
+        onClose={() => setShowManagePastas(false)}
+        programs={programs}
+        allTrainings={allTrainings}
+        onCreateProgram={createProgram}
+        onUpdateProgramName={updateProgramName}
+        onMoveTraining={handleMoveTraining}
+      />
     </div>
   )
 }
@@ -693,10 +720,10 @@ function MonthView({
 function SidePanel({
   cycleStart,
   panelState,
-  cycleTrainings,
   allTrainings,
   allTags,
   allCustomTypes,
+  allPrograms,
   mutating,
   mutationError,
   onModeChange,
@@ -706,13 +733,14 @@ function SidePanel({
   onClose,
   onCreateTag,
   onCreateType,
+  onOpenManagePastas,
 }: {
   cycleStart: string
   panelState: PanelState
-  cycleTrainings: GroupDayTraining[]
   allTrainings: Training[]
   allTags: Tag[]
   allCustomTypes: TrainingCustomType[]
+  allPrograms: TrainingProgram[]
   mutating: boolean
   mutationError: string | null
   onModeChange: (mode: PanelMode) => void
@@ -722,21 +750,35 @@ function SidePanel({
   onClose: () => void
   onCreateTag: (name: string, color: string) => Promise<Tag | null>
   onCreateType: (name: string) => Promise<TrainingCustomType | null>
+  onOpenManagePastas: () => void
 }) {
   const { weekNumber, dayOfWeek, mode, existing } = panelState
   const date = cycleStart ? dayDate(cycleStart, weekNumber, dayOfWeek) : null
   const dayLabel = date ? `${DAY_NAMES[dayOfWeek]}, ${formatDay(date)}` : DAY_NAMES[dayOfWeek]
 
   const [search, setSearch] = useState('')
-
-  const cycleTrainingIds = new Set(cycleTrainings.map(t => t.training.id))
-  const inCycle = allTrainings.filter(t => cycleTrainingIds.has(t.id))
-  const others = allTrainings.filter(t => !cycleTrainingIds.has(t.id))
+  const [selectedProgram, setSelectedProgram] = useState<string | null>(null)
 
   function filtered(list: Training[]) {
     if (!search.trim()) return list
     const q = search.toLowerCase()
     return list.filter(t => t.title.toLowerCase().includes(q))
+  }
+
+  const filteredPrograms = search.trim()
+    ? allPrograms.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+    : allPrograms
+
+  const programTrainings = filtered(allTrainings.filter(t => t.program === selectedProgram))
+
+  function openFolder(slug: string) {
+    setSelectedProgram(slug)
+    setSearch('')
+  }
+
+  function backToFolders() {
+    setSelectedProgram(null)
+    setSearch('')
   }
 
   const panelStyle: React.CSSProperties = {
@@ -806,30 +848,63 @@ function SidePanel({
               autoFocus
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar treino…"
+              placeholder={selectedProgram === null ? 'Buscar pasta…' : 'Buscar treino…'}
               style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: '8px', padding: '7px 10px', fontSize: '11px', color: 'var(--text-primary)', outline: 'none' }}
             />
           </div>
+
+          {selectedProgram !== null && (
+            <div style={{ padding: '8px 14px 0' }}>
+              <button
+                onClick={backToFolders}
+                style={{ background: 'none', border: 'none', color: 'var(--orange)', fontSize: '10px', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+              >
+                ← Pastas
+              </button>
+            </div>
+          )}
+
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 14px' }}>
-            {filtered(inCycle).length > 0 && (
-              <>
-                <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>Usados neste ciclo</div>
-                {filtered(inCycle).map(t => {
-                  const tag = allTags.find(tg => tg.id === t.tag_id)
-                  return <TrainingListItem key={t.id} training={t} mutating={mutating} onSelect={() => onAddTraining(t.id)} tagName={tag?.name} tagColor={tag?.color} />
-                })}
-              </>
-            )}
-            {filtered(others).length > 0 && (
-              <>
-                <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', margin: '8px 0 5px' }}>Outros treinos</div>
-                {filtered(others).map(t => {
-                  const tag = allTags.find(tg => tg.id === t.tag_id)
-                  return <TrainingListItem key={t.id} training={t} mutating={mutating} onSelect={() => onAddTraining(t.id)} tagName={tag?.name} tagColor={tag?.color} />
-                })}
-              </>
+            {selectedProgram === null ? (
+              filteredPrograms.length === 0 ? (
+                <p style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>Nenhuma pasta encontrada.</p>
+              ) : (
+                filteredPrograms.map(program => (
+                  <button
+                    key={program.id}
+                    onClick={() => openFolder(program.slug)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px', width: '100%',
+                      padding: '9px 8px', borderRadius: '7px', background: 'var(--bg-surface)',
+                      border: 'none', cursor: 'pointer', marginBottom: '4px', textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: PROGRAM_COLOR_VAR_MAP[program.color]?.accent ?? 'var(--text-secondary)', flexShrink: 0 }} />
+                    <span style={{ fontSize: '11px', color: 'var(--text-primary)', fontWeight: 600 }}>{program.name}</span>
+                  </button>
+                ))
+              )
+            ) : programTrainings.length === 0 ? (
+              <p style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>Nenhum treino nesta pasta.</p>
+            ) : (
+              programTrainings.map(t => {
+                const tag = allTags.find(tg => tg.id === t.tag_id)
+                return <TrainingListItem key={t.id} training={t} mutating={mutating} onSelect={() => onAddTraining(t.id)} tagName={tag?.name} tagColor={tag?.color} />
+              })
             )}
           </div>
+
+          {selectedProgram === null && (
+            <div style={{ padding: '6px 14px', borderTop: '1px solid var(--border-default)' }}>
+              <button
+                onClick={onOpenManagePastas}
+                style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border-default)', borderRadius: '8px', padding: '8px', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: 'var(--text-secondary)', cursor: 'pointer' }}
+              >
+                Gerenciar Pastas
+              </button>
+            </div>
+          )}
+
           <div style={{ padding: '8px 14px 12px', borderTop: '1px solid var(--border-default)' }}>
             <button
               onClick={() => onModeChange('create')}

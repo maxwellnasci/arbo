@@ -5,8 +5,10 @@ import type { TrainingProgram } from '../../lib/types'
 
 interface NewProgramModalProps {
   isOpen: boolean
+  programToEdit?: TrainingProgram | null
   onClose: () => void
   onCreate: (name: string, description: string, color: string) => Promise<TrainingProgram | null>
+  onUpdate?: (id: string, name: string) => Promise<{ error: string | null }>
 }
 
 const inputStyle: React.CSSProperties = {
@@ -31,12 +33,26 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
 }
 
-export function NewProgramModal({ isOpen, onClose, onCreate }: NewProgramModalProps) {
+export function NewProgramModal({ isOpen, programToEdit, onClose, onCreate, onUpdate }: NewProgramModalProps) {
+  const isEditMode = !!programToEdit
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [color, setColor] = useState<string>('orange')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen)
+
+  // Ajusta o formulário durante a renderização (não em useEffect) ao abrir o modal —
+  // evita cascading render flagado por react-hooks/set-state-in-effect.
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen)
+    if (isOpen) {
+      setName(programToEdit ? programToEdit.name : '')
+      setDescription('')
+      setColor('orange')
+      setError(null)
+    }
+  }
 
   function handleClose() {
     setName('')
@@ -51,6 +67,18 @@ export function NewProgramModal({ isOpen, onClose, onCreate }: NewProgramModalPr
     if (!name.trim() || isSaving) return
     setIsSaving(true)
     setError(null)
+
+    if (isEditMode && programToEdit && onUpdate) {
+      const { error: updateError } = await onUpdate(programToEdit.id, name.trim())
+      setIsSaving(false)
+      if (updateError) {
+        setError('Erro ao renomear biblioteca. Tente novamente.')
+        return
+      }
+      handleClose()
+      return
+    }
+
     const created = await onCreate(name.trim(), description.trim(), color)
     setIsSaving(false)
     if (!created) {
@@ -97,7 +125,7 @@ export function NewProgramModal({ isOpen, onClose, onCreate }: NewProgramModalPr
             onClick={e => e.stopPropagation()}
           >
             <h3 style={{ margin: '0 0 20px 0', fontSize: '18px', color: 'var(--text-primary)', fontWeight: 600 }}>
-              Nova Biblioteca
+              {isEditMode ? 'Editar Biblioteca' : 'Nova Biblioteca'}
             </h3>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -114,39 +142,43 @@ export function NewProgramModal({ isOpen, onClose, onCreate }: NewProgramModalPr
                 />
               </div>
 
-              <div>
-                <label style={labelStyle}>Descrição (opcional)</label>
-                <textarea
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  rows={2}
-                  placeholder="Descreva a biblioteca..."
-                  style={{ ...inputStyle, resize: 'vertical' }}
-                />
-              </div>
-
-              <div>
-                <label style={labelStyle}>Cor</label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  {PROGRAM_COLOR_OPTIONS.map(c => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setColor(c)}
-                      title={PROGRAM_COLOR_LABELS[c]}
-                      style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: '50%',
-                        border: color === c ? '2px solid var(--text-primary)' : '2px solid transparent',
-                        background: PROGRAM_COLOR_VAR_MAP[c].accent,
-                        cursor: 'pointer',
-                        padding: 0,
-                      }}
+              {!isEditMode && (
+                <>
+                  <div>
+                    <label style={labelStyle}>Descrição (opcional)</label>
+                    <textarea
+                      value={description}
+                      onChange={e => setDescription(e.target.value)}
+                      rows={2}
+                      placeholder="Descreva a biblioteca..."
+                      style={{ ...inputStyle, resize: 'vertical' }}
                     />
-                  ))}
-                </div>
-              </div>
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>Cor</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      {PROGRAM_COLOR_OPTIONS.map(c => (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => setColor(c)}
+                          title={PROGRAM_COLOR_LABELS[c]}
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: '50%',
+                            border: color === c ? '2px solid var(--text-primary)' : '2px solid transparent',
+                            background: PROGRAM_COLOR_VAR_MAP[c].accent,
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
 
               {error && <p style={{ color: 'var(--red-accent)', fontSize: '13px', margin: 0 }}>{error}</p>}
 

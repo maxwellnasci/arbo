@@ -7,6 +7,7 @@ export interface UseTrainingProgramsReturn {
   isLoading: boolean
   error: string | null
   createProgram: (name: string, description: string, color: string) => Promise<TrainingProgram | null>
+  updateProgramName: (id: string, name: string) => Promise<{ error: string | null }>
   deleteProgram: (id: string) => Promise<{ error: string | null }>
   refetch: () => void
 }
@@ -82,6 +83,18 @@ export function useTrainingPrograms(): UseTrainingProgramsReturn {
     return data
   }, [])
 
+  const updateProgramName = useCallback(async (id: string, name: string): Promise<{ error: string | null }> => {
+    const { data, error: updateError } = await supabase
+      .from('training_programs')
+      .update({ name })
+      .eq('id', id)
+      .select()
+      .single()
+    if (updateError || !data) return { error: updateError?.message ?? 'Erro ao renomear' }
+    setPrograms(prev => prev.map(p => p.id === id ? data : p))
+    return { error: null }
+  }, [])
+
   const deleteProgram = useCallback(async (id: string): Promise<{ error: string | null }> => {
     const { error: deleteError } = await supabase.from('training_programs').delete().eq('id', id)
     if (deleteError) return { error: deleteError.message }
@@ -89,5 +102,5 @@ export function useTrainingPrograms(): UseTrainingProgramsReturn {
     return { error: null }
   }, [])
 
-  return { programs, isLoading, error, createProgram, deleteProgram, refetch }
+  return { programs, isLoading, error, createProgram, updateProgramName, deleteProgram, refetch }
 }
