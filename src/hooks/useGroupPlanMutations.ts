@@ -95,5 +95,10 @@ export function useGroupPlanMutations(
     [currentPlanId],
   )
 
-  return { addTraining, removeTraining, createAndAddTraining, releaseThrough }
+  const deleteGroup = useCallback(async (targetGroupId: string) => {
+    const { error } = await supabase.from('groups').delete().eq('id', targetGroupId)
+    if (error) throw new Error(error.message)
+  }, [])
+
+  return { addTraining, removeTraining, createAndAddTraining, releaseThrough, deleteGroup }
 }

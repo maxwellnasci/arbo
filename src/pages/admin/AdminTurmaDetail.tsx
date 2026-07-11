@@ -11,7 +11,7 @@ import type { Tag, Training, TrainingCustomType, TrainingProgram } from '../../l
 import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS, PROGRAM_COLOR_VAR_MAP, insertTag, insertTrainingType } from '../../lib/trainingUtils'
 import { EditGroupModal } from '../../components/admin/EditGroupModal'
 import { ManageProgramsModal } from '../../components/admin/ManageProgramsModal'
-import { Edit2 } from 'lucide-react'
+import { Edit2, Trash2 } from 'lucide-react'
 import { ProfessorStatusGrid } from '../../components/admin/ProfessorStatusGrid'
 import { VideoPlayer } from '../../components/ui/VideoPlayer'
 
@@ -65,7 +65,7 @@ export default function AdminTurmaDetail() {
   const navigate = useNavigate()
   const { group, plan, trainings, cycleStart, defaultWeekNumber, isLoading, error, refresh } =
     useAdminTurmaDetail(id ?? '')
-  const { addTraining, removeTraining, createAndAddTraining, releaseThrough } =
+  const { addTraining, removeTraining, createAndAddTraining, releaseThrough, deleteGroup } =
     useGroupPlanMutations(id ?? '', cycleStart, plan?.id ?? null)
   const { programs, createProgram, updateProgramName } = useTrainingPrograms()
   const { updateTraining } = useTreinoMutations()
@@ -84,6 +84,10 @@ export default function AdminTurmaDetail() {
 
   const [showEditModal, setShowEditModal] = useState(false)
   const [showManagePastas, setShowManagePastas] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
 
   // 0 = user hasn't navigated yet → fall back to the hook's default (current week in cycle)
   const effectiveWeek = selectedWeek > 0 ? selectedWeek : defaultWeekNumber
@@ -214,6 +218,20 @@ export default function AdminTurmaDetail() {
       toast.error(e instanceof Error ? e.message : 'Erro ao liberar semana')
     } finally {
       setReleasing(false)
+    }
+  }
+
+  async function handleDeleteGroup() {
+    if (!id || !group || deleteConfirmText !== group.name) return
+    setIsDeleting(true)
+    setDeleteError(null)
+    try {
+      await deleteGroup(id)
+      toast.success('Turma excluída')
+      navigate('/admin/turmas')
+    } catch (e: unknown) {
+      setDeleteError(e instanceof Error ? e.message : 'Erro ao excluir turma')
+      setIsDeleting(false)
     }
   }
 
@@ -459,6 +477,36 @@ export default function AdminTurmaDetail() {
         </div>
       )}
 
+      {group && (
+        <div style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid rgba(220, 38, 38, 0.2)',
+          borderRadius: '16px',
+          padding: '24px',
+          marginTop: '24px',
+        }}>
+          <h3 style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: 700, margin: '0 0 6px' }}>
+            Zona de Perigo
+          </h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 16px', lineHeight: 1.5 }}>
+            Excluir a turma remove permanentemente o plano de treino, os treinos atribuídos e os agendamentos. Os alunos matriculados não são excluídos — apenas ficam sem turma.
+          </p>
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '8px',
+              background: 'rgba(220, 38, 38, 0.1)', color: 'var(--red-accent)',
+              border: '1px solid rgba(220, 38, 38, 0.3)',
+              borderRadius: '12px', padding: '10px 20px',
+              fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+            }}
+          >
+            <Trash2 size={16} />
+            Excluir turma
+          </button>
+        </div>
+      )}
+
       {showEditModal && group && (
         <EditGroupModal
           group={group}
@@ -479,6 +527,82 @@ export default function AdminTurmaDetail() {
         onUpdateProgramName={updateProgramName}
         onMoveTraining={handleMoveTraining}
       />
+
+      {showDeleteModal && group && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000,
+          background: 'rgba(0,0,0,0.8)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px',
+        }}>
+          <div style={{
+            background: 'var(--bg-surface)',
+            border: '1px solid var(--border-default)',
+            borderRadius: '20px',
+            padding: '32px',
+            maxWidth: '440px',
+            width: '100%',
+          }}>
+            <h2 style={{ color: 'var(--text-primary)', fontSize: '22px', fontWeight: 700, margin: '0 0 12px' }}>
+              Excluir turma?
+            </h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', lineHeight: 1.6, margin: '0 0 16px' }}>
+              Isso vai apagar o plano de treino, os treinos atribuídos e os agendamentos dessa turma. Os alunos matriculados NÃO serão excluídos — eles ficam sem turma (SEM TURMA). Essa ação não pode ser desfeita.
+            </p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 8px' }}>
+              Digite <strong style={{ color: 'var(--text-primary)' }}>{group.name}</strong> para confirmar:
+            </p>
+            <input
+              autoFocus
+              value={deleteConfirmText}
+              onChange={e => setDeleteConfirmText(e.target.value)}
+              placeholder={group.name}
+              style={{
+                width: '100%', boxSizing: 'border-box', background: 'var(--bg-input)',
+                border: '1px solid var(--border-default)', borderRadius: '8px',
+                padding: '10px 12px', fontSize: '14px', color: 'var(--text-primary)',
+                outline: 'none', marginBottom: '16px',
+              }}
+            />
+            {deleteError && (
+              <p style={{
+                color: 'var(--red-accent)', fontSize: '13px', margin: '0 0 16px',
+                padding: '10px', background: 'rgba(255, 59, 48, 0.07)',
+                borderRadius: '8px', border: '1px solid rgba(255, 59, 48, 0.25)',
+              }}>
+                {deleteError}
+              </p>
+            )}
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteError(null); setDeleteConfirmText('') }}
+                disabled={isDeleting}
+                style={{
+                  flex: 1, background: 'transparent', color: 'var(--text-secondary)',
+                  border: '1px solid var(--border-default)', borderRadius: '12px',
+                  padding: '12px', fontWeight: 700, fontSize: '14px',
+                  cursor: isDeleting ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDeleteGroup}
+                disabled={isDeleting || deleteConfirmText !== group.name}
+                style={{
+                  flex: 1, background: 'var(--red-accent)', color: 'var(--text-on-brand)',
+                  border: 'none', borderRadius: '12px',
+                  padding: '12px', fontWeight: 700, fontSize: '14px',
+                  cursor: isDeleting || deleteConfirmText !== group.name ? 'not-allowed' : 'pointer',
+                  opacity: isDeleting || deleteConfirmText !== group.name ? 0.5 : 1,
+                }}
+              >
+                {isDeleting ? 'Excluindo…' : 'Excluir permanentemente'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
