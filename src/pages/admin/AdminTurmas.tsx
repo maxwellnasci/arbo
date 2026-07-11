@@ -4,6 +4,7 @@ import { useAdminTurmas, type GroupWithCount } from '../../hooks/useAdminTurmas'
 import { CreateGroupModal } from '../../components/admin/CreateGroupModal'
 import { motion } from 'framer-motion'
 import { ChevronRight } from 'lucide-react'
+import { ListSkeleton } from '../../components/ui/ListSkeleton'
 
 const goalLabel: Record<string, string> = {
   '5k': '5K',
@@ -53,7 +54,7 @@ export default function AdminTurmas() {
 
       {error && <p style={{ color: 'var(--red-accent)', marginBottom: '16px' }}>{error}</p>}
 
-      {isLoading ? null : turmas.length === 0 ? (
+      {isLoading ? <ListSkeleton /> : turmas.length === 0 ? (
         <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '40px 24px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
           <p style={{ color: 'var(--text-secondary)' }}>Nenhuma turma cadastrada ainda.</p>
         </div>

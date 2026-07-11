@@ -4,6 +4,7 @@ import { useAdminAlunos } from '../../hooks/useAdminAlunos'
 import type { Profile } from '../../lib/types'
 import { motion } from 'framer-motion'
 import { ChevronRight, Search, Filter } from 'lucide-react'
+import { ListSkeleton } from '../../components/ui/ListSkeleton'
 
 export default function AdminAlunos() {
   const { alunos, isLoading, error } = useAdminAlunos()
@@ -113,7 +114,7 @@ export default function AdminAlunos() {
 
       {error && <p style={{ color: 'var(--red-accent)', marginBottom: '16px' }}>{error}</p>}
 
-      {isLoading ? null : alunos.length === 0 ? (
+      {isLoading ? <ListSkeleton /> : alunos.length === 0 ? (
         <div style={{ background: 'var(--bg-surface)', borderRadius: '16px', padding: '40px 24px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
           <p style={{ color: 'var(--text-secondary)' }}>Nenhum aluno ainda. Convide o primeiro!</p>
         </div>

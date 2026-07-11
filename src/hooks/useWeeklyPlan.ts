@@ -306,31 +306,32 @@ async function fetchWithRetry(
         if (gptError) throw gptError
         const rawTrainings = (gptData ?? []) as unknown as RawPlanTraining[]
 
-        // Fetch student schedules for flex mode
-        let schedByGptId: Map<string, ScheduleRow> = new Map()
-        if (groupMode === 'flexivel' && rawTrainings.length > 0) {
-          const gptIds = rawTrainings.map(r => r.id)
-          const { data: schedData, error: schedErr } = await supabase
-            .from('schedules')
-            .select('id, group_plan_training_id, scheduled_day_of_week')
-            .eq('student_id', userId)
-            .in('group_plan_training_id', gptIds)
-          if (schedErr) throw schedErr
-          schedByGptId = new Map((schedData ?? []).map(s => [s.group_plan_training_id, s]))
-        }
-
-        // Fetch checkins for these group plan trainings
+        // Schedules (flex mode) e checkins dependem só de rawTrainings/userId, não um do outro — rodam em paralelo
+        const gptIds = rawTrainings.map(r => r.id)
         const trainingIds = rawTrainings.map(r => r.training_id)
-        let checkins: Checkin[] = []
-        if (trainingIds.length > 0) {
-          const { data: checkinsData, error: checkinsErr } = await supabase
-            .from('checkins')
-            .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
-            .eq('student_id', userId)
-            .in('training_id', trainingIds)
-          if (checkinsErr) throw checkinsErr
-          checkins = checkinsData ?? []
-        }
+
+        const [schedRes, checkinsRes] = await Promise.all([
+          groupMode === 'flexivel' && gptIds.length > 0
+            ? supabase
+                .from('schedules')
+                .select('id, group_plan_training_id, scheduled_day_of_week')
+                .eq('student_id', userId)
+                .in('group_plan_training_id', gptIds)
+            : Promise.resolve({ data: null, error: null }),
+          trainingIds.length > 0
+            ? supabase
+                .from('checkins')
+                .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
+                .eq('student_id', userId)
+                .in('training_id', trainingIds)
+            : Promise.resolve({ data: null, error: null }),
+        ])
+
+        if (schedRes.error) throw schedRes.error
+        if (checkinsRes.error) throw checkinsRes.error
+
+        const schedByGptId: Map<string, ScheduleRow> = new Map((schedRes.data ?? []).map(s => [s.group_plan_training_id, s]))
+        const checkins: Checkin[] = checkinsRes.data ?? []
 
         return {
           profile,
