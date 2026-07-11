@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './DayPicker.module.css';
 
@@ -20,7 +21,7 @@ const DAYS: { value: DayOfWeek; label: string }[] = [
 ];
 
 export default function DayPicker({ isOpen, onClose, onSelect, selectedDay }: DayPickerProps) {
-  return (
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div className={styles.overlay} onClick={onClose}>
@@ -54,6 +55,7 @@ export default function DayPicker({ isOpen, onClose, onSelect, selectedDay }: Da
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

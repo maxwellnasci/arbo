@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../../lib/supabase'
 import type { Checkin } from '../../lib/types'
@@ -111,7 +112,7 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
     }, 1500)
   }
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <div className={styles.overlay} onClick={onClose}>
         <motion.div
@@ -216,6 +217,7 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
           )}
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }
