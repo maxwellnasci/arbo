@@ -69,7 +69,7 @@ export function useGroupPlanMutations(
       if (!user) throw new Error('Não autenticado')
       const { data: newTraining, error: tErr } = await supabase
         .from('trainings')
-        .insert({ ...input, created_by: user.id })
+        .insert({ program: 'treinos_gerais', ...input, created_by: user.id })
         .select('id')
         .single()
       if (tErr) throw new Error(tErr.message)

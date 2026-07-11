@@ -96,7 +96,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
     setSets('')
     setType('corrida')
     setTagId('')
-    setProgramSlug('')
+    setProgramSlug('treinos_gerais')
     setVideoUrl('')
     setVideoMode('youtube')
     setUploadedFileName(null)
