@@ -274,12 +274,13 @@ async function fetchWithRetry(
           let lastWeekSummary: LastWeekSummary | null = null
           if (targetWeekNumber > 1) {
             const previousMonday = subtractOneWeek(selectedWeekStartIndiv)
-            const { data: prevCheckins } = await supabase
+            const { data: prevCheckins, error: prevCheckinsErr } = await supabase
               .from('checkins')
               .select('actual_distance_m, actual_duration_seconds')
               .eq('student_id', userId)
               .gte('created_at', previousMonday)
               .lt('created_at', addOneDay(selectedWeekStartIndiv))
+            if (prevCheckinsErr) throw prevCheckinsErr
             lastWeekSummary = computeLastWeekSummary(prevCheckins ?? [])
           }
           return {
@@ -309,11 +310,12 @@ async function fetchWithRetry(
         let schedByGptId: Map<string, ScheduleRow> = new Map()
         if (groupMode === 'flexivel' && rawTrainings.length > 0) {
           const gptIds = rawTrainings.map(r => r.id)
-          const { data: schedData } = await supabase
+          const { data: schedData, error: schedErr } = await supabase
             .from('schedules')
             .select('id, group_plan_training_id, scheduled_day_of_week')
             .eq('student_id', userId)
             .in('group_plan_training_id', gptIds)
+          if (schedErr) throw schedErr
           schedByGptId = new Map((schedData ?? []).map(s => [s.group_plan_training_id, s]))
         }
 
@@ -321,11 +323,12 @@ async function fetchWithRetry(
         const trainingIds = rawTrainings.map(r => r.training_id)
         let checkins: Checkin[] = []
         if (trainingIds.length > 0) {
-          const { data: checkinsData } = await supabase
+          const { data: checkinsData, error: checkinsErr } = await supabase
             .from('checkins')
             .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
             .eq('student_id', userId)
             .in('training_id', trainingIds)
+          if (checkinsErr) throw checkinsErr
           checkins = checkinsData ?? []
         }
 

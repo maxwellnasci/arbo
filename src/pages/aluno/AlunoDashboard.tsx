@@ -322,7 +322,7 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
     targetWeekNumber,
   } = useWeeklyPlan(effectiveUserId, selectedWeek)
   
-  const { streak, recentCheckins, records } = useProgresso(effectiveUserId ?? '')
+  const { streak, recentCheckins, records, isLoading: isProgressoLoading } = useProgresso(effectiveUserId ?? '')
 
   const activeWeek = targetWeekNumber || currentWeekNumber || 1
 
@@ -364,7 +364,7 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
     setActiveTab(tab)
   }
 
-  if (isLoading) return <SkeletonLoader />
+  if (isLoading || isProgressoLoading) return <SkeletonLoader />
 
   if (error) {
     return (
