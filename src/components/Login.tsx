@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Mail, Lock } from 'lucide-react'
-import arboLogo from '../assets/arbo-run-logo.png'
+import arboLogo from '../assets/arbo-run-logo.webp'
 import './Login.css'
 
 export default function Login() {

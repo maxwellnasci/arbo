@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
@@ -9,15 +9,18 @@ import { supabase } from '../../lib/supabase'
 import type { TrainingType } from '../../lib/types'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Home, TrendingUp, MessageSquare, User, Calendar, CheckCircle2, Medal, Flame, Eye, Lock } from 'lucide-react'
-import AlunoChat from './AlunoChat'
-import AlunoProgresso from './AlunoProgresso'
-import AlunoPerfil from './AlunoPerfil'
-import CheckinSheet from '../../components/aluno/CheckinSheet'
 import LockedScreen from '../../components/aluno/LockedScreen'
 import FlexibleTrainingCard from '../../components/aluno/FlexibleTrainingCard'
 import { VideoPlayer } from '../../components/ui/VideoPlayer'
 import type { DayOfWeek } from '../../components/aluno/DayPicker'
 import styles from './AlunoDashboard.module.css'
+
+// Abas carregadas sob demanda — evita baixar recharts (AlunoProgresso) e o resto
+// no primeiro load de quem nunca sai da aba Início
+const AlunoChat = lazy(() => import('./AlunoChat'))
+const AlunoProgresso = lazy(() => import('./AlunoProgresso'))
+const AlunoPerfil = lazy(() => import('./AlunoPerfil'))
+const CheckinSheet = lazy(() => import('../../components/aluno/CheckinSheet'))
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -282,14 +285,16 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
       </div>
 
       {showSheet && (
-        <CheckinSheet
-          dayTraining={dayTraining}
-          planId={planId}
-          userId={userId}
-          existingCheckin={editMode ? checkin : null}
-          onClose={() => setShowSheet(false)}
-          onSuccess={onCheckinSuccess}
-        />
+        <Suspense fallback={null}>
+          <CheckinSheet
+            dayTraining={dayTraining}
+            planId={planId}
+            userId={userId}
+            existingCheckin={editMode ? checkin : null}
+            onClose={() => setShowSheet(false)}
+            onSuccess={onCheckinSuccess}
+          />
+        </Suspense>
       )}
     </motion.div>
   )
@@ -418,12 +423,18 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
       )}
       {activeTab === 'chat' ? (
         <div className={styles.contentWrapper}>
-          <AlunoChat studentId={effectiveUserId} />
+          <Suspense fallback={<SkeletonLoader />}>
+            <AlunoChat studentId={effectiveUserId} />
+          </Suspense>
         </div>
       ) : activeTab === 'progresso' ? (
-        <AlunoProgresso studentId={effectiveUserId} />
+        <Suspense fallback={<SkeletonLoader />}>
+          <AlunoProgresso studentId={effectiveUserId} />
+        </Suspense>
       ) : activeTab === 'perfil' ? (
-        <AlunoPerfil studentId={effectiveUserId} isPreview={isPreview} />
+        <Suspense fallback={<SkeletonLoader />}>
+          <AlunoPerfil studentId={effectiveUserId} isPreview={isPreview} />
+        </Suspense>
       ) : activeTab === 'calendario' ? (
         <main className={styles.container}>
           <div className={styles.emptyState}>
@@ -574,15 +585,17 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
           )}
 
           {activeCheckin && (
-            <CheckinSheet
-              dayTraining={activeCheckin}
-              planId={plan?.id ?? null}
-              scheduleId={activeCheckin.scheduleId}
-              userId={effectiveUserId}
-              existingCheckin={activeCheckin.checkin}
-              onClose={() => setActiveCheckin(null)}
-              onSuccess={() => { setActiveCheckin(null); refresh() }}
-            />
+            <Suspense fallback={null}>
+              <CheckinSheet
+                dayTraining={activeCheckin}
+                planId={plan?.id ?? null}
+                scheduleId={activeCheckin.scheduleId}
+                userId={effectiveUserId}
+                existingCheckin={activeCheckin.checkin}
+                onClose={() => setActiveCheckin(null)}
+                onSuccess={() => { setActiveCheckin(null); refresh() }}
+              />
+            </Suspense>
           )}
         </main>
       )}

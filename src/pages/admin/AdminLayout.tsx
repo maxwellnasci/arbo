@@ -6,7 +6,7 @@ import styles from './AdminLayout.module.css'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLogout } from '../../hooks/useLogout'
 import { LogOut, Sun, Moon, Settings, Eye } from 'lucide-react'
-import arboLogo from '../../assets/arbo-run-logo.png'
+import arboLogo from '../../assets/arbo-run-logo.webp'
 
 export function AdminLayout() {
   const { user } = useAuth()
