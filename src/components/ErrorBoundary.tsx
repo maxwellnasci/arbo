@@ -1,4 +1,5 @@
 import React, { ErrorInfo, ReactNode } from 'react';
+import { Sentry } from '../lib/sentry';
 
 interface Props {
   children?: ReactNode;
@@ -21,7 +22,11 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error:', error, errorInfo);
-    
+
+    Sentry.captureException(error, {
+      contexts: { react: { componentStack: errorInfo.componentStack } },
+    });
+
     // Auto-reload on dynamic import failure (usually means a new version was deployed)
     if (
       error.message.includes('Failed to fetch dynamically imported module') ||

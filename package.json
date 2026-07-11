@@ -13,6 +13,7 @@
     "test:ui": "vitest --ui"
   },
   "dependencies": {
+    "@sentry/react": "^10.65.0",
     "@supabase/supabase-js": "^2.106.0",
     "date-fns": "^4.4.0",
     "framer-motion": "^12.40.0",
