@@ -82,7 +82,7 @@ npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/da
 
 ### Banco de dados (Supabase — project: `jhfkflnixzivuichmkie`)
 
-**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `strava_analysis`, `groups`, `group_plans`, `group_plan_trainings`, `messages`, `invites`, `tags`, `training_types`, `schedules`
+**Tabelas:** `profiles`, `anamnesis`, `trainings`, `weekly_plans`, `weekly_plan_trainings`, `checkins`, `records`, `comments`, `reactions`, `strava_connections`, `strava_activities`, `strava_analysis`, `groups`, `group_plans`, `group_plan_trainings`, `messages`, `invites`, `tags`, `training_types`, `schedules`, `training_programs`
 
 **Enums:** `training_type` (enum legado — `trainings.type` migrado para `text`) · `distance_category` · `user_level`
 
@@ -126,6 +126,7 @@ GRANTs configurados por tabela — apenas os necessários conforme policies RLS:
 | `invites` | SELECT, INSERT |
 | `training_types` | SELECT, INSERT, DELETE |
 | `schedules` | SELECT, INSERT, UPDATE, DELETE |
+| `training_programs` | SELECT, INSERT, UPDATE, DELETE |
 
 > Ao criar nova tabela: habilitar RLS + executar `GRANT` explícito para `authenticated`. Sem GRANT o cliente recebe erro 42501 mesmo com policy correta.
 
@@ -220,6 +221,10 @@ catch (e: unknown) {
 - **`trainingUtils.ts`** (`src/lib/`) — fonte única de verdade para `TAG_COLORS`, `TRAINING_TYPE_OPTIONS`, `TRAINING_TYPE_LABELS`, e helpers `insertTag(userId, name, color)` / `insertTrainingType(userId, name)`. Não duplicar em componentes.
 - **Mutations de etiqueta/tipo** devem ficar no componente pai (page), não em componentes presentacionais. `TreinoFormPanel` expõe `onCreateTag: (name, color) => Promise<Tag | null>` e `onCreateType: (name) => Promise<TrainingCustomType | null>` — a responsabilidade de chamar Supabase é do pai.
 - **`GroupMode = 'fixo' | 'flexivel'`** — valores em português, correspondem ao `CHECK (mode IN ('fixo', 'flexivel'))` no banco. Nunca usar `'fixed'` ou `'flexible'` (causaria rejeição silenciosa).
+- **`groups.is_active`** — boolean, já existia desde o schema original. Usado (1) como badge visual "Ativa"/"Inativa" em `AdminTurmas.tsx`, e (2) na policy RLS `aluno_select_groups` (`is_active = true`) — turma inativa fica invisível para alunos, mas continua acessível ao admin. **Mecanismo diferente e independente da exclusão de turma** (abaixo): `is_active = false` é reversível e não apaga nada; a exclusão é `DELETE` real e permanente. Não confundir os dois ao decidir entre "desativar" e "excluir" uma turma.
+- **Exclusão de turma** (`deleteGroup()` em `useGroupPlanMutations.ts`) — hard delete real via `supabase.from('groups').delete().eq('id', groupId)` direto do client, **sem Edge Function**: a policy `admin_all_groups` (`FOR ALL`, `private.is_admin()`) já cobre `DELETE` para o admin autenticado. Diferente da exclusão de aluno (que exige `service_role` porque mexe em `auth.users`). Cascade do banco remove `group_plans`/`group_plan_trainings`/`schedules` dependentes; `profiles.group_id` (`ON DELETE SET NULL`) vira `NULL` para os alunos matriculados — eles não são excluídos, só ficam "SEM TURMA". UI em `AdminTurmaDetail.tsx` ("Zona de Perigo") exige digitar o nome exato da turma para confirmar.
+- **`training_programs`** — tabela de "bibliotecas"/"pastas" de treino: `id uuid PK`, `name text NOT NULL`, `slug text NOT NULL UNIQUE`, `description text` nullable, `color text NOT NULL DEFAULT 'orange'` com `CHECK IN ('orange','green','yellow','red')`, `created_by uuid`. RLS: `private.is_admin()` para `ALL` (admin gerencia) + `SELECT` aberto a `authenticated` (todos leem). `trainings.program` é `text` livre **sem FK** para `training_programs` — casamento por `slug` feito inteiramente no frontend (confirmar sempre com grep antes de assumir integridade referencial). Excluir uma biblioteca não apaga os treinos que a usam — eles só ficam com `program` órfão, sem badge/filtro. Treinos com `program = NULL` não aparecem na navegação por pastas do `AdminTurmaDetail.tsx` (só a lista raiz de `allPrograms` é iterada) — hoje só são editáveis diretamente em `/admin/treinos`.
+- **`trainings.program`** (text, slug de `training_programs`) e **`trainings.category`** (text — método de treino: `intervalado`, `fartlek`, `contínuo`, `progressivo`, `pirâmide`, `regenerativo`, `teste`, `ritmo`) — colunas adicionadas junto com a carga de 48 treinos do professor (2026-07-09). Índices `idx_trainings_program`/`idx_trainings_category`.
 - **Tabela `schedules`** — agendamentos de alunos em modo flexível: `student_id`, `group_plan_training_id`, `scheduled_day_of_week smallint CHECK(1-6)`, `checkin_id` (nullable, vinculado ao checar), `completed_at` (nullable). JOIN via `group_plan_training_id` — não há FK direto para `trainings`.
 - **`DayTraining.dayOfWeek`** pode ser `null` (modo flexível sem agendamento). Usar `?? 99` em sorts e `?? null` em acessos. Nunca indexar diretamente sem null guard.
 - **`useScheduling` hook** não inclui confirmação de exclusão — chamador deve usar `<ConfirmModal />`. `window.confirm` é proibido.
@@ -312,24 +317,39 @@ Frontend:
 
 **Pendente:** configuração manual de CORS no bucket R2 (Cloudflare Dashboard) permitindo `PUT` das origens do app — sem isso o navegador bloqueia o upload direto mesmo com a URL assinada correta. Exclusão do objeto no R2 ao remover vídeo também não implementada (só limpa `video_url`).
 
+### Service Worker — estratégia de cache (`vite.config.ts`)
+
+Configurado via `VitePWA({ workbox: { runtimeCaching: [...] } })`. Estratégia por padrão de URL:
+- **REST do Supabase** (`/rest/v1/*`) e **Auth** (`/auth/v1/*`) — `NetworkOnly`. Dado de aplicação (treinos, check-ins, sessão) nunca é servido do cache — sempre rede. Antes disso usavam `NetworkFirst` com timeout de 30s e validade de até 24h/1h: em rede instável, o Workbox servia silenciosamente dado obsoleto "com cara de atual" quando a rede falhava/estourava o timeout (ver Caso 9 em `docs/PORTFOLIO_DEBUG_CASES.md`).
+- **Storage do Supabase** (`/storage/v1/*`) — `NetworkFirst` (mantido — arquivo estático, não dado de aplicação que muda a cada ação do usuário).
+- **Edge Functions** (`/functions/*`) — `NetworkOnly` (sempre foi assim).
+- **Imagens** (`png/jpg/jpeg/svg/gif/webp`) — `CacheFirst`, 30 dias.
+- `skipWaiting: true` + `clientsClaim: true` — SW assume imediatamente após deploy, sem precisar fechar/reabrir o app (Task 56).
+
+**Regra geral:** nunca cachear resposta de API que representa estado do usuário (dado que muda por ação de outro usuário/admin) — só cachear assets verdadeiramente estáticos.
+
 ### Aviso SMTP
 
 O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação de senha.  
 Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
 **Supabase Dashboard → Authentication → Settings → SMTP Settings**
 
-## Estado atual (2026-07-04)
+## Estado atual (2026-07-11)
 
 - **Média geral:** 9.0/10 — Segurança 8.5 · Performance 8.8 · Qualidade 9.2 · UX/Bugs 9.2 · Arquitetura 8.5 · PWA/Mobile 9.0
-- **Tasks 39-55, 56, 57, 59, 59c, 60, 61, 62, 63, 64, 65, 66, 67 concluídas**
+- **Tasks 39-55, 56, 57, 59, 59c, 60, 61, 62, 63, 64, 65, 66, 67, 68 concluídas**
 - **Lighthouse Mobile:** Performance 96 · Accessibility 89 · Best Practices 100 · SEO 100
 - **Testes:** 22 testes passando (Vitest)
 - **Sessão 2026-07-02:** 2 rodadas de correção no painel do aluno — causa raiz de `groups.starts_at NULL` gerando `group_plans` duplicados (Task 65) e feature de liberação de semana ausente por completo no modo flexível (Task 66). 6 estudos de caso documentados em `docs/PORTFOLIO_DEBUG_CASES.md`, linkado no README.
 - **Sessão 2026-07-03 (Task 67):** Integração Strava completa — OAuth, 4 Edge Functions, hook e UI no `AlunoPerfil`.
 - **Sessão 2026-07-04 (Task 68):** Strava Fase 2 (card profissional + painel admin + `strava-sync` v2), Upload de Vídeo via Cloudflare R2 (`r2-upload`, presigned URL) e Agente DeepSeek de análise automática de atividades (`strava-analyze`). Ver seções "Integração Strava" e "Upload de Vídeo — Cloudflare R2" acima. 7º estudo de caso documentado em `docs/PORTFOLIO_DEBUG_CASES.md` (GRANT `authenticated` ausente, pego na revisão antes de aplicar SQL).
+- **Sessão 2026-07-09:** Biblioteca de treinos dinâmica — tabela `training_programs`, dropdown "Biblioteca de Treinos" substituindo pills fixas, `ManageProgramsModal`/`NewProgramModal`, carga de 48 treinos reais do professor em 3 programas (`trainings.program`/`trainings.category` novas colunas). 4 commits de fix visual/comportamental no dropdown, culminando em correção via `createPortal` para o corte de borda no mobile (Caso 8 em `docs/PORTFOLIO_DEBUG_CASES.md`).
+- **Sessão 2026-07-10:** Navegação por pastas no seletor de treinos da turma (`AdminTurmaDetail.tsx` reaproveita `training_programs` como "pastas") + `ManageProgramsModal` (criar/renomear pasta, mover treino entre pastas) + exclusão permanente de turma (hard delete via RLS, sem Edge Function, confirmação por nome digitado).
+- **Sessão 2026-07-11:** Auditoria e correção de performance/confiabilidade em 4 commits — P1 service worker `NetworkOnly` (fim do cache de dado obsoleto de até 24h, Caso 9 em `docs/PORTFOLIO_DEBUG_CASES.md`), P2 erros de `schedules`/`checkins` não são mais engolidos silenciosamente + hero espera `useProgresso`, P3 skeleton no lugar de tela branca no admin + paralelização de queries em `useWeeklyPlan`, P4 lazy load das abas do aluno + logo PNG→WebP (chunk `AlunoDashboard`: 438kB→33kB gzip 118kB→9,6kB; logo: 454kB→34,7kB).
 - **Próxima sessão:**
   - Configurar CORS no bucket R2 (Cloudflare Dashboard) para o upload de vídeo funcionar ponta a ponta
   - Testar no celular o fluxo completo de turma flexível ponta a ponta (liberar semana → aluno ver treino → check-in)
+  - Endereçar o gap de treinos órfãos (`program = NULL`) na navegação por pastas do `AdminTurmaDetail.tsx` — hoje ficam inacessíveis nesse fluxo, só editáveis via `/admin/treinos`
   - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos) — cobrir especialmente `useWeeklyPlan.ts` (cálculo de ciclo) e o branch flexível do `AdminTurmaDetail.tsx`
   - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`
   - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
@@ -398,13 +418,17 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Task 66 (2026-07-02):** Fix crítico — modo flexível não tinha NENHUM mecanismo de liberar semana no admin (`AdminTurmaDetail.tsx`). Os chips S1–S4 (`handleChipClick`/`releaseThrough`) só existiam no branch `WeekView` do modo fixo; turmas flexíveis ficavam com `released_through_week` travado em 0 pra sempre — todo aluno via tudo bloqueado, sem forma de o professor liberar. Adicionados os mesmos chips S1–S4 no branch flexível (reuso da lógica existente, sem duplicar). Corrigido também: botão "+ Adicionar Treino" sempre criava na Semana 1 (`openSlot(1, 1)` fixo); lista agora é agrupada por semana (1–4), cada uma com seu próprio botão de adicionar. `AlunoChat.module.css` — padding do `.inputArea` alinhado a 110px (mesmo valor do resto do app) para folga real acima do `BottomNav` no celular. Ver Caso 6 em `docs/PORTFOLIO_DEBUG_CASES.md`. ✅
 - **Task 67 (2026-07-03):** Integração Strava — OAuth completo, 4 Edge Functions (`strava-auth`, `strava-callback`, `strava-sync`, `strava-connection` — a 4ª não estava no escopo original, mas foi necessária porque `strava_connections` está travada pra `authenticated` desde sempre), `useStravaConnection.ts`, `StravaCallback.tsx` (com proteção CSRF via `state`), card funcional no `AlunoPerfil.tsx` (conectar/desconectar/sincronizar/lista de atividades). Antes de escrever qualquer SQL, consultado o schema real via MCP Supabase — a tabela já existia com `user_id`/`token_expires_at` (não `student_id`/`expires_at` como um primeiro rascunho supôs) e RLS corretamente travada; nenhuma migration foi necessária. Tokens do Strava nunca trafegam para o cliente — todas as operações passam por `service_role` nas Edge Functions, filtrando explicitamente por `user.id`. ✅
 - **Task 68 (2026-07-04):** Três entregas na mesma sessão — (1) **Strava Fase 2**: fix de atividades sumindo ao recarregar (`fetchActivities()` chamada automaticamente no mount), card profissional no `AlunoPerfil.tsx` (badge, data de conexão, ícones), seção "Atividades Strava" no `AdminAlunoDetail.tsx`, `strava-sync` v2 aceitando `{ studentId }` para admin; (2) **Upload de Vídeo via Cloudflare R2**: Edge Function `r2-upload` com presigned URL (SigV4/`aws4fetch`) em vez de proxy de bytes — Edge Functions não aguentariam 500MB; toggle YouTube/Upload no `TreinoFormPanel.tsx`, `VideoPlayer.tsx` detecta R2 vs YouTube automaticamente; (3) **Agente DeepSeek**: tabela `strava_analysis` + Edge Function `strava-analyze` gera `{ summary, analysis, tip }` em PT-BR após cada sync, exibido em card dedicado no aluno e no admin. Bug de `GRANT SELECT ON strava_analysis TO authenticated` ausente pego na revisão do SQL antes de aplicar (mesma classe do incidente da Task 67 com `service_role`) — lição registrada em `GEMINI_LESSONS.md` item 14 e Caso 7 em `docs/PORTFOLIO_DEBUG_CASES.md`. ✅
-**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-07-04)
+- **Sessão 2026-07-09:** Biblioteca de treinos dinâmica — tabela `training_programs` (RLS + GRANT `FOR ALL`), dropdown "Biblioteca de Treinos" (`FilterDropdown.tsx` extraído como componente reutilizável) substituindo pills fixas, `ManageProgramsModal`/`NewProgramModal`, carga real de 48 treinos do professor em 3 programas via `trainings.program`/`trainings.category` (novas colunas + índices). 4 commits de fix visual/comportamental no dropdown — extração do componente, redesign visual (laranja + texto branco, lado a lado), correção de overflow, e fix definitivo do corte de borda no mobile via `createPortal` (Caso 8 em `docs/PORTFOLIO_DEBUG_CASES.md`). ✅
+- **Sessão 2026-07-10:** Navegação por pastas no seletor de treinos da turma (`AdminTurmaDetail.tsx` reaproveita `training_programs`, chamado de "pasta" na UI do professor — dois níveis: lista de pastas → treinos da pasta) + `ManageProgramsModal.tsx` (criar/renomear pasta, mover treino entre pastas). Exclusão permanente de turma: seção "Zona de Perigo", `deleteGroup()` faz hard delete real (`DELETE` direto, coberto pela policy `admin_all_groups`, sem Edge Function), cascade remove `group_plans`/`group_plan_trainings`/`schedules`, alunos ficam "SEM TURMA" (não são excluídos), confirmação exige digitar o nome exato da turma. ✅
+- **Sessão 2026-07-11:** Auditoria de performance/confiabilidade (diagnóstico + 4 commits validados independentemente) — P1: service worker REST/Auth do Supabase `NetworkFirst` → `NetworkOnly` (fim do cache de dado obsoleto de até 24h mascarando falha de rede como dado válido, Caso 9 em `docs/PORTFOLIO_DEBUG_CASES.md`); P2: `useWeeklyPlan.ts` para de descartar o `error` de `schedules`/`checkins`/`prevCheckins` (propagava lista vazia silenciosa), `AlunoDashboard.tsx` espera `isLoading` do `useProgresso` também; P3: `AdminAlunos.tsx`/`AdminTurmas.tsx` trocam `{isLoading ? null : ...}` (tela branca) por `ListSkeleton.tsx` novo, `schedules`+`checkins` do modo flexível paralelizados via `Promise.all` em `useWeeklyPlan.ts` (decisão consciente de **não** paralelizar `weekly_plans`/`group_plans` — dependência real via `released_through_week`); P4: `AlunoChat`/`AlunoProgresso`/`AlunoPerfil`/`CheckinSheet` convertidos para `React.lazy`+`Suspense` (isola `recharts` num chunk só carregado sob demanda), logo PNG 454kB → WebP 512×512 34,7kB. Chunk `AlunoDashboard`: 438,69kB→33,36kB (gzip 117,79kB→9,58kB). ✅
+**Lint:** `npm run lint` → 0 erros, 0 warnings ✅ (2026-07-11)
 **Fase 3:** 100% completa ✅  
 **Fase 5:** 100% completa ✅
 **Vitest:** 22 testes passando ✅
 
 ### Próximos passos
 - Configurar CORS no bucket R2 (Cloudflare Dashboard) para o upload de vídeo funcionar ponta a ponta
+- Endereçar treinos órfãos (`program = NULL`) na navegação por pastas do `AdminTurmaDetail.tsx`
 - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos)
 - SMTP externo (Resend ou AWS SES) antes de produção
 - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`

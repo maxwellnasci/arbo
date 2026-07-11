@@ -189,3 +189,79 @@ GRANT SELECT ON strava_analysis TO authenticated;
 A lição foi generalizada e registrada em `GEMINI_LESSONS.md` (item 14), separada do item 13 (que cobre o lado `service_role`), como uma regra de checklist reutilizável para qualquer tabela nova: *toda `CREATE POLICY ... TO <role>` deveria ter um `GRANT` correspondente `TO <role>` logo depois — se não tiver, é bug quase certo.*
 
 **Conhecimento demonstrado:** Aprendizado transferível entre incidentes — reconhecer a mesma classe de bug (GRANT vs. RLS como camadas independentes no Postgres) em um contexto novo antes que ele se manifeste, transformando um incidente de produção resolvido em um checklist preventivo aplicado à próxima tabela criada.
+
+---
+
+## Estudo de Caso 8: Dropdown Cortado no Mobile — Clipping por `overflow` de Ancestral (CSS / Layout)
+
+**O Cenário:**
+A biblioteca de treinos do admin (`/admin/treinos`) ganhou um dropdown customizado ("Biblioteca de Treinos") para filtrar por programa, posicionado com `position: absolute` relativo ao seu botão gatilho — o padrão mais comum para esse tipo de componente.
+
+**O Sintoma:**
+No desktop, o dropdown abria perfeitamente. No mobile, a borda laranja do painel aparecia visivelmente cortada, como se um pedaço do componente simplesmente não existisse. Não era uma sobreposição (outro elemento por cima) — era um corte real, como se o painel tivesse sido recortado por uma tesoura.
+
+**O Diagnóstico:**
+Diferente do Estudo de Caso 5 (elemento `position: fixed` sobrepondo conteúdo por cima, sem nenhum corte no elemento em si), este era um problema de **clipping**: o container pai da lista de filtros tinha `overflowX: 'auto'` (para permitir rolagem horizontal dos filtros no mobile). Qualquer elemento filho com `position: absolute` que "vaze" visualmente para fora da caixa do pai é recortado exatamente na borda desse pai quando ele declara qualquer valor de `overflow` diferente de `visible` — `position: absolute` não escapa do clipping do ancestral mais próximo com overflow restrito, só do seu fluxo de documento. Ajustar apenas `padding`/`overflowX: hidden` no container pai (tentativa anterior, commit `75a602b`) mitigava mas não resolvia de raiz — qualquer painel mais largo que o espaço visível dentro do pai continuava sendo cortado.
+
+**A Solução:**
+Renderizar o painel do dropdown fora da árvore DOM do pai com overflow restrito, via `createPortal` direto no `document.body`, e recalcular sua posição manualmente com `position: fixed` (imune a qualquer `overflow` de ancestral, já que não tem mais ancestral com overflow entre ele e o body):
+```tsx
+function updatePosition() {
+  const rect = triggerRef.current?.getBoundingClientRect()
+  if (!rect) return
+  const style: React.CSSProperties = { top: rect.bottom + 6 }
+  const overflowsRight = rect.left + PANEL_MAX_WIDTH > window.innerWidth - VIEWPORT_MARGIN
+  if (overflowsRight) {
+    style.right = Math.max(VIEWPORT_MARGIN, window.innerWidth - rect.right)
+  } else {
+    style.left = rect.left
+  }
+  setPanelStyle(style)
+}
+// ...
+{isOpen && createPortal(
+  <div ref={panelRef} style={{ position: 'fixed', ...panelStyle }}>...</div>,
+  document.body
+)}
+```
+Posição recalculada em `resize` e `scroll` (com `capture: true`, para pegar scroll de qualquer ancestral rolável, não só da window); detecção de colisão com a borda direita da viewport evita que o painel vaze pra fora da tela em telas estreitas.
+
+**Conhecimento demonstrado:** Distinção precisa entre as duas causas mais comuns de elementos "sumindo" em CSS — sobreposição (`z-index`/`position: fixed` por cima) vs. clipping (`overflow` de ancestral cortando um `position: absolute`) — e a técnica padrão de mercado (React Portal + posicionamento manual) para resolver definitivamente a segunda, em vez de empilhar ajustes de padding que só adiam o mesmo problema em telas diferentes.
+
+---
+
+## Estudo de Caso 9: Cache do Service Worker Mascarando Falha de Rede como Dado Válido (PWA / Offline-First)
+
+**O Cenário:**
+O app é um PWA com service worker (Workbox) cacheando respostas de rede para funcionar melhor em conexões instáveis — comum em quem treina na rua. As chamadas REST ao Supabase (treinos, check-ins, planos liberados) estavam configuradas com a estratégia `NetworkFirst`.
+
+**O Sintoma:**
+O usuário relatou que, às vezes, uma tela demorava para carregar ou aparecia com informação faltando (um treino sumido, uma semana liberada não aparecendo) — e que trocar de aba e voltar "consertava" o problema, mostrando o dado completo.
+
+**O Diagnóstico:**
+A leitura de `vite.config.ts` revelou a configuração:
+```ts
+{
+  urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
+  handler: 'NetworkFirst',
+  options: {
+    networkTimeoutSeconds: 30,
+    expiration: { maxEntries: 100, maxAgeSeconds: 24 * 60 * 60 }, // 1 dia
+  },
+}
+```
+`NetworkFirst` tenta a rede primeiro — até aqui, comportamento correto e igual a não ter cache nenhum. O problema aparece exatamente quando a rede falha ou demora mais que o timeout (comum em 4G instável, elevador, sinal fraco): nesse caso, o Workbox cai silenciosamente para a resposta cacheada mais recente, que pode ter **até 24 horas**. A UI não tem nenhuma forma de saber que recebeu uma resposta de cache em vez de rede — ela renderiza normalmente, como se o dado fosse atual. O "conserta ao voltar de aba" não era o service worker se corrigindo: era o remount da aba disparando uma nova tentativa de rede, que dessa vez funcionava e sobrescrevia o dado velho.
+
+Esse é o oposto do padrão típico de bug de cache (dado velho óbvio, tela de erro, ou nada carregando) — aqui o sintoma é justamente a ausência de qualquer sinal de erro, porque o cache foi desenhado para ser transparente.
+
+**A Solução:**
+Dado de aplicação (linhas de banco que mudam a qualquer momento por ação de outro usuário/admin) nunca deveria ser servido de cache — ao contrário de um asset estático, não existe uma versão "boa o suficiente" de um treino ou check-in de ontem. Trocado para `NetworkOnly` nas rotas de API e Auth do Supabase, mantendo cache normal só para o que de fato é estático:
+```ts
+// REST e Auth do Supabase — sempre rede, nunca cache
+{ urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i, handler: 'NetworkOnly' },
+{ urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/.*/i, handler: 'NetworkOnly' },
+// Storage (arquivos) e imagens continuam com cache — são de fato estáticos
+{ urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/.*/i, handler: 'NetworkFirst', options: { ... } },
+```
+
+**Conhecimento demonstrado:** Diagnóstico de um bug "silencioso por design" — a estratégia de cache estava funcionando exatamente como configurada, o problema era a configuração ter sido aplicada a um tipo de dado errado. Distinção clara entre o que é seguro cachear (assets estáticos, imutáveis por natureza) e o que nunca deveria ser (estado de aplicação multi-usuário), e leitura de configuração de infraestrutura (Workbox/PWA) como primeira hipótese antes de suspeitar de lógica de aplicação.
