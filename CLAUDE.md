@@ -23,12 +23,16 @@ Não há test runner configurado ainda.
 
 ### Sempre que alterar o banco de dados
 
-1. Fazer a alteração no [Supabase Dashboard → SQL Editor](https://supabase.com/dashboard/project/jhfkflnixzivuichmkie/sql/new)
-2. Sincronizar os tipos TypeScript:
+> **`supabase/migrations/` reflete o schema real de produção** desde o baseline capturado via `supabase db pull` (commit `eb8491f`, 2026-07-11 — 21 tabelas, 65 RLS policies, funções, triggers, grants). A partir de agora, **toda mudança de banco é uma migration nova** (`supabase migration new <nome>` + `supabase db push`), **nunca SQL solto direto no SQL Editor** — SQL aplicado fora de uma migration volta a divergir o repositório do banco real, o mesmo problema que o baseline resolveu.
+
+1. Criar a migration: `npx supabase migration new <nome_descritivo>`
+2. Escrever o SQL no arquivo gerado em `supabase/migrations/`
+3. Aplicar em produção: `npx supabase db push`
+4. Sincronizar os tipos TypeScript:
 ```bash
 npx supabase gen types typescript --project-id jhfkflnixzivuichmkie > src/lib/database.types.ts
 ```
-3. Confirmar zero erros:
+5. Confirmar zero erros:
 ```bash
 npx tsc --noEmit
 ```
@@ -212,6 +216,9 @@ catch (e: unknown) {
 - `profiles` **tem coluna `role text`** (`'aluno'` | `'admin'`). Filtrar alunos com `.eq('role', 'aluno')`.
 - `profiles` **tem coluna `group_id uuid`** — FK para `groups.id`, nullable (`ON DELETE SET NULL`). Alunos sem turma têm `NULL`.
 - Trigger `tr_set_profile_role` (BEFORE INSERT em `profiles`) — popula `role` de `raw_user_meta_data` ao criar perfil via convite.
+- **Trigger `trg_prevent_self_privilege_escalation`** (BEFORE UPDATE em `profiles`, função `private.prevent_self_privilege_escalation()`) — bloqueia alteração de `role`/`group_id` por quem não é `private.is_admin()`. A policy `profiles_update` permite `id = auth.uid()` (necessário para o aluno editar nome/avatar), o que sozinho também liberaria o aluno setar `role='admin'` ou `group_id` para qualquer turma via PATCH direto no client REST — RLS controla **quais linhas**, não **quais colunas**, um usuário pode tocar. O trigger fecha esse gap sem restringir a edição legítima dos demais campos (ver Caso 10 em `docs/PORTFOLIO_DEBUG_CASES.md`).
+- **FKs de dado operacional do aluno** (`checkins.student_id`, `records.student_id`, `weekly_plans.student_id`, `strava_activities.user_id`, `strava_connections.user_id`) são `ON DELETE CASCADE` para `profiles(id)` — decisão: ao excluir um aluno, o histórico dele é removido de fato (não anonimizado), cumprindo direito ao esquecimento (LGPD). Antes eram `NO ACTION` (padrão implícito), o que fazia `delete-user` falhar com 500 sempre que o aluno tinha qualquer checkin/record/plano/atividade Strava.
+- **`records_select`** — `USING ((student_id = auth.uid()) OR private.is_admin())`. Antes era `USING (true)`: qualquer aluno autenticado lia o recorde pessoal de qualquer outro aluno via query direta ao Supabase.
 - **Plano de grupo:** `group_plans` (id, group_id, starts_at, notes, created_by, **released_through_week smallint DEFAULT 0** — 0=bloqueado, 1–4=semanas liberadas até N, **bidirecional**: chips S1–S4 fazem toggle — clicar em semana já liberada reduz o valor; clicar na semana ativa seta para N-1, com S1 ativo → 0) + `group_plan_trainings` (id, group_plan_id, week_number 1–4, day_of_week 1–6, training_id, sort_order). Ciclo de 4 semanas calculado a partir de `groups.starts_at`. Admin: acesso total. Aluno: SELECT onde `group_id = profile.group_id`.
 - **`supabase gen types`** pode incluir aviso de versão no final do arquivo gerado — remover manualmente as linhas de texto após o `} as const` antes de commitar.
 - **Checkins limitados a 100 registros no frontend (`limit(100)`)** — decisão MVP 2026-06-05. Quando algum aluno atingir esse limite, implementar RPC no Supabase para calcular streak no banco e separar da query de exibição.
@@ -275,6 +282,7 @@ Edge Function: `supabase/functions/delete-user/index.ts`
 - Proteção anti-auto-exclusão (admin não pode deletar a si mesmo)  
 - CORS restrito ao mesmo allowlist de `invite-user`  
 - Deploy: `npx supabase functions deploy delete-user --project-ref jhfkflnixzivuichmkie`
+- Depende das FKs de aluno serem `ON DELETE CASCADE` (ver bullet em "Convenções") — sem isso, `auth.admin.deleteUser()` falha com 500 sempre que o aluno tem checkin/record/plano/atividade Strava.
 
 ### Integração Strava (implementada 2026-07-03, estendida 2026-07-04)
 
@@ -320,13 +328,24 @@ Frontend:
 ### Service Worker — estratégia de cache (`vite.config.ts`)
 
 Configurado via `VitePWA({ workbox: { runtimeCaching: [...] } })`. Estratégia por padrão de URL:
+- **Navegação (documento HTML)** — `NetworkFirst` (`networkTimeoutSeconds: 5`), `cacheName: 'html-cache'`. `navigateFallback` (default `"index.html"` do `vite-plugin-pwa`) é explicitamente desativado (`navigateFallback: undefined`) — o default gera um `NavigationRoute` preso ao precache, que serve **todo** carregamento de página (inclusive hard refresh) do `index.html` cacheado, com os headers HTTP (CSP, security headers) congelados de quando aquele arquivo foi cacheado pela primeira vez. Como mudanças só em `vercel.json` não alteram os bytes do `index.html`, a revisão do precache nunca muda entre deploys — o Workbox nunca refaz o fetch, e headers desatualizados ficam presos indefinidamente em quem já tinha o SW instalado. Vercel já resolve o fallback de rotas da SPA via `rewrites` (`vercel.json`), então essa rota do SW é redundante para roteamento (ver Caso 11 em `docs/PORTFOLIO_DEBUG_CASES.md`).
 - **REST do Supabase** (`/rest/v1/*`) e **Auth** (`/auth/v1/*`) — `NetworkOnly`. Dado de aplicação (treinos, check-ins, sessão) nunca é servido do cache — sempre rede. Antes disso usavam `NetworkFirst` com timeout de 30s e validade de até 24h/1h: em rede instável, o Workbox servia silenciosamente dado obsoleto "com cara de atual" quando a rede falhava/estourava o timeout (ver Caso 9 em `docs/PORTFOLIO_DEBUG_CASES.md`).
 - **Storage do Supabase** (`/storage/v1/*`) — `NetworkFirst` (mantido — arquivo estático, não dado de aplicação que muda a cada ação do usuário).
 - **Edge Functions** (`/functions/*`) — `NetworkOnly` (sempre foi assim).
 - **Imagens** (`png/jpg/jpeg/svg/gif/webp`) — `CacheFirst`, 30 dias.
 - `skipWaiting: true` + `clientsClaim: true` — SW assume imediatamente após deploy, sem precisar fechar/reabrir o app (Task 56).
+- **`cacheId` versionado** (`arbo-v6`, incrementar a cada mudança de comportamento crítico do SW) — cada bump cria um namespace de cache totalmente novo, forçando refetch de tudo (inclusive o precache do `index.html`). Necessário sempre que uma mudança não muda dado, mas muda **como** o SW decide servir dado (estratégia de cache, `navigateFallback`, etc.) — nesses casos não existe "conteúdo novo" que naturalmente invalide o cache antigo, só o bump força a atualização em quem já tinha o SW anterior instalado.
 
-**Regra geral:** nunca cachear resposta de API que representa estado do usuário (dado que muda por ação de outro usuário/admin) — só cachear assets verdadeiramente estáticos.
+**Regra geral:** nunca cachear resposta de API que representa estado do usuário (dado que muda por ação de outro usuário/admin) — só cachear assets verdadeiramente estáticos. O mesmo raciocínio vale para o **documento HTML**: ele carrega os headers de segurança da resposta e a referência aos bundles JS/CSS do deploy atual — tratá-lo como asset estático (precache) tem o mesmo risco de servir configuração desatualizada que tratar dado de API como estático.
+
+### Sentry — monitoramento de erro em produção
+
+`@sentry/react` integrado via `src/lib/sentry.ts` — `initSentry()` chama `Sentry.init({ dsn, environment, tracesSampleRate: 0.1 })` só se `VITE_SENTRY_DSN` estiver definida; sem a env var, é **no-op** (não quebra build nem runtime). Chamada em `main.tsx`, antes do primeiro render.
+
+- `ErrorBoundary.tsx` (`componentDidCatch`) chama `Sentry.captureException(error, { contexts: { react: { componentStack } } })` — cobre erros de render não tratados por nenhum boundary mais interno.
+- Integrations padrão do SDK (não sobrescritas) incluem `GlobalHandlers` (`window.onerror` + `unhandledrejection`) — captura automática de exceções soltas sem precisar de `try/catch` manual em todo lugar.
+- `VITE_SENTRY_DSN` configurada no Vercel (Production + Preview). DSN é um valor público (não secreto) — pode aparecer no bundle final sem risco.
+- **CSP:** `connect-src` em `vercel.json` precisa incluir `https://*.ingest.us.sentry.io https://*.sentry.io`, senão o navegador bloqueia o POST do evento de erro mesmo com o DSN configurado corretamente (erro aparece no console, nunca chega no painel do Sentry).
 
 ### Aviso SMTP
 
@@ -345,8 +364,10 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - **Sessão 2026-07-04 (Task 68):** Strava Fase 2 (card profissional + painel admin + `strava-sync` v2), Upload de Vídeo via Cloudflare R2 (`r2-upload`, presigned URL) e Agente DeepSeek de análise automática de atividades (`strava-analyze`). Ver seções "Integração Strava" e "Upload de Vídeo — Cloudflare R2" acima. 7º estudo de caso documentado em `docs/PORTFOLIO_DEBUG_CASES.md` (GRANT `authenticated` ausente, pego na revisão antes de aplicar SQL).
 - **Sessão 2026-07-09:** Biblioteca de treinos dinâmica — tabela `training_programs`, dropdown "Biblioteca de Treinos" substituindo pills fixas, `ManageProgramsModal`/`NewProgramModal`, carga de 48 treinos reais do professor em 3 programas (`trainings.program`/`trainings.category` novas colunas). 4 commits de fix visual/comportamental no dropdown, culminando em correção via `createPortal` para o corte de borda no mobile (Caso 8 em `docs/PORTFOLIO_DEBUG_CASES.md`).
 - **Sessão 2026-07-10:** Navegação por pastas no seletor de treinos da turma (`AdminTurmaDetail.tsx` reaproveita `training_programs` como "pastas") + `ManageProgramsModal` (criar/renomear pasta, mover treino entre pastas) + exclusão permanente de turma (hard delete via RLS, sem Edge Function, confirmação por nome digitado).
-- **Sessão 2026-07-11:** Auditoria e correção de performance/confiabilidade em 4 commits — P1 service worker `NetworkOnly` (fim do cache de dado obsoleto de até 24h, Caso 9 em `docs/PORTFOLIO_DEBUG_CASES.md`), P2 erros de `schedules`/`checkins` não são mais engolidos silenciosamente + hero espera `useProgresso`, P3 skeleton no lugar de tela branca no admin + paralelização de queries em `useWeeklyPlan`, P4 lazy load das abas do aluno + logo PNG→WebP (chunk `AlunoDashboard`: 438kB→33kB gzip 118kB→9,6kB; logo: 454kB→34,7kB).
+- **Sessão 2026-07-11 (manhã):** Auditoria e correção de performance/confiabilidade em 4 commits — P1 service worker `NetworkOnly` (fim do cache de dado obsoleto de até 24h, Caso 9 em `docs/PORTFOLIO_DEBUG_CASES.md`), P2 erros de `schedules`/`checkins` não são mais engolidos silenciosamente + hero espera `useProgresso`, P3 skeleton no lugar de tela branca no admin + paralelização de queries em `useWeeklyPlan`, P4 lazy load das abas do aluno + logo PNG→WebP (chunk `AlunoDashboard`: 438kB→33kB gzip 118kB→9,6kB; logo: 454kB→34,7kB).
+- **Sessão 2026-07-11 (tarde) — Auditoria de segurança de produção (Fable 5) + 5 bloqueadores corrigidos:** auditoria completa confirmou RLS em 21/21 tabelas, segredos protegidos (nunca expostos ao client), zero XSS, JWT validado em todas as Edge Functions e 0 vulnerabilidade de dependência em produção — 5 bloqueadores encontrados e corrigidos, cada um com commit próprio e testado manualmente em produção: `eb8491f` baseline do schema versionado (ver "Sempre que alterar o banco de dados" acima); `8e40af5` **crítico** — trigger `trg_prevent_self_privilege_escalation` + migração de 3 policies legadas para `private.is_admin()` (Caso 10 em `docs/PORTFOLIO_DEBUG_CASES.md`); `b71b502` **crítico** — FKs de aluno de `NO ACTION` para `CASCADE`, corrige exclusão de aluno e cumpre LGPD; `8d7716f` **alto** — `records_select` restrita ao próprio aluno + admin; `a0b1590` **alto** — integração Sentry. Na sequência, mais 3 correções relacionadas: `a540dbd` bug de botão de ação escondido em `CheckinSheet`/`DayPicker` (`position: fixed` perde a viewport como containing block quando um ancestral tem `transform` do Framer Motion — mesma classe do Caso 8, corrigido com `createPortal`); `ad3a7bf` CSP sem os domínios de ingest do Sentry no `connect-src`; `877fde7` causa raiz real de "Sentry não recebia erro mesmo após o fix do CSP" — Service Worker preso em `navigateFallback: "index.html"` (default do `vite-plugin-pwa`), servindo o documento HTML precacheado com os headers antigos mesmo com hard refresh (Caso 11 em `docs/PORTFOLIO_DEBUG_CASES.md`). Ver seções "Convenções", "Exclusão de aluno", "Service Worker" e "Sentry" acima.
 - **Próxima sessão:**
+  - Achados extra do advisor de segurança do Supabase (não corrigidos nesta sessão, escopo separado): `search_path` mutável em `update_updated_at_column`/`update_group_plans_updated_at` (risco baixíssimo — nenhuma é `SECURITY DEFINER`); RPCs `SECURITY DEFINER` expostas via REST (`handle_new_user`/`rls_auto_enable`/`set_profile_role`/`set_user_role` são funções de trigger/event-trigger, não invocáveis fora desse contexto — risco zero; `get_user_email` já tem guarda interna de admin, risco baixo); proteção de senha vazada (HaveIBeenPwned) desligada no Supabase Auth — risco médio, fix trivial (toggle no dashboard).
   - Configurar CORS no bucket R2 (Cloudflare Dashboard) para o upload de vídeo funcionar ponta a ponta
   - Testar no celular o fluxo completo de turma flexível ponta a ponta (liberar semana → aluno ver treino → check-in)
   - Endereçar o gap de treinos órfãos (`program = NULL`) na navegação por pastas do `AdminTurmaDetail.tsx` — hoje ficam inacessíveis nesse fluxo, só editáveis via `/admin/treinos`

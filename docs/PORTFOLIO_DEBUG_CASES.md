@@ -265,3 +265,80 @@ Dado de aplicação (linhas de banco que mudam a qualquer momento por ação de 
 ```
 
 **Conhecimento demonstrado:** Diagnóstico de um bug "silencioso por design" — a estratégia de cache estava funcionando exatamente como configurada, o problema era a configuração ter sido aplicada a um tipo de dado errado. Distinção clara entre o que é seguro cachear (assets estáticos, imutáveis por natureza) e o que nunca deveria ser (estado de aplicação multi-usuário), e leitura de configuração de infraestrutura (Workbox/PWA) como primeira hipótese antes de suspeitar de lógica de aplicação.
+
+---
+
+## Estudo de Caso 10: Escalada de Privilégio via RLS Que Filtra Linha, Não Coluna (PostgreSQL / Segurança)
+
+**O Cenário:**
+Uma auditoria de segurança proativa em produção — não um bug reportado por usuário — revisou a policy de `UPDATE` da tabela `profiles`, que permite `id = auth.uid()` para o aluno poder editar o próprio nome e avatar.
+
+**O Sintoma:**
+Nenhum visível ao usuário final. O achado veio de auditoria, não de um erro reportado — a classe de bug mais perigosa, porque não gera nenhum sinal espontâneo até ser explorada.
+
+**O Diagnóstico:**
+Row Level Security no Postgres restringe **quais linhas** um usuário pode tocar, não **quais colunas** dentro dessa linha. A policy `profiles_update` (`id = auth.uid()`) estava correta para o caso de uso pretendido (aluno edita o próprio perfil), mas o mesmo `UPDATE` que altera `full_name` também permitia alterar `role` e `group_id` — sem nenhuma checagem de coluna, um aluno autenticado podia fazer `UPDATE profiles SET role = 'admin'` direto via client REST do Supabase e se auto-promover a administrador. O impacto era agravado por 3 policies legadas (`training_types`, `schedules`, `messages`) que ainda verificavam privilégio lendo `profiles.role` via subquery direta, em vez da fonte de verdade imutável (`app_metadata`, só alterável no servidor) — uma vez com `role = 'admin'` na própria linha, o aluno destravava também essas policies.
+
+**A Solução:**
+RLS por si só não resolve granularidade de coluna — a correção correta é uma trigger que inspeciona a mudança e rejeita alterações não autorizadas nas colunas sensíveis, deixando o restante do `UPDATE` intacto:
+```sql
+CREATE OR REPLACE FUNCTION private.prevent_self_privilege_escalation()
+RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, private
+AS $$
+BEGIN
+  IF NOT private.is_admin() THEN
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      RAISE EXCEPTION 'Não autorizado a alterar role';
+    END IF;
+    IF NEW.group_id IS DISTINCT FROM OLD.group_id THEN
+      RAISE EXCEPTION 'Não autorizado a alterar group_id';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER trg_prevent_self_privilege_escalation
+BEFORE UPDATE ON profiles
+FOR EACH ROW EXECUTE FUNCTION private.prevent_self_privilege_escalation();
+```
+Testado em produção com um usuário descartável (criado e removido na mesma sessão, sem tocar em dado real), simulando o JWT de um aluno via `set_config('request.jwt.claims', ...)`: `UPDATE role = 'admin'` e `UPDATE group_id = <qualquer turma>` passaram a levantar exceção, enquanto `UPDATE full_name` continuou funcionando normalmente — a mesma verificação confirmou que um admin de verdade segue alterando `role`/`group_id` de aluno sem restrição.
+
+**Conhecimento demonstrado:** Modelo mental correto de RLS (filtro de linha, não de coluna) — reconhecer que uma policy "correta" para o caso de uso principal pode ainda deixar uma superfície de ataque em colunas adjacentes da mesma linha; uso de trigger `BEFORE UPDATE` como camada complementar ao RLS quando a granularidade necessária é por coluna; validação de segurança sem depender de dado real de produção, simulando o contexto de autenticação (JWT) diretamente via SQL.
+
+---
+
+## Estudo de Caso 11: CSP Correto no Servidor, mas Navegador Preso em Versão Antiga por Causa do Service Worker (PWA / Cache de Documento)
+
+**O Cenário:**
+Uma correção de CSP (liberando o domínio de ingest do Sentry no `connect-src`, para permitir o monitoramento de erros em produção) foi publicada e confirmada — o header `Content-Security-Policy` servido por `curl -I` já mostrava a mudança correta.
+
+**O Sintoma:**
+O navegador do usuário nunca refletia a correção. Um `throw new Error` de teste no console continuava sem aparecer no painel do Sentry, mesmo depois de múltiplos hard refresh (Ctrl+Shift+R).
+
+**O Diagnóstico:**
+Hard refresh limpa o cache HTTP do **navegador**, mas não o precache do **Service Worker** — são duas camadas de cache completamente independentes. O `vite-plugin-pwa` aplica `navigateFallback: "index.html"` por padrão quando não configurado explicitamente, o que gera um `NavigationRoute(createHandlerBoundToURL("index.html"))` no Workbox: **toda** navegação (carregamento de página, inclusive reload) passa a ser servida do `index.html` **precacheado**, nunca da rede — o Service Worker intercepta a requisição de navegação antes mesmo dela poder chegar ao servidor. O precache do Workbox é indexado por revisão de conteúdo (hash dos bytes do arquivo); como a correção de CSP alterou só o `vercel.json` (um header HTTP, entregue pelo servidor, não embutido no HTML), os bytes do `index.html` continuaram idênticos entre o deploy antigo e o novo — a revisão nunca mudou, então o Workbox nunca considerou o arquivo "desatualizado" e nunca refez o fetch. Qualquer navegador que já tinha o Service Worker instalado antes da correção ficaria preso ao CSP antigo (cacheado junto com a resposta original do `index.html`) indefinidamente, em qualquer deploy futuro que só alterasse headers e não o conteúdo do HTML em si.
+
+Categoria diferente do Estudo de Caso 9 (aquele era cache de **dado** de API, mascarando falha de rede como resposta válida): aqui o cache é do próprio **documento** de navegação — mais traiçoeiro, porque a ferramenta que o usuário naturalmente tenta primeiro (hard refresh) não tem nenhum efeito sobre essa camada.
+
+**A Solução:**
+Investigado sem depender de teste manual no navegador do usuário: `curl -I` confirmou o header correto no servidor (descartando causa server-side); leitura do código-fonte do `vite-plugin-pwa` em `node_modules` confirmou o default `navigateFallback: "index.html"`; e um envelope de teste enviado via `curl` direto ao endpoint de ingest do Sentry (com a DSN extraída do bundle de produção) confirmou HTTP 200 — isolando a causa exclusivamente à camada de Service Worker no navegador. Vercel já resolve o fallback de rotas da SPA via `rewrites` (`vercel.json`), então o `NavigationRoute` do Service Worker era redundante para roteamento — trocado por `NetworkFirst` para requisições de navegação, priorizando rede sempre que disponível:
+```ts
+workbox: {
+  cacheId: 'arbo-v6', // bump força invalidação de quem já tinha o SW antigo
+  navigateFallback: undefined, // desliga o NavigationRoute preso ao precache
+  runtimeCaching: [
+    {
+      urlPattern: ({ request }) => request.mode === 'navigate',
+      handler: 'NetworkFirst',
+      options: { cacheName: 'html-cache', networkTimeoutSeconds: 5 },
+    },
+    // ...demais regras
+  ],
+}
+```
+O bump de `cacheId` (`arbo-v5` → `arbo-v6`) foi necessário como complemento — sem ele, mesmo o novo Service Worker (com a estratégia corrigida) reaproveitaria a entrada de precache já existente do `index.html`, já que sua revisão de conteúdo continua igual. Um novo `cacheId` cria um namespace de cache totalmente novo, forçando o navegador de quem já visitou o site a buscar tudo de novo na próxima abertura do app — sem precisar de nenhuma ação manual do usuário além de fechar e reabrir (`skipWaiting`+`clientsClaim` já garantiam isso).
+
+**Conhecimento demonstrado:** Distinção entre cache do navegador e cache do Service Worker (hard refresh não afeta o segundo); entendimento de como o Workbox decide revalidar um recurso precacheado (hash de conteúdo, não header HTTP); leitura de código-fonte de uma dependência (`node_modules`) para confirmar um comportamento default não documentado explicitamente no próprio projeto; verificação de infraestrutura de ponta a ponta sem depender do navegador do usuário (`curl` para o header, `curl` para o endpoint de ingest) antes de propor a correção.
