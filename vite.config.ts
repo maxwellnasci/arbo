@@ -58,28 +58,22 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true,
         runtimeCaching: [
-          // Supabase REST API — NetworkFirst, timeout 30s (era 10s — muito baixo)
+          // Supabase REST API — NetworkOnly: dado de aplicação nunca pode vir de cache obsoleto
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-api-cache',
-              networkTimeoutSeconds: 30,
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 24 * 60 * 60, // 1 dia
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
+            handler: 'NetworkOnly',
           },
-          // Supabase Auth e Storage — NetworkFirst, timeout 30s
+          // Supabase Auth — NetworkOnly: sessão/token nunca podem vir de cache obsoleto
           {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/(auth|storage)\/.*/i,
+            urlPattern: /^https:\/\/.*\.supabase\.co\/auth\/.*/i,
+            handler: 'NetworkOnly',
+          },
+          // Supabase Storage — mantém NetworkFirst (arquivos estáticos, não dado de aplicação)
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/.*/i,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'supabase-auth-storage-cache',
+              cacheName: 'supabase-storage-cache',
               networkTimeoutSeconds: 30,
               expiration: {
                 maxEntries: 50,
