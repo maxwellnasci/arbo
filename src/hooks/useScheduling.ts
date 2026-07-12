@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { Sentry } from '../lib/sentry'
 import type { Database } from '../lib/database.types'
 
 type Schedule = Database['public']['Tables']['schedules']['Row']
@@ -45,6 +46,7 @@ export function useScheduling(groupPlanTrainingIds: string[]) {
 
     if (error) {
       console.error('Erro ao agendar treino:', error.message)
+      Sentry.captureException(error, { contexts: { schedule: { studentId, groupPlanTrainingId, scheduledDayOfWeek } } })
       return null
     }
     return data
@@ -65,6 +67,7 @@ export function useScheduling(groupPlanTrainingIds: string[]) {
 
     if (error) {
       console.error('Erro ao reagendar treino:', error.message)
+      Sentry.captureException(error, { contexts: { schedule: { scheduleId, newDayOfWeek } } })
       return null
     }
     return data
@@ -78,6 +81,7 @@ export function useScheduling(groupPlanTrainingIds: string[]) {
 
     if (error) {
       console.error('Erro ao excluir agendamento:', error.message)
+      Sentry.captureException(error, { contexts: { schedule: { scheduleId } } })
       return false
     }
     return true
