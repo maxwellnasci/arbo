@@ -40,7 +40,7 @@ function cellStatus(schedule?: ScheduleRow): string {
   return STATUS_PENDING
 }
 
-const DAY_NAMES: Record<number, string> = { 1:'Seg',2:'Ter',3:'Qua',4:'Qui',5:'Sex',6:'Sáb' }
+const DAY_NAMES: Record<number, string> = { 1:'Seg',2:'Ter',3:'Qua',4:'Qui',5:'Sex',6:'Sáb',7:'Dom' }
 
 const Cell = React.memo(({ schedule }: { schedule?: ScheduleRow }) => {
   const status = cellStatus(schedule)

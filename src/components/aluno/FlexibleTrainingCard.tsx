@@ -12,7 +12,7 @@ interface FlexibleTrainingCardProps {
 }
 
 const DAYS_LABEL: Record<number, string> = {
-  1: 'SEG', 2: 'TER', 3: 'QUA', 4: 'QUI', 5: 'SEX', 6: 'SÁB', 0: 'DOM'
+  1: 'SEG', 2: 'TER', 3: 'QUA', 4: 'QUI', 5: 'SEX', 6: 'SÁB', 7: 'DOM'
 };
 
 export default function FlexibleTrainingCard({

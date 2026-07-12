@@ -348,7 +348,8 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
     syncStravaRedirect()
   }, [searchParams, setSearchParams])
 
-  const todayDow    = new Date().getDay()
+  const jsDow       = new Date().getDay()
+  const todayDow    = jsDow === 0 ? 7 : jsDow // getDay() retorna 0 para domingo; day_of_week usa 1=Seg..7=Dom
   const completed   = trainings.filter(t => t.checkin !== null).length
   const total       = trainings.length
 

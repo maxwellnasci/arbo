@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './DayPicker.module.css';
 
-export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6;
+export type DayOfWeek = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 interface DayPickerProps {
   isOpen: boolean;
@@ -18,6 +18,7 @@ const DAYS: { value: DayOfWeek; label: string }[] = [
   { value: 4, label: 'QUI' },
   { value: 5, label: 'SEX' },
   { value: 6, label: 'SÁB' },
+  { value: 7, label: 'DOM' },
 ];
 
 export default function DayPicker({ isOpen, onClose, onSelect, selectedDay }: DayPickerProps) {
@@ -39,7 +40,7 @@ export default function DayPicker({ isOpen, onClose, onSelect, selectedDay }: Da
               {DAYS.map((day) => (
                 <button
                   key={day.value}
-                  className={`${styles.dayBtn} ${selectedDay === day.value ? styles.selected : ''}`}
+                  className={`${styles.dayBtn} ${day.value === 7 ? styles.fullWidth : ''} ${selectedDay === day.value ? styles.selected : ''}`}
                   onClick={() => {
                     onSelect(day.value);
                     onClose();

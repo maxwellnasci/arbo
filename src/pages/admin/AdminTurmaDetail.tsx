@@ -22,7 +22,7 @@ const goalLabel: Record<string, string> = {
   evoluir_10k: 'Evolução 10K', evoluir_21k: 'Evolução 21K',
 }
 const frequencyLabel: Record<string, string> = { '2x': '2×/sem', '3x': '3×/sem' }
-const DAY_NAMES = ['', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB']
+const DAY_NAMES = ['', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM']
 const MONTH_NAMES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -732,8 +732,8 @@ function WeekView({
 
       {/* Day grid */}
       <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', padding: '6px 16px 16px', minWidth: '420px' }}>
-          {[1, 2, 3, 4, 5, 6].map(dow => {
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', padding: '6px 16px 16px', minWidth: '490px' }}>
+          {[1, 2, 3, 4, 5, 6, 7].map(dow => {
             const date = cycleStart ? dayDate(cycleStart, selectedWeek, dow) : null
             const entry = trainingByDay.get(dow) ?? null
             const isSelected = panelEntry?.weekNumber === selectedWeek && panelEntry?.dayOfWeek === dow
@@ -807,8 +807,8 @@ function MonthView({
           <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '5px' }}>
             Semana {wn} · {cycleStart ? weekRange(cycleStart, wn) : ''}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px' }}>
-            {[1, 2, 3, 4, 5, 6].map(dow => {
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+            {[1, 2, 3, 4, 5, 6, 7].map(dow => {
               const entry = trainings.find(t => t.weekNumber === wn && t.dayOfWeek === dow)
               return (
                 <button
