@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
@@ -162,10 +162,11 @@ type TrainingCardProps = {
   planId: string | null
   userId: string
   isToday: boolean
+  usedStravaActivityIds: Set<number>
   onCheckinSuccess: () => void
 }
 
-function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }: TrainingCardProps) {
+function TrainingCard({ dayTraining, planId, userId, isToday, usedStravaActivityIds, onCheckinSuccess }: TrainingCardProps) {
   const [showSheet, setShowSheet] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
@@ -291,6 +292,7 @@ function TrainingCard({ dayTraining, planId, userId, isToday, onCheckinSuccess }
             planId={planId}
             userId={userId}
             existingCheckin={editMode ? checkin : null}
+            usedStravaActivityIds={usedStravaActivityIds}
             onClose={() => setShowSheet(false)}
             onSuccess={onCheckinSuccess}
           />
@@ -333,6 +335,17 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
 
   const gptIds = trainings.map(t => t.weeklyPlanTrainingId)
   const { scheduleTraining, rescheduleTraining } = useScheduling(gptIds)
+
+  // Atividades Strava já vinculadas a algum check-in da semana — usado só para
+  // sinalizar "já usada" na lista de importação, não bloqueia a escolha.
+  const usedStravaActivityIds = useMemo(
+    () => new Set(
+      trainings
+        .map(t => t.checkin?.strava_activity_id)
+        .filter((id): id is number => id != null)
+    ),
+    [trainings]
+  )
 
   const [activeTab, setActiveTab] = useState<NavTab>('inicio')
   const [activeCheckin, setActiveCheckin] = useState<DayTraining | null>(null)
@@ -576,6 +589,7 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
                         planId={plan?.id ?? null}
                         userId={effectiveUserId}
                         isToday={dt.dayOfWeek !== null && dt.dayOfWeek === todayDow}
+                        usedStravaActivityIds={usedStravaActivityIds}
                         onCheckinSuccess={refresh}
                       />
                     </motion.div>
@@ -593,6 +607,7 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
                 scheduleId={activeCheckin.scheduleId}
                 userId={effectiveUserId}
                 existingCheckin={activeCheckin.checkin}
+                usedStravaActivityIds={usedStravaActivityIds}
                 onClose={() => setActiveCheckin(null)}
                 onSuccess={() => { setActiveCheckin(null); refresh() }}
               />

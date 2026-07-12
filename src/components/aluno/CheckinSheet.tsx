@@ -1,13 +1,26 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Activity } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type { Checkin } from '../../lib/types'
 import type { DayTraining } from '../../hooks/useWeeklyPlan'
+import { useStravaActivitiesLocal, type StravaActivityLocal } from '../../hooks/useStravaActivitiesLocal'
 import styles from './CheckinSheet.module.css'
 
 const EFFORT_EMOJIS: Record<number, string> = {
   1: '😴', 2: '🙂', 3: '💪', 4: '🔥', 5: '💀',
+}
+
+function formatActivityDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+}
+
+function formatPace(secondsPerKm: number | null): string {
+  if (!secondsPerKm) return '--:--'
+  const m = Math.floor(secondsPerKm / 60)
+  const s = Math.round(secondsPerKm % 60)
+  return `${m}:${s.toString().padStart(2, '0')}`
 }
 
 type CheckinSheetProps = {
@@ -16,11 +29,12 @@ type CheckinSheetProps = {
   userId: string
   scheduleId?: string
   existingCheckin?: Checkin | null
+  usedStravaActivityIds?: Set<number>
   onClose: () => void
   onSuccess: () => void
 }
 
-export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, existingCheckin, onClose, onSuccess }: CheckinSheetProps) {
+export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, existingCheckin, usedStravaActivityIds, onClose, onSuccess }: CheckinSheetProps) {
   const [distance, setDistance] = useState(() =>
     existingCheckin?.actual_distance_m != null
       ? String(existingCheckin.actual_distance_m / 1000).replace('.', ',')
@@ -36,7 +50,10 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showStravaList, setShowStravaList] = useState(false)
+  const [selectedActivity, setSelectedActivity] = useState<StravaActivityLocal | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const { activities: stravaActivities } = useStravaActivitiesLocal(userId)
 
   useEffect(() => {
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
@@ -51,6 +68,17 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
   function adjustMinutes(delta: number) {
     const v = parseFloat(minutes || '0')
     setMinutes(String(Math.max(0, v + delta)))
+  }
+
+  function handleSelectActivity(activity: StravaActivityLocal) {
+    setSelectedActivity(activity)
+    setDistance(String(activity.distance_m / 1000).replace('.', ','))
+    setMinutes(String(Math.round(activity.duration_seconds / 60)))
+    setShowStravaList(false)
+  }
+
+  function handleClearStravaImport() {
+    setSelectedActivity(null)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -82,9 +110,10 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
       const { data, error } = await supabase
         .from('checkins')
         .insert({
-          student_id:  userId,
-          training_id: dayTraining.training.id,
-          plan_id:     planId || null,
+          student_id:          userId,
+          training_id:         dayTraining.training.id,
+          plan_id:             planId || null,
+          strava_activity_id:  selectedActivity?.strava_id ?? null,
           ...payload,
         })
         .select('id')
@@ -142,12 +171,65 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
               </div>
               <p className={styles.subtitle}>{dayTraining.training.title}</p>
 
+              {!existingCheckin && stravaActivities.length > 0 && (
+                <div className={styles.stravaSection}>
+                  {selectedActivity ? (
+                    <div className={styles.stravaImportedBadge}>
+                      <Activity size={14} />
+                      <span className={styles.stravaImportedText}>Importado do Strava · {selectedActivity.name}</span>
+                      <button
+                        type="button"
+                        className={styles.stravaClearBtn}
+                        onClick={handleClearStravaImport}
+                        aria-label="Remover importação do Strava"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className={styles.stravaImportBtn}
+                        onClick={() => setShowStravaList(s => !s)}
+                      >
+                        <Activity size={16} />
+                        Importar do Strava
+                      </button>
+                      {showStravaList && (
+                        <div className={styles.stravaList}>
+                          {stravaActivities.map(activity => {
+                            const alreadyUsed = usedStravaActivityIds?.has(activity.strava_id) ?? false
+                            return (
+                              <button
+                                key={activity.strava_id}
+                                type="button"
+                                className={styles.stravaItem}
+                                onClick={() => handleSelectActivity(activity)}
+                              >
+                                <div className={styles.stravaItemRow}>
+                                  <span className={styles.stravaItemName}>{activity.name}</span>
+                                  {alreadyUsed && <span className={styles.stravaItemUsedBadge}>já usada</span>}
+                                </div>
+                                <span className={styles.stravaItemDetails}>
+                                  {formatActivityDate(activity.start_date)} · {(activity.distance_m / 1000).toFixed(1)} km · {formatPace(activity.pace_seconds_per_km)} /km
+                                </span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className={styles.form}>
                 {/* Distância */}
                 <div className={styles.field}>
                   <label className={styles.label}>Distância (km)</label>
                   <div className={styles.numericInput}>
-                    <button type="button" className={styles.numBtn} onClick={() => adjustDistance(-0.5)}>−</button>
+                    <button type="button" className={styles.numBtn} onClick={() => adjustDistance(-0.5)} disabled={!!selectedActivity}>−</button>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -155,8 +237,9 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
                       value={distance}
                       onChange={e => setDistance(e.target.value)}
                       placeholder="0,0"
+                      readOnly={!!selectedActivity}
                     />
-                    <button type="button" className={styles.numBtn} onClick={() => adjustDistance(0.5)}>+</button>
+                    <button type="button" className={styles.numBtn} onClick={() => adjustDistance(0.5)} disabled={!!selectedActivity}>+</button>
                   </div>
                 </div>
 
@@ -164,7 +247,7 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
                 <div className={styles.field}>
                   <label className={styles.label}>Tempo (min)</label>
                   <div className={styles.numericInput}>
-                    <button type="button" className={styles.numBtn} onClick={() => adjustMinutes(-5)}>−</button>
+                    <button type="button" className={styles.numBtn} onClick={() => adjustMinutes(-5)} disabled={!!selectedActivity}>−</button>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -172,8 +255,9 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
                       value={minutes}
                       onChange={e => setMinutes(e.target.value)}
                       placeholder="0"
+                      readOnly={!!selectedActivity}
                     />
-                    <button type="button" className={styles.numBtn} onClick={() => adjustMinutes(5)}>+</button>
+                    <button type="button" className={styles.numBtn} onClick={() => adjustMinutes(5)} disabled={!!selectedActivity}>+</button>
                   </div>
                 </div>
 
