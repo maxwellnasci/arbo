@@ -342,3 +342,32 @@ workbox: {
 O bump de `cacheId` (`arbo-v5` → `arbo-v6`) foi necessário como complemento — sem ele, mesmo o novo Service Worker (com a estratégia corrigida) reaproveitaria a entrada de precache já existente do `index.html`, já que sua revisão de conteúdo continua igual. Um novo `cacheId` cria um namespace de cache totalmente novo, forçando o navegador de quem já visitou o site a buscar tudo de novo na próxima abertura do app — sem precisar de nenhuma ação manual do usuário além de fechar e reabrir (`skipWaiting`+`clientsClaim` já garantiam isso).
 
 **Conhecimento demonstrado:** Distinção entre cache do navegador e cache do Service Worker (hard refresh não afeta o segundo); entendimento de como o Workbox decide revalidar um recurso precacheado (hash de conteúdo, não header HTTP); leitura de código-fonte de uma dependência (`node_modules`) para confirmar um comportamento default não documentado explicitamente no próprio projeto; verificação de infraestrutura de ponta a ponta sem depender do navegador do usuário (`curl` para o header, `curl` para o endpoint de ingest) antes de propor a correção.
+
+---
+
+## Estudo de Caso 12: Bug de Layout Que Só Aparece Medindo, Não Lendo o Código (CSS / Metodologia de Diagnóstico)
+
+**O Cenário:**
+Um bottom sheet mobile (seletor de dia da semana, 7 botões após a adição de Domingo) teve os botões da coluna direita e o botão full-width relatados como "cortados" na borda direita da tela, com espaço sobrando à esquerda.
+
+**O Sintoma:**
+Duas rodadas de diagnóstico por leitura isolada do CSS-fonte (`.grid`, `.dayBtn`, `.fullWidth`) concluíram, cada uma, "matemática correta, sem bug encontrado" — nenhuma propriedade sobrescrita, nenhuma classe duplicada, nenhum conflito de especificidade. Um hardening defensivo foi aplicado no meio do caminho (`box-sizing: border-box`, `text-align: center`, `width: 100%` explícitos em `.dayBtn`) — não resolveu. O sintoma persistiu, confirmado por print do usuário **duas vezes**, inclusive depois de descartar cache do Service Worker como causa (fechar e reabrir o app).
+
+**O Diagnóstico:**
+As duas primeiras rodadas erraram o alvo: investigaram o `.grid` e os botões (`.dayBtn`/`.fullWidth`) isoladamente, e essa matemática *estava* correta — o bug não morava ali. Só apareceu ao montar o componente isolado e medir o layout renderizado de verdade com Playwright + Chromium headless, viewport 375px (mesmo tamanho usado com sucesso no diagnóstico de um bug de layout anterior no admin, nesta mesma sessão): `getBoundingClientRect()`/`getComputedStyle()` revelaram que `.modal` — o **container pai** do grid, não o grid em si — tinha `width: 100%` e `padding: 16px 20px` sem nenhum `box-sizing` declarado (`content-box`, default do browser). Com `content-box`, o padding é somado *por cima* dos 100%: `.modal` renderizava com **415px de largura numa viewport de 375px**, um vazamento de exatos 40px (2×20px de padding). O `.grid` filho, esticando via `align-items: stretch` do flex do `.modal`, herdava esse excesso — e a coluna direita e o botão full-width, medidos, tinham a borda direita 20px além da viewport.
+
+**A Solução:**
+```css
+.modal {
+  width: 100%;
+  padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box; /* sem isso, padding soma por cima dos 100% */
+}
+```
+Medição repetida com o mesmo script Playwright, antes/depois:
+```
+Antes:  .modal.right = 415px (viewport 375px) — vazamento de 40px
+Depois: .modal.right = 375px — exato, nenhum botão ultrapassa a viewport
+```
+
+**Conhecimento demonstrado:** Reconhecer o limite da leitura estática de código quando o bug mora na *composição* de elementos ancestrais diferentes, não em nenhum isoladamente — e, ao esgotar a análise teórica sem achar causa raiz que explique um sintoma repetidamente confirmado pelo usuário, trocar de método em vez de insistir ("meça, não leia") — montagem de componente isolado + medição real de layout (Playwright headless, `getBoundingClientRect`) como ferramenta de diagnóstico quando a inspeção de CSS-fonte se esgota sem explicar o sintoma relatado.
