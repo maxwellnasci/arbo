@@ -731,59 +731,59 @@ function WeekView({
       )}
 
       {/* Day grid */}
-      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', padding: '6px 16px 16px', minWidth: '490px' }}>
-          {[1, 2, 3, 4, 5, 6, 7].map(dow => {
-            const date = cycleStart ? dayDate(cycleStart, selectedWeek, dow) : null
-            const entry = trainingByDay.get(dow) ?? null
-            const isSelected = panelEntry?.weekNumber === selectedWeek && panelEntry?.dayOfWeek === dow
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px', padding: '6px 16px 16px' }}>
+        {[1, 2, 3, 4, 5, 6, 7].map(dow => {
+          const date = cycleStart ? dayDate(cycleStart, selectedWeek, dow) : null
+          const entry = trainingByDay.get(dow) ?? null
+          const isSelected = panelEntry?.weekNumber === selectedWeek && panelEntry?.dayOfWeek === dow
 
-            return (
-              <div key={dow} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <div style={{ background: 'var(--bg-surface)', borderRadius: '8px', padding: '6px 4px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
-                  <div style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{DAY_NAMES[dow]}</div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '1px' }}>{date?.getDate() ?? ''}</div>
-                </div>
-
-                {entry ? (
-                  <button
-                    onClick={() => onCardClick(entry)}
-                    style={{
-                      background: isSelected ? 'var(--bg-card-orange)' : 'var(--bg-surface)',
-                      border: `1px solid ${isSelected ? 'var(--orange)' : 'var(--border-orange)'}`,
-                      borderRadius: '8px', padding: '7px 6px', cursor: 'pointer',
-                      textAlign: 'left', width: '100%',
-                    }}
-                  >
-                    {entry.training.tags && (
-                      <div style={{ fontSize: '7px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: '2px', color: entry.training.tags.color, background: entry.training.tags.color + '18', padding: '1px 5px', borderRadius: '3px', display: 'inline-block' }}>
-                        {entry.training.tags.name}
-                      </div>
-                    )}
-                    <div style={{ fontSize: '8px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '2px' }}>
-                      {TRAINING_TYPE_LABELS[entry.training.type] ?? entry.training.type}
-                    </div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 600, lineHeight: 1.3 }}>{entry.training.title}</div>
-                    {entry.training.distance_m && (
-                      <div style={{ fontSize: '8px', color: 'var(--text-secondary)', marginTop: '3px' }}>{(entry.training.distance_m / 1000).toFixed(1)}km</div>
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => onSlotClick(selectedWeek, dow)}
-                    style={{
-                      border: `1px dashed ${isSelected ? 'var(--orange)' : 'var(--border-default)'}`,
-                      borderRadius: '8px', minHeight: '52px', display: 'flex', alignItems: 'center',
-                      justifyContent: 'center', color: isSelected ? 'var(--orange)' : 'var(--text-tertiary)',
-                      fontSize: '18px', cursor: 'pointer', background: isSelected ? 'var(--orange-subtle)' : 'transparent',
-                      width: '100%',
-                    }}
-                  >+</button>
-                )}
+          return (
+            <div key={dow} style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div style={{ background: 'var(--bg-surface)', borderRadius: '8px', padding: '6px 4px', textAlign: 'center', border: '1px solid var(--border-default)' }}>
+                <div style={{ fontSize: '9px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{DAY_NAMES[dow]}</div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)', marginTop: '1px' }}>{date?.getDate() ?? ''}</div>
               </div>
-            )
-          })}
-        </div>
+
+              {entry ? (
+                <button
+                  onClick={() => onCardClick(entry)}
+                  style={{
+                    background: isSelected ? 'var(--bg-card-orange)' : 'var(--bg-surface)',
+                    border: `1px solid ${isSelected ? 'var(--orange)' : 'var(--border-orange)'}`,
+                    borderRadius: '8px', padding: '7px 6px', cursor: 'pointer',
+                    textAlign: 'left', width: '100%',
+                  }}
+                >
+                  {entry.training.tags && (
+                    <div style={{ fontSize: '7px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', marginBottom: '2px', color: entry.training.tags.color, background: entry.training.tags.color + '18', padding: '1px 5px', borderRadius: '3px', display: 'inline-block' }}>
+                      {entry.training.tags.name}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '8px', color: 'var(--orange)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '2px' }}>
+                    {TRAINING_TYPE_LABELS[entry.training.type] ?? entry.training.type}
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-primary)', fontWeight: 600, lineHeight: 1.3 }}>
+                    {entry.training.title.length > 12 ? entry.training.title.slice(0, 11) + '…' : entry.training.title}
+                  </div>
+                  {entry.training.distance_m && (
+                    <div style={{ fontSize: '8px', color: 'var(--text-secondary)', marginTop: '3px' }}>{(entry.training.distance_m / 1000).toFixed(1)}km</div>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={() => onSlotClick(selectedWeek, dow)}
+                  style={{
+                    border: `1px dashed ${isSelected ? 'var(--orange)' : 'var(--border-default)'}`,
+                    borderRadius: '8px', minHeight: '52px', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', color: isSelected ? 'var(--orange)' : 'var(--text-tertiary)',
+                    fontSize: '18px', cursor: 'pointer', background: isSelected ? 'var(--orange-subtle)' : 'transparent',
+                    width: '100%',
+                  }}
+                >+</button>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
