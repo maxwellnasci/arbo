@@ -31,6 +31,7 @@ export function useProgresso(studentId: string) {
   const [streak, setStreak] = useState(0);
   const [paceHistory, setPaceHistory] = useState<{ label: string; pace: number }[]>([]);
   const [recentCheckins, setRecentCheckins] = useState<CheckinData[]>([]);
+  const [allCheckins, setAllCheckins] = useState<CheckinData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,8 +67,9 @@ export function useProgresso(studentId: string) {
         });
         setRecords(recordsMap);
 
-        // Recent checkins (first 5)
+        // Recent checkins (first 5) + lista completa (já ordenada desc por created_at)
         setRecentCheckins(checkinsData.slice(0, 5));
+        setAllCheckins(checkinsData);
 
         // Streak calculation
         const weekSet = new Set<string>();
@@ -168,7 +170,10 @@ export function useProgresso(studentId: string) {
     setRecentCheckins(cs => cs.map(c =>
       c.id === checkinId ? { ...c, professor_feedback_seen_at: seenAt } : c
     ));
+    setAllCheckins(cs => cs.map(c =>
+      c.id === checkinId ? { ...c, professor_feedback_seen_at: seenAt } : c
+    ));
   };
 
-  return { records, streak, paceHistory, recentCheckins, isLoading, error, markFeedbackSeen };
+  return { records, streak, paceHistory, recentCheckins, allCheckins, isLoading, error, markFeedbackSeen };
 }

@@ -20,6 +20,7 @@ import styles from './AlunoDashboard.module.css'
 const AlunoChat = lazy(() => import('./AlunoChat'))
 const AlunoProgresso = lazy(() => import('./AlunoProgresso'))
 const AlunoPerfil = lazy(() => import('./AlunoPerfil'))
+const AlunoCalendario = lazy(() => import('./AlunoCalendario'))
 const CheckinSheet = lazy(() => import('../../components/aluno/CheckinSheet'))
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -450,13 +451,9 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
           <AlunoPerfil studentId={effectiveUserId} isPreview={isPreview} />
         </Suspense>
       ) : activeTab === 'calendario' ? (
-        <main className={styles.container}>
-          <div className={styles.emptyState}>
-            <Calendar size={32} className={styles.emptyIcon} />
-            <p className={styles.emptyTitle}>Calendário Completo</p>
-            <p className={styles.emptySubtext}>Em breve você poderá ver todos os ciclos aqui.</p>
-          </div>
-        </main>
+        <Suspense fallback={<SkeletonLoader />}>
+          <AlunoCalendario studentId={effectiveUserId} />
+        </Suspense>
       ) : (
         <main className={styles.container}>
 
