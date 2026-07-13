@@ -5,6 +5,29 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-07-13 (Limpeza de repositório + loop de feedback Strava/professor/aluno)
+
+Parte do trabalho do dia 2026-07-12 foi feita fora do Claude Code (Gemini/Antigravity), incluindo um commit (`e489de0`) que trouxe consigo vários artefatos indevidos. Esta sessão começou reconciliando esse estado antes de seguir com features novas.
+
+**Limpeza de repositório (4 commits):**
+- `e0dfb39` — remoção de artefatos comitados por engano no `e489de0`: 4 arquivos `.docx` do professor (planilhas-fonte da carga de treinos — desversionados via `git rm --cached`, mantidos fisicamente no disco), `supabase/.temp/*` (estado de sessão do CLI), um patch de debug órfão em `strava-sync/index.ts.patch` (confirmado que os 2 `console.log` nunca foram aplicados ao arquivo real antes de remover) e `tsconfig.tsbuildinfo`/`tsconfig.node.tsbuildinfo`.
+- `3f8e2af` — **achado mais sério da limpeza:** `vite.config.js` e `vite.config.d.ts` (cópias compiladas de `vite.config.ts`, geradas por um `tsc` rodado por engano contra o arquivo de config) estavam comitadas no git. O Vite resolve o arquivo de configuração nesta ordem de prioridade: `.js` → `.mjs` → `.ts` → ... — ou seja, **o `.js` desatualizado era o que realmente rodava em dev/build, não o `.ts`**. Confirmado por diff semântico normalizado que os dois eram idênticos em comportamento antes de remover; depois de remover, build limpo + `cacheId: 'arbo-v6'` presente no `sw.js` gerado confirmaram que o Vite passou a carregar o `.ts` corretamente.
+- `042171b` — `.gitignore` ganhou `*.docx`, `supabase/.temp/`, `*.tsbuildinfo`, `vite.config.js`, `vite.config.d.ts` e `*.patch` para prevenir recorrência.
+- `cdf8ccd` — `CLAUDE.md` atualizado com a feature de check-in Strava e os 2 fixes de auth do dia 2026-07-12, que não tinham sido documentados aqui (a sessão externa não escreve neste arquivo).
+
+**Dados ricos do Strava no painel do professor + feedback real (commit `0adfeff`):**
+- Investigação prévia (sem código) confirmou que `strava_activities.raw` (jsonb) já guarda `average_heartrate`, `max_heartrate`, `average_cadence`, `total_elevation_gain`, `suffer_score`, `moving_time`/`elapsed_time` — tudo isso vindo de graça na resposta de `GET /athlete/activities` que a Edge Function `strava-sync` já chama, mas só distância/tempo/pace eram persistidos em coluna própria. Nenhum escopo OAuth novo necessário (`activity:read_all` já cobre); splits/laps/zonas de FC ficaram de fora por exigirem endpoints extra (`/activities/{id}`, `/activities/{id}/zones`) não chamados hoje.
+- A mesma investigação encontrou a aba "Check-ins" do admin (`AdminAlunoDetail.tsx`) já lendo `strava_activity_id` do banco mas nunca exibindo nada com ele, e a seção "Atividades Strava" com um `<textarea>` de feedback que nunca foi conectado a estado nenhum (ver Caso 15 no `PORTFOLIO_DEBUG_CASES.md`).
+- Implementado: `useStravaActivityRaw.ts` (busca `raw` sob demanda por `strava_id`), `CheckinDetailModal.tsx` (aba Check-ins vira clicável, mostra FC média/máxima, cadência — corrigida ×2, o Strava reporta por perna —, elevação e "Esforço Relativo" só quando o campo existir no JSON), migration `checkins.professor_feedback`/`professor_feedback_at`, e remoção do textarea decorativo.
+
+**Feedback visível para o aluno (commit `bb52b43`):**
+- Investigação prévia descartou dois padrões de "visto/não visto" como reaproveitáveis: `AdminPRFeed.tsx` não tem nenhum, e `messages.read_at`/`markAsRead` em `useChat.ts` existem mas nunca são chamados em lugar nenhum do app — mesma classe de risco do textarea fantasma, um recurso meio-construído.
+- Decisão: rastrear "visto" de verdade (`checkins.professor_feedback_seen_at`), escrito pelo próprio aluno (a policy `checkins_update` já cobre `student_id = auth.uid()`, nenhuma policy nova).
+- `CheckinDetailModal.tsx` promovido de `components/admin/` para `components/shared/` (mesmo padrão cross-role de `PaceCalculator.tsx`), ganhou prop `readOnly` (textarea editável vira bloco de texto estático). `AlunoProgresso.tsx`: histórico vira clicável, badge "💬 Feedback do professor" enquanto `professor_feedback_seen_at` for `null`, marcado ao abrir (fire-and-forget, só atualiza estado local se o `UPDATE` confirmar — diferente do `markAsRead` nunca chamado, este de fato é usado).
+- Fecha o loop: Strava sincroniza → professor vê dado rico + escreve feedback → aluno é notificado → aluno lê.
+
+---
+
 ## O que foi feito em 2026-07-12 (Sessão de Bugfixing Strava)
 
 **Fix: Sincronização do Strava falhando silenciosamente no Check-in**

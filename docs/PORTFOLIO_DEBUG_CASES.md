@@ -428,3 +428,21 @@ A rotina foi refatorada para alinhar-se perfeitamente com os guidelines exigidos
 Adicionalmente, scripts temporários que rodavam localmente (como `test-sync.js`) foram removidos do root do diretório para purgar alertas colaterais no linter, restaurando a pipeline a zero defeitos.
 
 **Conhecimento demonstrado:** Alinhamento avançado com os paradigmas de otimização de renderização do React (evitando cascading renders síncronos no corpo do effect), gerenciamento de cleanup functions para anular conditions race, e disciplina para resolver quebras severas de CI causadas por configurações de ESLint restritas (`zero-error tolerance`).
+
+---
+
+## Estudo de Caso 15: Campo de Feedback Decorativo, Sem Persistência Real (React / Estado)
+
+**O Cenário:**
+A seção "Atividades Strava" no painel do professor (`AdminAlunoDetail.tsx`) exibia, para cada atividade sincronizada, um `<textarea>` com placeholder "Feedback do professor sobre esta atividade...", estilizado igual a qualquer outro campo do app e posicionado corretamente no layout.
+
+**O Sintoma:**
+Nenhum. Não havia erro no console, nenhum corte de tela, nenhuma falha visível. O professor digitava um feedback, o campo aceitava o texto normalmente — e ao trocar de aba ou recarregar a página, o texto simplesmente desaparecia, sem nenhum aviso de que nada tinha sido salvo.
+
+**O Diagnóstico:**
+Um `grep` por todas as ocorrências do identificador daquele elemento no código-fonte (`stravaFeedbackInput`) retornou apenas o próprio JSX e as regras de CSS correspondentes — nenhum `value`, nenhum `onChange`, nenhum `useState` associado, em nenhum outro lugar do arquivo. O campo nunca teve nenhuma ligação com estado ou com o backend desde que foi criado; era puramente decorativo.
+
+**A Solução:**
+O campo foi substituído por uma feature real: colunas `checkins.professor_feedback`/`professor_feedback_at` no banco, um modal de detalhe do check-in (`CheckinDetailModal.tsx`) com `textarea` de verdade (`value`/`onChange`/estado controlado) e botão "Salvar feedback" que persiste via `UPDATE` no Supabase.
+
+**Conhecimento demonstrado:** Mesma classe de risco do Caso 11 (algo que parece funcionar mas não está conectado a lugar nenhum) — porém este é ainda mais traiçoeiro, porque **não existe nenhum sintoma que dispare a investigação por conta própria**: sem erro, sem tela quebrada, sem log. Só foi descoberto porque o usuário tentou usar a feature de verdade e notou que o feedback nunca chegava ao aluno. Lição prática: antes de considerar um formulário "pronto", confirmar explicitamente (por leitura de código, não só visual) que todo campo tem um `onChange` real conectado a um estado — renderizar bonito não é o mesmo que funcionar.
