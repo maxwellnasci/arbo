@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { MessageSquare, RefreshCw, ChevronLeft, Trash2, Pencil, Footprints, Bot, BarChart3, Lightbulb, Target } from 'lucide-react'
 import styles from './AdminAlunoDetail.module.css'
 import AdminChatPanel from '../../components/admin/AdminChatPanel'
-import CheckinDetailModal from '../../components/admin/CheckinDetailModal'
+import CheckinDetailModal from '../../components/shared/CheckinDetailModal'
 import { supabase } from '../../lib/supabase'
 
 const levelLabel: Record<string, string> = {

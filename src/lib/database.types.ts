@@ -79,6 +79,7 @@ export type Database = {
           plan_id: string | null
           professor_feedback: string | null
           professor_feedback_at: string | null
+          professor_feedback_seen_at: string | null
           strava_activity_id: number | null
           student_id: string
           training_id: string | null
@@ -97,6 +98,7 @@ export type Database = {
           plan_id?: string | null
           professor_feedback?: string | null
           professor_feedback_at?: string | null
+          professor_feedback_seen_at?: string | null
           strava_activity_id?: number | null
           student_id: string
           training_id?: string | null
@@ -115,6 +117,7 @@ export type Database = {
           plan_id?: string | null
           professor_feedback?: string | null
           professor_feedback_at?: string | null
+          professor_feedback_seen_at?: string | null
           strava_activity_id?: number | null
           student_id?: string
           training_id?: string | null

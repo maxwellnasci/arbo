@@ -144,6 +144,17 @@
   border-color: var(--orange);
 }
 
+.feedbackReadOnly {
+  background: var(--orange-subtle);
+  border: 1px solid var(--orange-border);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .feedbackFooter {
   display: flex;
   align-items: center;

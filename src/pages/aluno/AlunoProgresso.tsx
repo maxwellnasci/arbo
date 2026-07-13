@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useProgresso } from '../../hooks/useProgresso'
+import type { CheckinData } from '../../hooks/useProgresso'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import { Flame, Target, Calculator } from 'lucide-react'
 import { motion } from 'framer-motion'
 import PaceCalculator from '../../components/shared/PaceCalculator'
+import CheckinDetailModal from '../../components/shared/CheckinDetailModal'
 import styles from './AlunoProgresso.module.css'
 
 function formatTime(seconds: number): string {
@@ -38,8 +40,16 @@ const EFFORT_EMOJIS: Record<number, string> = {
 }
 
 export default function AlunoProgresso({ studentId }: { studentId: string }) {
-  const { records, streak, paceHistory, recentCheckins, isLoading } = useProgresso(studentId)
+  const { records, streak, paceHistory, recentCheckins, isLoading, markFeedbackSeen } = useProgresso(studentId)
   const [showCalculator, setShowCalculator] = useState(false)
+  const [selectedCheckin, setSelectedCheckin] = useState<CheckinData | null>(null)
+
+  function handleOpenCheckin(checkin: CheckinData) {
+    setSelectedCheckin(checkin)
+    if (checkin.professor_feedback && !checkin.professor_feedback_seen_at) {
+      markFeedbackSeen(checkin.id)
+    }
+  }
 
   if (isLoading) {
     return <div className={styles.loadingState}>Carregando progresso...</div>
@@ -182,36 +192,47 @@ export default function AlunoProgresso({ studentId }: { studentId: string }) {
               const pace = checkin.actual_pace_seconds_per_km
               const emoji = checkin.perceived_effort ? EFFORT_EMOJIS[checkin.perceived_effort] : '✅'
               
+              const hasUnseenFeedback = !!checkin.professor_feedback && !checkin.professor_feedback_seen_at
+
               return (
-                <motion.div 
-                  key={checkin.id} 
-                  className={styles.historyCard}
+                <motion.div
+                  key={checkin.id}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.08, duration: 0.3 }}
                 >
-                  <div className={styles.historyHeader}>
-                    <span className={styles.historyDate}>
-                      {new Date(checkin.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                    </span>
-                    <span className={styles.historyEmoji}>{emoji}</span>
-                  </div>
-                  
-                  <div className={styles.historyTitle}>
-                    {checkin.trainings?.title || (checkin.trainings?.type?.toUpperCase() ?? '')}
-                  </div>
-
-                  <div className={styles.historyStats}>
-                    {dist && <span>{(dist / 1000).toFixed(2).replace('.', ',')} km</span>}
-                    {time && pace && <span> • </span>}
-                    {pace && <span>Pace {formatTime(pace)}</span>}
-                  </div>
-
-                  {checkin.notes && (
-                    <div className={styles.historyNotes}>
-                      "{checkin.notes}"
+                  <button
+                    type="button"
+                    className={styles.historyCard}
+                    onClick={() => handleOpenCheckin(checkin)}
+                  >
+                    <div className={styles.historyHeader}>
+                      <span className={styles.historyDate}>
+                        {new Date(checkin.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                      </span>
+                      <span className={styles.historyEmoji}>{emoji}</span>
                     </div>
-                  )}
+
+                    <div className={styles.historyTitle}>
+                      {checkin.trainings?.title || (checkin.trainings?.type?.toUpperCase() ?? '')}
+                    </div>
+
+                    <div className={styles.historyStats}>
+                      {dist && <span>{(dist / 1000).toFixed(2).replace('.', ',')} km</span>}
+                      {time && pace && <span> • </span>}
+                      {pace && <span>Pace {formatTime(pace)}</span>}
+                    </div>
+
+                    {checkin.notes && (
+                      <div className={styles.historyNotes}>
+                        "{checkin.notes}"
+                      </div>
+                    )}
+
+                    {hasUnseenFeedback && (
+                      <div className={styles.historyFeedbackBadge}>💬 Feedback do professor</div>
+                    )}
+                  </button>
                 </motion.div>
               )
             })
@@ -222,6 +243,14 @@ export default function AlunoProgresso({ studentId }: { studentId: string }) {
       </section>
 
       <PaceCalculator isOpen={showCalculator} onClose={() => setShowCalculator(false)} />
+
+      {selectedCheckin && (
+        <CheckinDetailModal
+          checkin={selectedCheckin}
+          onClose={() => setSelectedCheckin(null)}
+          readOnly
+        />
+      )}
     </div>
   )
 }

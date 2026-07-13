@@ -6,8 +6,24 @@ import { ptBR } from 'date-fns/locale'
 import { Activity, HeartPulse, Gauge, Mountain, Flame, Timer } from 'lucide-react'
 import { toast } from 'sonner'
 import { useStravaActivityRaw } from '../../hooks/useStravaActivityRaw'
-import type { CheckinWithTraining } from '../../hooks/useAdminAlunoDetail'
 import styles from './CheckinDetailModal.module.css'
+
+// Forma mínima estrutural usada pelo modal — tanto CheckinWithTraining (admin,
+// com Training completo em `trainings`) quanto CheckinData (aluno, com
+// `trainings` mais enxuto) satisfazem este tipo sem cast.
+export type CheckinDetailData = {
+  id: string
+  created_at: string | null
+  actual_distance_m: number | null
+  actual_duration_seconds: number | null
+  actual_pace_seconds_per_km: number | null
+  perceived_effort: number | null
+  notes: string | null
+  strava_activity_id: number | null
+  professor_feedback: string | null
+  professor_feedback_at: string | null
+  trainings: { title: string; type: string } | null
+}
 
 const effortEmoji: Record<number, string> = { 1: '😴', 2: '😌', 3: '😊', 4: '😤', 5: '🥵' }
 const typeLabel: Record<string, string> = {
@@ -45,12 +61,13 @@ function formatClock(seconds: number): string {
 }
 
 type CheckinDetailModalProps = {
-  checkin: CheckinWithTraining
+  checkin: CheckinDetailData
   onClose: () => void
-  onSaveFeedback: (checkinId: string, feedback: string) => Promise<string>
+  readOnly?: boolean
+  onSaveFeedback?: (checkinId: string, feedback: string) => Promise<string>
 }
 
-export default function CheckinDetailModal({ checkin, onClose, onSaveFeedback }: CheckinDetailModalProps) {
+export default function CheckinDetailModal({ checkin, onClose, readOnly = false, onSaveFeedback }: CheckinDetailModalProps) {
   const { raw: stravaRaw, isLoading: isStravaLoading } = useStravaActivityRaw(checkin.strava_activity_id ?? null)
   const [feedback, setFeedback] = useState(checkin.professor_feedback ?? '')
   const [savedAt, setSavedAt] = useState(checkin.professor_feedback_at ?? null)
@@ -59,6 +76,7 @@ export default function CheckinDetailModal({ checkin, onClose, onSaveFeedback }:
   const tType = checkin.trainings?.type ? (typeLabel[checkin.trainings.type] ?? checkin.trainings.type) : 'Treino'
 
   async function handleSaveFeedback() {
+    if (!onSaveFeedback) return
     setIsSaving(true)
     try {
       const feedbackAt = await onSaveFeedback(checkin.id, feedback)
@@ -82,6 +100,8 @@ export default function CheckinDetailModal({ checkin, onClose, onSaveFeedback }:
     || stravaRaw.suffer_score != null
     || hasMovingGap
   )
+
+  const showFeedbackSection = !readOnly || !!checkin.professor_feedback
 
   return createPortal(
     <AnimatePresence>
@@ -162,24 +182,32 @@ export default function CheckinDetailModal({ checkin, onClose, onSaveFeedback }:
             </div>
           )}
 
-          <div className={styles.section}>
-            <h3 className={styles.sectionTitle}>Feedback do professor</h3>
-            <textarea
-              className={styles.feedbackTextarea}
-              value={feedback}
-              onChange={e => setFeedback(e.target.value)}
-              placeholder="Deixe um feedback sobre este treino..."
-              rows={3}
-            />
-            <div className={styles.feedbackFooter}>
-              <span className={styles.feedbackSavedAt}>
-                {savedAt ? `Enviado em ${format(new Date(savedAt), "dd/MM 'às' HH:mm", { locale: ptBR })}` : ''}
-              </span>
-              <button className={styles.saveBtn} onClick={handleSaveFeedback} disabled={isSaving}>
-                {isSaving ? 'Salvando...' : 'Salvar feedback'}
-              </button>
+          {showFeedbackSection && (
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>Feedback do professor</h3>
+              {readOnly ? (
+                <div className={styles.feedbackReadOnly}>{checkin.professor_feedback}</div>
+              ) : (
+                <>
+                  <textarea
+                    className={styles.feedbackTextarea}
+                    value={feedback}
+                    onChange={e => setFeedback(e.target.value)}
+                    placeholder="Deixe um feedback sobre este treino..."
+                    rows={3}
+                  />
+                  <div className={styles.feedbackFooter}>
+                    <span className={styles.feedbackSavedAt}>
+                      {savedAt ? `Enviado em ${format(new Date(savedAt), "dd/MM 'às' HH:mm", { locale: ptBR })}` : ''}
+                    </span>
+                    <button className={styles.saveBtn} onClick={handleSaveFeedback} disabled={isSaving}>
+                      {isSaving ? 'Salvando...' : 'Salvar feedback'}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>,

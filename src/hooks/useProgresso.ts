@@ -7,7 +7,7 @@ interface RecordData {
   time_seconds: number;
 }
 
-interface CheckinData {
+export interface CheckinData {
   id: string;
   actual_duration_seconds: number | null;
   actual_distance_m: number | null;
@@ -15,6 +15,10 @@ interface CheckinData {
   perceived_effort: number | null;
   notes: string | null;
   created_at: string;
+  strava_activity_id: number | null;
+  professor_feedback: string | null;
+  professor_feedback_at: string | null;
+  professor_feedback_seen_at: string | null;
   trainings: {
     title: string;
     distance_m: number | null;
@@ -41,7 +45,7 @@ export function useProgresso(studentId: string) {
         const [recordsResponse, checkinsResponse] = await Promise.all([
           supabase.from('records').select('distance_category, time_seconds').eq('student_id', studentId).limit(50),
           supabase.from('checkins')
-            .select('id, actual_duration_seconds, actual_distance_m, actual_pace_seconds_per_km, perceived_effort, notes, created_at, trainings(title, distance_m, type)')
+            .select('id, actual_duration_seconds, actual_distance_m, actual_pace_seconds_per_km, perceived_effort, notes, created_at, strava_activity_id, professor_feedback, professor_feedback_at, professor_feedback_seen_at, trainings(title, distance_m, type)')
             .eq('student_id', studentId)
             .order('created_at', { ascending: false })
             .limit(100),
@@ -151,5 +155,20 @@ export function useProgresso(studentId: string) {
     };
   }, [studentId]);
 
-  return { records, streak, paceHistory, recentCheckins, isLoading, error };
+  const markFeedbackSeen = async (checkinId: string) => {
+    const seenAt = new Date().toISOString();
+    const { error: updErr } = await supabase
+      .from('checkins')
+      .update({ professor_feedback_seen_at: seenAt })
+      .eq('id', checkinId);
+    if (updErr) {
+      console.error('Erro ao marcar feedback como visto:', updErr.message);
+      return;
+    }
+    setRecentCheckins(cs => cs.map(c =>
+      c.id === checkinId ? { ...c, professor_feedback_seen_at: seenAt } : c
+    ));
+  };
+
+  return { records, streak, paceHistory, recentCheckins, isLoading, error, markFeedbackSeen };
 }
