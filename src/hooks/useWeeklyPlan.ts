@@ -321,7 +321,7 @@ async function fetchWithRetry(
           trainingIds.length > 0
             ? supabase
                 .from('checkins')
-                .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
+                .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, professor_feedback, professor_feedback_at, student_id')
                 .eq('student_id', userId)
                 .in('training_id', trainingIds)
             : Promise.resolve({ data: null, error: null }),
@@ -357,7 +357,7 @@ async function fetchWithRetry(
             .order('day_of_week'),
           supabase
             .from('checkins')
-            .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
+            .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, professor_feedback, professor_feedback_at, student_id')
             .eq('student_id', userId)
             .eq('plan_id', plan.id),
         ])
@@ -402,7 +402,7 @@ async function fetchWithRetry(
           .order('day_of_week'),
         supabase
           .from('checkins')
-          .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, student_id')
+          .select('id, training_id, actual_distance_m, actual_duration_seconds, actual_pace_seconds_per_km, perceived_effort, approved, approved_by, completed_at, created_at, notes, plan_id, strava_activity_id, professor_feedback, professor_feedback_at, student_id')
           .eq('student_id', userId)
           .eq('plan_id', plan.id),
       ])

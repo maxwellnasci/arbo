@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAdminAlunoDetail } from '../../hooks/useAdminAlunoDetail'
+import type { CheckinWithTraining } from '../../hooks/useAdminAlunoDetail'
 import { useAdminStravaActivities } from '../../hooks/useAdminStravaActivities'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
@@ -9,6 +10,7 @@ import { toast } from 'sonner'
 import { MessageSquare, RefreshCw, ChevronLeft, Trash2, Pencil, Footprints, Bot, BarChart3, Lightbulb, Target } from 'lucide-react'
 import styles from './AdminAlunoDetail.module.css'
 import AdminChatPanel from '../../components/admin/AdminChatPanel'
+import CheckinDetailModal from '../../components/admin/CheckinDetailModal'
 import { supabase } from '../../lib/supabase'
 
 const levelLabel: Record<string, string> = {
@@ -65,7 +67,7 @@ function formatStravaDuration(totalSeconds: number): string {
 export default function AdminAlunoDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const { profile, group, checkins, records, anamnesis, allGroups, metrics, isLoading, error, changeGroup, updateName, email } = useAdminAlunoDetail(id)
+  const { profile, group, checkins, records, anamnesis, allGroups, metrics, isLoading, error, changeGroup, updateName, updateCheckinFeedback, email } = useAdminAlunoDetail(id)
   const {
     activities: stravaActivities,
     isLoading: isStravaLoading,
@@ -76,6 +78,7 @@ export default function AdminAlunoDetail() {
   } = useAdminStravaActivities(id)
 
   const [activeTab, setActiveTab] = useState<'checkins' | 'records' | 'anamnesis'>('checkins')
+  const [selectedCheckin, setSelectedCheckin] = useState<CheckinWithTraining | null>(null)
   const [isChangingGroup, setIsChangingGroup] = useState(false)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -336,7 +339,12 @@ export default function AdminAlunoDetail() {
                 const tType = c.trainings?.type ? (typeLabel[c.trainings.type] ?? c.trainings.type) : 'Treino'
                 
                 return (
-                  <div key={c.id} className={styles.checkinCard}>
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={styles.checkinCard}
+                    onClick={() => setSelectedCheckin(c)}
+                  >
                     <div className={styles.checkinHeader}>
                       <div className={styles.checkinTitle}>
                         🏃 {tType} {c.trainings?.title ? `— ${c.trainings.title}` : ''}
@@ -349,9 +357,11 @@ export default function AdminAlunoDetail() {
                       {c.actual_pace_seconds_per_km && <span>Pace: {formatPace(c.actual_pace_seconds_per_km)}</span>}
                       {c.actual_duration_seconds && <span>Duração: {formatDuration(c.actual_duration_seconds)}</span>}
                       {c.perceived_effort && <span>Esforço: {effortEmoji[c.perceived_effort]} {c.perceived_effort}/5</span>}
+                      {c.strava_activity_id != null && <span><Footprints size={12} style={{ verticalAlign: 'text-bottom' }} /> Strava</span>}
+                      {c.professor_feedback && <span>💬 Com feedback</span>}
                     </div>
                     {c.notes && <div className={styles.checkinNotes}>"{c.notes}"</div>}
-                  </div>
+                  </button>
                 )
               })
             )}
@@ -456,11 +466,6 @@ export default function AdminAlunoDetail() {
                   <span>Pace: {formatPace(activity.paceSecondsPerKm)}</span>
                   <span>Duração: {formatStravaDuration(activity.durationSeconds)}</span>
                 </div>
-                <textarea
-                  className={styles.stravaFeedbackInput}
-                  placeholder="Feedback do professor sobre esta atividade..."
-                  rows={2}
-                />
               </div>
             ))}
           </div>
@@ -525,6 +530,14 @@ export default function AdminAlunoDetail() {
         studentId={id || ''}
         studentName={profile.full_name || 'Aluno'}
       />
+
+      {selectedCheckin && (
+        <CheckinDetailModal
+          checkin={selectedCheckin}
+          onClose={() => setSelectedCheckin(null)}
+          onSaveFeedback={updateCheckinFeedback}
+        />
+      )}
 
       {/* Delete confirmation modal */}
       {showDeleteModal && (

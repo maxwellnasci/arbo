@@ -170,6 +170,11 @@
 }
 
 .checkinCard {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: 16px;
@@ -422,26 +427,6 @@
   gap: 16px;
   flex-wrap: wrap;
   font-weight: 500;
-}
-
-.stravaFeedbackInput {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  color: var(--text-primary);
-  font-size: 13px;
-  font-family: inherit;
-  padding: 10px 12px;
-  resize: vertical;
-  outline: none;
-}
-
-.stravaFeedbackInput:focus {
-  border-color: var(--orange);
-}
-
-.stravaFeedbackInput::placeholder {
-  color: var(--text-tertiary);
 }
 
 .analysisCard {

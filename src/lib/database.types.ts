@@ -77,6 +77,8 @@ export type Database = {
           notes: string | null
           perceived_effort: number | null
           plan_id: string | null
+          professor_feedback: string | null
+          professor_feedback_at: string | null
           strava_activity_id: number | null
           student_id: string
           training_id: string | null
@@ -93,6 +95,8 @@ export type Database = {
           notes?: string | null
           perceived_effort?: number | null
           plan_id?: string | null
+          professor_feedback?: string | null
+          professor_feedback_at?: string | null
           strava_activity_id?: number | null
           student_id: string
           training_id?: string | null
@@ -109,6 +113,8 @@ export type Database = {
           notes?: string | null
           perceived_effort?: number | null
           plan_id?: string | null
+          professor_feedback?: string | null
+          professor_feedback_at?: string | null
           strava_activity_id?: number | null
           student_id?: string
           training_id?: string | null
