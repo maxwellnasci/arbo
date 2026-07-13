@@ -13,20 +13,27 @@ export default function SetPassword() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // 1. Verifica se a URL já possui um erro do Supabase Auth no hash (ex: link expirado)
-    const hashParams = new URLSearchParams(window.location.hash.substring(1))
-    const hashError = hashParams.get('error_description') || hashParams.get('error')
-    
-    if (hashError) {
-      // Se for otp_expired, mostramos uma mensagem amigável
-      if (hashParams.get('error_code') === 'otp_expired') {
-        setError('Este link de convite expirou ou já foi utilizado. Peça ao seu professor para enviá-lo novamente.')
-      } else {
-        setError(decodeURIComponent(hashError))
+    let cancelled = false
+
+    async function checkHash() {
+      // 1. Verifica se a URL já possui um erro do Supabase Auth no hash (ex: link expirado)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const hashError = hashParams.get('error_description') || hashParams.get('error')
+      
+      if (hashError) {
+        if (!cancelled) {
+          // Se for otp_expired, mostramos uma mensagem amigável
+          if (hashParams.get('error_code') === 'otp_expired') {
+            setError('Este link de convite expirou ou já foi utilizado. Peça ao seu professor para enviá-lo novamente.')
+          } else {
+            setError(decodeURIComponent(hashError))
+          }
+          setReady(true)
+        }
       }
-      setReady(true)
-      return
     }
+    
+    checkHash()
 
     // 2. Supabase troca o token do hash por sessão automaticamente
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -37,10 +44,13 @@ export default function SetPassword() {
 
     // 3. Verifica se já há sessão ativa (ex: usuário recarregou a página)
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true)
+      if (data.session && !cancelled) setReady(true)
     }).catch(() => { /* ignora erro silencioso */ })
 
-    return () => subscription?.unsubscribe()
+    return () => {
+      cancelled = true
+      subscription?.unsubscribe()
+    }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {

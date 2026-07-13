@@ -53,10 +53,36 @@ export default defineConfig({
                 ]
             },
             workbox: {
-                cacheId: 'arbo-v5',
+                cacheId: 'arbo-v6',
                 skipWaiting: true,
                 clientsClaim: true,
+                // Desliga o navigateFallback padrão do vite-plugin-pwa ('index.html'), que gera um
+                // NavigationRoute preso ao precache: o documento HTML fica congelado com os headers
+                // (CSP, security headers) de quando foi cacheado pela primeira vez, porque mudanças
+                // só em vercel.json não alteram os bytes do index.html — a revisão do precache nunca
+                // muda, então o SW nunca refaz o fetch. Vercel já resolve o fallback de SPA via
+                // rewrites (vercel.json), então essa rota do SW é redundante para roteamento; o
+                // navigate abaixo troca por NetworkFirst para o documento sempre vir da rede quando
+                // online, sem ficar preso a headers antigos entre deploys.
+                navigateFallback: undefined,
                 runtimeCaching: [
+                    // Documento HTML (navegação) — NetworkFirst: garante que headers (CSP etc.) e
+                    // referências a novos bundles cheguem sempre que houver rede disponível.
+                    {
+                        urlPattern: ({ request }) => request.mode === 'navigate',
+                        handler: 'NetworkFirst',
+                        options: {
+                            cacheName: 'html-cache',
+                            networkTimeoutSeconds: 5,
+                            expiration: {
+                                maxEntries: 5,
+                                maxAgeSeconds: 24 * 60 * 60,
+                            },
+                            cacheableResponse: {
+                                statuses: [0, 200],
+                            },
+                        },
+                    },
                     // Supabase REST API — NetworkOnly: dado de aplicação nunca pode vir de cache obsoleto
                     {
                         urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/.*/i,
