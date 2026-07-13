@@ -13,19 +13,34 @@ export default function SetPassword() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Supabase troca o token do hash por sessão automaticamente (detectSessionInUrl padrão)
+    // 1. Verifica se a URL já possui um erro do Supabase Auth no hash (ex: link expirado)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1))
+    const hashError = hashParams.get('error_description') || hashParams.get('error')
+    
+    if (hashError) {
+      // Se for otp_expired, mostramos uma mensagem amigável
+      if (hashParams.get('error_code') === 'otp_expired') {
+        setError('Este link de convite expirou ou já foi utilizado. Peça ao seu professor para enviá-lo novamente.')
+      } else {
+        setError(decodeURIComponent(hashError))
+      }
+      setReady(true)
+      return
+    }
+
+    // 2. Supabase troca o token do hash por sessão automaticamente
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         setReady(true)
       }
     })
 
-    // Verifica se já há sessão ativa (ex: usuário recarregou a página)
+    // 3. Verifica se já há sessão ativa (ex: usuário recarregou a página)
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setReady(true)
-    }).catch(() => { /* link pode estar expirado — aguarda evento do onAuthStateChange */ })
+    }).catch(() => { /* ignora erro silencioso */ })
 
-    return () => subscription.unsubscribe()
+    return () => subscription?.unsubscribe()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,54 +128,63 @@ export default function SetPassword() {
         <h2 style={styles.title}>Defina sua senha</h2>
         <p style={styles.subtitle}>Escolha uma senha para acessar o Arbo.</p>
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Seu nome completo</label>
-            <input
-              type="text"
-              placeholder="Ex: João da Silva"
-              value={nome}
-              onChange={e => setNome(e.target.value)}
-              required
-              style={styles.input}
-              autoComplete="name"
-            />
+        {error && error.includes('expirou') ? (
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <p style={{ ...styles.error, fontSize: '15px', lineHeight: 1.5, marginBottom: '24px' }}>{error}</p>
+            <button onClick={() => navigate('/login')} style={styles.button}>
+              Voltar ao Login
+            </button>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} style={styles.form}>
+            <div style={styles.field}>
+              <label style={styles.label}>Seu nome completo</label>
+              <input
+                type="text"
+                placeholder="Ex: João da Silva"
+                value={nome}
+                onChange={e => setNome(e.target.value)}
+                required
+                style={styles.input}
+                autoComplete="name"
+              />
+            </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Nova senha</label>
-            <input
-              type="password"
-              placeholder="Mínimo 8 caracteres"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              minLength={8}
-              required
-              style={styles.input}
-              autoComplete="new-password"
-            />
-          </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Nova senha</label>
+              <input
+                type="password"
+                placeholder="Mínimo 8 caracteres"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                minLength={8}
+                required
+                style={styles.input}
+                autoComplete="new-password"
+              />
+            </div>
 
-          <div style={styles.field}>
-            <label style={styles.label}>Confirmar senha</label>
-            <input
-              type="password"
-              placeholder="Repita a senha"
-              value={confirm}
-              onChange={e => setConfirm(e.target.value)}
-              minLength={8}
-              required
-              style={styles.input}
-              autoComplete="new-password"
-            />
-          </div>
+            <div style={styles.field}>
+              <label style={styles.label}>Confirmar senha</label>
+              <input
+                type="password"
+                placeholder="Repita a senha"
+                value={confirm}
+                onChange={e => setConfirm(e.target.value)}
+                minLength={8}
+                required
+                style={styles.input}
+                autoComplete="new-password"
+              />
+            </div>
 
-          {error && <p style={styles.error}>{error}</p>}
+            {error && <p style={styles.error}>{error}</p>}
 
-          <button type="submit" style={styles.button} disabled={loading}>
-            {loading ? 'Salvando...' : 'Confirmar senha'}
-          </button>
-        </form>
+            <button type="submit" style={styles.button} disabled={loading}>
+              {loading ? 'Salvando...' : 'Confirmar senha'}
+            </button>
+          </form>
+        )}
       </div>
     </main>
   )
