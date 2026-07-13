@@ -25,3 +25,20 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Documentos de conteúdo (planilhas de treino do professor etc.) — nunca
+# pertencem ao repositório de código; force-add se algum dia for necessário
+*.docx
+
+# Supabase CLI — estado de sessão local (project ref, pooler URL etc.)
+supabase/.temp/
+
+# Build cache do tsc
+*.tsbuildinfo
+
+# Cópias compiladas de configs TS — só o .ts é fonte de verdade
+vite.config.js
+vite.config.d.ts
+
+# Patches soltos de debug — nunca devem ficar versionados
+*.patch
