@@ -5,7 +5,7 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
-## O que foi feito em 2026-07-13 (Limpeza de repositório + loop de feedback Strava/professor/aluno)
+## O que foi feito em 2026-07-13 (Limpeza de repositório + loop de feedback Strava/professor/aluno + aba Calendário)
 
 Parte do trabalho do dia 2026-07-12 foi feita fora do Claude Code (Gemini/Antigravity), incluindo um commit (`e489de0`) que trouxe consigo vários artefatos indevidos. Esta sessão começou reconciliando esse estado antes de seguir com features novas.
 
@@ -25,6 +25,15 @@ Parte do trabalho do dia 2026-07-12 foi feita fora do Claude Code (Gemini/Antigr
 - Decisão: rastrear "visto" de verdade (`checkins.professor_feedback_seen_at`), escrito pelo próprio aluno (a policy `checkins_update` já cobre `student_id = auth.uid()`, nenhuma policy nova).
 - `CheckinDetailModal.tsx` promovido de `components/admin/` para `components/shared/` (mesmo padrão cross-role de `PaceCalculator.tsx`), ganhou prop `readOnly` (textarea editável vira bloco de texto estático). `AlunoProgresso.tsx`: histórico vira clicável, badge "💬 Feedback do professor" enquanto `professor_feedback_seen_at` for `null`, marcado ao abrir (fire-and-forget, só atualiza estado local se o `UPDATE` confirmar — diferente do `markAsRead` nunca chamado, este de fato é usado).
 - Fecha o loop: Strava sincroniza → professor vê dado rico + escreve feedback → aluno é notificado → aluno lê.
+
+**Aba "Calendário" deixa de ser placeholder (commit `f23d343`):**
+- Investigação prévia (sem código) confirmou que a aba "Calendário" do bottom nav do aluno (`AlunoDashboard.tsx`) era um placeholder puro desde sempre — só um `EmptyState` decorativo com o texto "Em breve você poderá ver todos os ciclos aqui", sem nenhuma query nem componente próprio, e sem menção em nenhuma task documentada.
+- Levantadas 3 propostas de escopo para dar vida à aba: (1) timeline simples reaproveitando `checkins` já buscados; (2) cards agregados por ciclo (planejado vs. feito, km total); (3) calendário mensal visual (grid de dias com status verde/perdido/planejado). As propostas 2 e 3 exigiriam generalizar o cálculo de ciclo do `useWeeklyPlan.ts` para ciclos **passados** (hoje ele só calcula o ciclo atual a partir de `groups.starts_at` + "hoje") e, no modo flexível, reconstruir o `scheduled_day_of_week` histórico por aluno — trabalho e risco desproporcionais a um MVP, adiados para decisão futura com o Max.
+- Implementada só a Proposta 1 (timeline): `useProgresso.ts` ganhou o retorno `allCheckins` (a mesma lista de até 100 checkins que o hook já buscava, só que sem o `.slice(0,5)` aplicado a `recentCheckins` — que continua existindo e intocado, para não afetar quem já o usa no hero do `AlunoDashboard`). Novo componente `AlunoCalendario.tsx`, lazy-loaded no mesmo padrão de `AlunoChat`/`AlunoProgresso`/`AlunoPerfil` (busca seus próprios dados via prop `studentId`, chunk próprio de 3,89 kB só carregado ao abrir a aba). Agrupa os checkins por mês (mais recente primeiro, já que a query vem `order by created_at desc`) com um resumo calculado em memória (`X treinos · Y km`, zero query nova). Reaproveita 100% o CSS do `historyCard` de `AlunoProgresso.module.css` (mesmo card clicável, mesma badge de feedback do professor) e o `CheckinDetailModal` já existente em modo `readOnly` — nenhum componente novo de exibição de check-in foi criado, só o agrupamento por mês e o empty state ("Nenhum check-in ainda") são exclusivos do arquivo novo.
+- `tsc --noEmit` ✅ · `lint` 0 erros/warnings ✅ · `build` ✅.
+
+**Encerramento de sessão — decisão consciente de pausar UX do aluno novo:**
+- Durante a investigação da aba Calendário ficou evidente que a experiência de um aluno recém-cadastrado (sem histórico, sem check-ins) ainda não é bem guiada em várias telas do app. Em vez de iterar mais em UX sem dado real de uso, o Max decidiu fechar a sessão aqui e priorizar testar o app de verdade com o professor antes de qualquer novo redesenho — registrado como prioridade nº 1 da próxima sessão no `CLAUDE.md`, não como pendência esquecida.
 
 ---
 
