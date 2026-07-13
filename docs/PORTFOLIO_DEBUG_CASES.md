@@ -371,3 +371,26 @@ Depois: .modal.right = 375px — exato, nenhum botão ultrapassa a viewport
 ```
 
 **Conhecimento demonstrado:** Reconhecer o limite da leitura estática de código quando o bug mora na *composição* de elementos ancestrais diferentes, não em nenhum isoladamente — e, ao esgotar a análise teórica sem achar causa raiz que explique um sintoma repetidamente confirmado pelo usuário, trocar de método em vez de insistir ("meça, não leia") — montagem de componente isolado + medição real de layout (Playwright headless, `getBoundingClientRect`) como ferramenta de diagnóstico quando a inspeção de CSS-fonte se esgota sem explicar o sintoma relatado.
+
+---
+
+## Estudo de Caso 13: Sincronização Falhando Silenciosamente via "Upsert" do Supabase (PostgreSQL / PostgREST)
+
+**O Cenário:**
+A aplicação possui uma integração com o Strava. Após a autorização OAuth, uma Edge Function do Supabase (rodando com privilégio de `service_role`) sincroniza as corridas recentes usando `upsert()` na tabela `strava_activities`. A tabela recém-criada possuía políticas de Row Level Security e um `GRANT INSERT, UPDATE ON strava_activities TO service_role` executado em sessões anteriores.
+
+**O Sintoma:**
+O atleta conectava o Strava com sucesso e via a mensagem de sincronização na sua tela de Perfil. Contudo, ao tentar fazer Check-in num treino, o botão "Importar do Strava" não aparecia. Nos logs da Edge Function, todas as execuções exibiam status HTTP 200 (OK), sem nenhuma indicação de erro. 
+
+**O Diagnóstico:**
+O problema estava em uma camada de abstração do cliente JavaScript do Supabase. A Edge Function enviava os dados e chamava `.upsert(rows)`. O PostgREST (que atende o SDK) implementa `upsert` por padrão com o equivalente a `RETURNING *`, tentando devolver as linhas afetadas. 
+Embora a role `service_role` tivesse permissão de escrita, faltava-lhe o `GRANT SELECT`. O Postgres bloqueava a transação devido a essa falha na leitura do `RETURNING`. Como a operação falhava silenciosamente (ausência de `.throwOnError()`) e a função respondia um array gerado em memória, a UI era enganada a mostrar sucesso, quando o banco continuava vazio.
+
+**A Solução:**
+A investigação direta do banco via SQL (`information_schema.role_table_grants` via MCP) confirmou a ausência do privilégio. O problema foi sanado executando:
+```sql
+GRANT ALL ON strava_activities TO service_role;
+```
+Nenhuma linha de código fonte da aplicação precisou ser alterada.
+
+**Conhecimento demonstrado:** Entendimento profundo do funcionamento interno da API PostgREST (comportamento implícito de retorno de dados no `upsert`), investigação direta de grants no PostgreSQL contornando a ausência de logs da aplicação, e mitigação de falsos-positivos na interface de usuário causados por falhas silenciosas na comunicação com o BaaS.

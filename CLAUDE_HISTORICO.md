@@ -5,6 +5,15 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-07-12 (Sessão de Bugfixing Strava)
+
+**Fix: Sincronização do Strava falhando silenciosamente no Check-in**
+- **Problema:** O Aluno conectava o Strava e as corridas apareciam normalmente na tela de Perfil. No entanto, ao tentar fazer o Check-in de um treino, o botão "Importar do Strava" não aparecia.
+- **Causa Raiz:** O app lia as atividades do banco (`strava_activities`) na hora do check-in para evitar bater no limite da API. Porém a Edge Function `strava-sync` não estava inserindo as corridas. Ao investigar o banco, constatou-se que embora a role `service_role` tivesse recebido um `GRANT INSERT, UPDATE` anteriormente, faltava-lhe o `GRANT SELECT`. Como a operação de `upsert()` no Supabase JS por padrão executa um `RETURNING *` no PostgREST, a falta de `SELECT` causava uma falha silenciosa na query inteira de insert. Como a Edge Function não fazia log detalhado (e MCP get_logs pega só HTTP requests), e a função retornava um "resumo das corridas" montado *em memória*, a tela de Perfil era enganada e exibia as corridas.
+- **Resolução:** Diagnosticou-se as permissões ausentes consultando o `information_schema.role_table_grants`. Executou-se `GRANT ALL ON strava_activities TO service_role;` garantindo acesso total para a Edge Function. Foi criada também uma documentação formalizada do caso (o que aprendemos sobre Upsert e Grants) registrada neste histórico para o Claude e IAs futuras.
+
+---
+
 ## O que foi feito em 2026-07-01 (Sessão de Bugfixing)
 
 **Fix 1: Sincronização de Ciclos (Treinos não liberando no Aluno)**
