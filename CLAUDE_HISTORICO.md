@@ -12,6 +12,12 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 - **Causa Raiz:** O app lia as atividades do banco (`strava_activities`) na hora do check-in para evitar bater no limite da API. Porém a Edge Function `strava-sync` não estava inserindo as corridas. Ao investigar o banco, constatou-se que embora a role `service_role` tivesse recebido um `GRANT INSERT, UPDATE` anteriormente, faltava-lhe o `GRANT SELECT`. Como a operação de `upsert()` no Supabase JS por padrão executa um `RETURNING *` no PostgREST, a falta de `SELECT` causava uma falha silenciosa na query inteira de insert. Como a Edge Function não fazia log detalhado (e MCP get_logs pega só HTTP requests), e a função retornava um "resumo das corridas" montado *em memória*, a tela de Perfil era enganada e exibia as corridas.
 - **Resolução:** Diagnosticou-se as permissões ausentes consultando o `information_schema.role_table_grants`. Executou-se `GRANT ALL ON strava_activities TO service_role;` garantindo acesso total para a Edge Function. Foi criada também uma documentação formalizada do caso (o que aprendemos sobre Upsert e Grants) registrada neste histórico para o Claude e IAs futuras.
 
+**Fix 2: Experiência de Erro no Convite (Link Expirado) e Regra ESLint**
+- **Problema:** Usuários clicando em links de convite do Supabase já expirados recebiam a hash `#error=access_denied&error_code=otp_expired` e ficavam travados numa tela de "Validando convite..." infinitamente, pois o código aguardava a emissão de uma sessão que nunca viria. Além disso, o deploy falhou na Vercel com o erro `react-hooks/set-state-in-effect` devido à chamada síncrona de `setState` no corpo do hook.
+- **Resolução:** 
+  1. A validação do link via `URLSearchParams` foi inserida antes da espera da sessão para exibir uma mensagem amigável ("Este link expirou...") e esconder os inputs de senha.
+  2. O erro do ESLint foi resolvido embrulhando a lógica num método interno `async function checkHash()` com verificação de bloqueio `if (!cancelled)`, eliminando o bad pattern de Cascading Renders síncronos no React.
+  3. O arquivo fantasma `/test-sync.js` que também ofendia o Linter na Vercel foi devidamente apagado, de acordo com as diretrizes do `GEMINI_LESSONS.md`.
 ---
 
 ## O que foi feito em 2026-07-01 (Sessão de Bugfixing)

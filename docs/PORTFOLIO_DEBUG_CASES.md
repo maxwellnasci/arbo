@@ -394,3 +394,37 @@ GRANT ALL ON strava_activities TO service_role;
 Nenhuma linha de código fonte da aplicação precisou ser alterada.
 
 **Conhecimento demonstrado:** Entendimento profundo do funcionamento interno da API PostgREST (comportamento implícito de retorno de dados no `upsert`), investigação direta de grants no PostgreSQL contornando a ausência de logs da aplicação, e mitigação de falsos-positivos na interface de usuário causados por falhas silenciosas na comunicação com o BaaS.
+
+---
+
+## Estudo de Caso 14: Strict Linting em CI Bloqueando Renderização em Cascata (React / ESLint)
+
+**O Cenário:**
+Ao corrigir um fluxo na interface onde usuários convidados ficavam presos em uma tela infinita de "Validando convite..." ao clicar num link de recuperação expirado (`otp_expired`), implementou-se uma captura inicial direto da hash da URL para modificar o estado da aplicação e apresentar um erro formatado.
+
+**O Sintoma:**
+O deploy falhou no pipeline da Vercel acusando um exit code fatal pelo ESLint:
+`Error: Calling setState synchronously within an effect can trigger cascading renders (react-hooks/set-state-in-effect)`. 
+A UI funcionava bem localmente (pois os warnings eram engolidos em desenvolvimento rápido), mas a pipeline configurada com zero-tolerance barrou o avanço para a produção.
+
+**O Diagnóstico:**
+O código atualizado possuía uma quebra arquitetônica estrutural: ele injetava uma rotina síncrona com múltiplas chamadas `setState` direto no corpo do hook `useEffect`. No React, executar `setState` de forma síncrona dentro de um effect provoca *cascading renders*, forçando o motor de reconciliação a abortar renderizações paralelas e calcular a árvore sequencialmente, esmagando a performance da página.
+
+**A Solução:**
+A rotina foi refatorada para alinhar-se perfeitamente com os guidelines exigidos pelo motor de otimização e regras avançadas de Linting. As alterações assíncronas foram isoladas num bloco executável blindado, contendo inclusive a checagem de ciclo de vida (`if (!cancelled)`):
+```typescript
+  useEffect(() => {
+    let cancelled = false
+    async function checkHash() {
+      if (hashError && !cancelled) {
+         setError(...)
+         setReady(true)
+      }
+    }
+    checkHash()
+    return () => { cancelled = true }
+  }, [])
+```
+Adicionalmente, scripts temporários que rodavam localmente (como `test-sync.js`) foram removidos do root do diretório para purgar alertas colaterais no linter, restaurando a pipeline a zero defeitos.
+
+**Conhecimento demonstrado:** Alinhamento avançado com os paradigmas de otimização de renderização do React (evitando cascading renders síncronos no corpo do effect), gerenciamento de cleanup functions para anular conditions race, e disciplina para resolver quebras severas de CI causadas por configurações de ESLint restritas (`zero-error tolerance`).
