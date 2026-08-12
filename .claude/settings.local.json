@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'SECRET=\"${BERNSTEIN_HOOK_SECRET:-$BERNSTEIN_AUTH_TOKEN}\"; BODY=$(cat); SIG=$(printf \"%s\" \"$BODY\" | openssl dgst -sha256 -hmac \"$SECRET\" -hex | awk \"{print \\$2}\"); curl -sS -X POST -H \"Content-Type: application/json\" -H \"X-Bernstein-Hook-Signature-256: sha256=$SIG\" -d \"$BODY\" http://127.0.0.1:8052/hooks/devops-1e0cbb42'"
+            "command": "sh -c 'SECRET=\"${BERNSTEIN_HOOK_SECRET:-$BERNSTEIN_AUTH_TOKEN}\"; BODY=$(cat); SIG=$(printf \"%s\" \"$BODY\" | openssl dgst -sha256 -hmac \"$SECRET\" -hex | awk \"{print \\$2}\"); curl -sS -X POST -H \"Content-Type: application/json\" -H \"X-Bernstein-Hook-Signature-256: sha256=$SIG\" -d \"$BODY\" http://127.0.0.1:8052/hooks/backend-28fc0a30'"
           }
         ]
       }
@@ -17,7 +17,16 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'SECRET=\"${BERNSTEIN_HOOK_SECRET:-$BERNSTEIN_AUTH_TOKEN}\"; BODY=$(cat); SIG=$(printf \"%s\" \"$BODY\" | openssl dgst -sha256 -hmac \"$SECRET\" -hex | awk \"{print \\$2}\"); curl -sS -X POST -H \"Content-Type: application/json\" -H \"X-Bernstein-Hook-Signature-256: sha256=$SIG\" -d \"$BODY\" http://127.0.0.1:8052/hooks/devops-1e0cbb42'"
+            "command": "sh -c 'SECRET=\"${BERNSTEIN_HOOK_SECRET:-$BERNSTEIN_AUTH_TOKEN}\"; BODY=$(cat); SIG=$(printf \"%s\" \"$BODY\" | openssl dgst -sha256 -hmac \"$SECRET\" -hex | awk \"{print \\$2}\"); curl -sS -X POST -H \"Content-Type: application/json\" -H \"X-Bernstein-Hook-Signature-256: sha256=$SIG\" -d \"$BODY\" http://127.0.0.1:8052/hooks/backend-28fc0a30'"
+          }
+        ]
+      },
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bernstein hook-gate check --session backend-28fc0a30 --event Stop"
           }
         ]
       }
@@ -28,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'SECRET=\"${BERNSTEIN_HOOK_SECRET:-$BERNSTEIN_AUTH_TOKEN}\"; BODY=$(cat); SIG=$(printf \"%s\" \"$BODY\" | openssl dgst -sha256 -hmac \"$SECRET\" -hex | awk \"{print \\$2}\"); curl -sS -X POST -H \"Content-Type: application/json\" -H \"X-Bernstein-Hook-Signature-256: sha256=$SIG\" -d \"$BODY\" http://127.0.0.1:8052/hooks/devops-1e0cbb42'"
+            "command": "sh -c 'SECRET=\"${BERNSTEIN_HOOK_SECRET:-$BERNSTEIN_AUTH_TOKEN}\"; BODY=$(cat); SIG=$(printf \"%s\" \"$BODY\" | openssl dgst -sha256 -hmac \"$SECRET\" -hex | awk \"{print \\$2}\"); curl -sS -X POST -H \"Content-Type: application/json\" -H \"X-Bernstein-Hook-Signature-256: sha256=$SIG\" -d \"$BODY\" http://127.0.0.1:8052/hooks/backend-28fc0a30'"
           }
         ]
       }
@@ -39,7 +48,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'SECRET=\"${BERNSTEIN_HOOK_SECRET:-$BERNSTEIN_AUTH_TOKEN}\"; BODY=$(cat); SIG=$(printf \"%s\" \"$BODY\" | openssl dgst -sha256 -hmac \"$SECRET\" -hex | awk \"{print \\$2}\"); curl -sS -X POST -H \"Content-Type: application/json\" -H \"X-Bernstein-Hook-Signature-256: sha256=$SIG\" -d \"$BODY\" http://127.0.0.1:8052/hooks/devops-1e0cbb42'"
+            "command": "sh -c 'SECRET=\"${BERNSTEIN_HOOK_SECRET:-$BERNSTEIN_AUTH_TOKEN}\"; BODY=$(cat); SIG=$(printf \"%s\" \"$BODY\" | openssl dgst -sha256 -hmac \"$SECRET\" -hex | awk \"{print \\$2}\"); curl -sS -X POST -H \"Content-Type: application/json\" -H \"X-Bernstein-Hook-Signature-256: sha256=$SIG\" -d \"$BODY\" http://127.0.0.1:8052/hooks/backend-28fc0a30'"
           }
         ]
       }
@@ -50,7 +59,18 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh -c 'SECRET=\"${BERNSTEIN_HOOK_SECRET:-$BERNSTEIN_AUTH_TOKEN}\"; BODY=$(cat); SIG=$(printf \"%s\" \"$BODY\" | openssl dgst -sha256 -hmac \"$SECRET\" -hex | awk \"{print \\$2}\"); curl -sS -X POST -H \"Content-Type: application/json\" -H \"X-Bernstein-Hook-Signature-256: sha256=$SIG\" -d \"$BODY\" http://127.0.0.1:8052/hooks/devops-1e0cbb42'"
+            "command": "sh -c 'SECRET=\"${BERNSTEIN_HOOK_SECRET:-$BERNSTEIN_AUTH_TOKEN}\"; BODY=$(cat); SIG=$(printf \"%s\" \"$BODY\" | openssl dgst -sha256 -hmac \"$SECRET\" -hex | awk \"{print \\$2}\"); curl -sS -X POST -H \"Content-Type: application/json\" -H \"X-Bernstein-Hook-Signature-256: sha256=$SIG\" -d \"$BODY\" http://127.0.0.1:8052/hooks/backend-28fc0a30'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bernstein hook-gate check --session backend-28fc0a30 --event PreToolUse"
           }
         ]
       }
