@@ -1,0 +1,108 @@
+# Bernstein task routing configuration
+# Upgrade proposal UPG-0001/UPG-0002/UPG-0003: model_routing
+# Observed: backend/devops on sonnet/high → 0% success; manager on opus/max → 100%
+# Target: 80%+ task success rate
+
+version: "1"
+
+# Default profile applied when no role-specific rule matches
+defaults:
+  model: sonnet
+  effort: high
+  max_retries: 2
+  retry_delay_s: 30
+
+# Role-specific routing overrides
+roles:
+  backend:
+    model: opus
+    effort: max
+    max_retries: 3
+    retry_delay_s: 30
+    cascade:
+      # On repeated failure, escalate to higher effort before giving up
+      - on_failure_count: 1
+        model: opus
+        effort: max
+
+  devops:
+    model: opus
+    effort: max
+    max_retries: 3
+    retry_delay_s: 30
+    cascade:
+      - on_failure_count: 1
+        model: opus
+        effort: max
+
+  security:
+    model: opus
+    effort: max
+    max_retries: 2
+    retry_delay_s: 30
+
+  architect:
+    model: opus
+    effort: max
+    max_retries: 2
+    retry_delay_s: 30
+
+  manager:
+    model: opus
+    effort: max
+    max_retries: 2
+    retry_delay_s: 60
+
+  frontend:
+    model: sonnet
+    effort: high
+    max_retries: 2
+    retry_delay_s: 30
+
+  qa:
+    model: sonnet
+    effort: high
+    max_retries: 2
+    retry_delay_s: 30
+
+  reviewer:
+    model: sonnet
+    effort: high
+    max_retries: 2
+    retry_delay_s: 30
+
+  docs:
+    model: sonnet
+    effort: max
+    max_retries: 2
+    retry_delay_s: 30
+
+  ml-engineer:
+    model: opus
+    effort: max
+    max_retries: 2
+    retry_delay_s: 30
+
+# Scope-based effort modifiers (applied on top of role defaults)
+scope_overrides:
+  large:
+    effort: max
+    max_retries: 3
+  medium:
+    effort: max
+  small:
+    effort: high
+
+# Task-type routing rules
+task_type_overrides:
+  upgrade_proposal:
+    model: opus
+    effort: max
+
+# Janitor gate: require files_modified > 0 to count a task as passed
+require_file_changes: true
+
+# SLO thresholds that trigger automatic re-routing
+slo_triggers:
+  task_success_rate_below: 0.6
+  action: upgrade_model
