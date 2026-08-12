@@ -42,3 +42,4 @@ vite.config.d.ts
 
 # Patches soltos de debug — nunca devem ficar versionados
 *.patch
+.sdd/runtime/

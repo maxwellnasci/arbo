@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "bernstein": {
+      "command": "/home/max/.local/share/pipx/venvs/bernstein/bin/python",
+      "args": [
+        "-m",
+        "bernstein.mcp.server"
+      ]
+    }
+  }
+}

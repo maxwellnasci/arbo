@@ -1,0 +1,7 @@
+{"timestamp": 1786572546.159698, "task_id": null, "role": "backend", "agent_id": "backend-9eff6873", "lifetime_seconds": 75.93, "tasks_completed": 0, "heartbeat_failures": 0, "sleep_incidents": 0, "context_tokens": 0}
+{"timestamp": 1786572570.1510298, "task_id": null, "role": "manager", "agent_id": "manager-9f510af4", "lifetime_seconds": 225.87, "tasks_completed": 1, "heartbeat_failures": 0, "sleep_incidents": 0, "context_tokens": 0}
+{"timestamp": 1786572635.6526713, "task_id": null, "role": "devops", "agent_id": "devops-bfc4b29f", "lifetime_seconds": 120.1, "tasks_completed": 0, "heartbeat_failures": 0, "sleep_incidents": 0, "context_tokens": 0}
+{"timestamp": 1786572652.334254, "task_id": null, "role": "backend", "agent_id": "backend-85d662f8", "lifetime_seconds": 118.91, "tasks_completed": 0, "heartbeat_failures": 0, "sleep_incidents": 0, "context_tokens": 0}
+{"timestamp": 1786572831.3052433, "task_id": null, "role": "docs", "agent_id": "docs-972ed67f", "lifetime_seconds": 251.42, "tasks_completed": 1, "heartbeat_failures": 0, "sleep_incidents": 0, "context_tokens": 0}
+{"timestamp": 1786572994.6736727, "task_id": null, "role": "backend", "agent_id": "backend-03ab5360", "lifetime_seconds": 147.76, "tasks_completed": 0, "heartbeat_failures": 0, "sleep_incidents": 0, "context_tokens": 0}
+{"timestamp": 1786573052.3862996, "task_id": null, "role": "backend", "agent_id": "backend-a72f7c00", "lifetime_seconds": 188.2, "tasks_completed": 1, "heartbeat_failures": 0, "sleep_incidents": 0, "context_tokens": 0}

@@ -1,0 +1,9 @@
+# Bernstein orchestration config
+cli: auto
+team: auto
+budget: "$3"
+goal: "Analisar o projeto e verificar se as conexões com o banco de dados estão ativas e funcionando. Não alterar, criar ou apagar nenhum arquivo — apenas investigar e gerar um relatório do que encontrar (status da conexão, variáveis de ambiente relevantes, possíveis erros de configuração)."
+constraints:
+  - "Node.js"
+  - "TypeScript preferred"
+  - "Somente leitura — não modificar nenhum arquivo"

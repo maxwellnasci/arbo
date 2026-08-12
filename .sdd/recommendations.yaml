@@ -1,0 +1,57 @@
+recommendations:
+- id: claude-bash
+  category: coding
+  severity: suggestion
+  text: '```bash'
+  applies_to: []
+- id: claude-npm-run-dev-servidor-de-desenvolvimento-vite-hmr
+  category: coding
+  severity: suggestion
+  text: 'npm run dev       # servidor de desenvolvimento (Vite HMR)'
+  applies_to: []
+- id: claude-npm-run-build-tsc-b-vite-build
+  category: coding
+  severity: suggestion
+  text: 'npm run build     # tsc -b && vite build'
+  applies_to: []
+- id: claude-npm-run-preview-preview-do-build-local
+  category: coding
+  severity: suggestion
+  text: 'npm run preview   # preview do build local'
+  applies_to: []
+- id: claude-npm-run-lint-eslint-js-jsx-e-ts-tsx
+  category: coding
+  severity: suggestion
+  text: 'npm run lint      # ESLint (JS/JSX e TS/TSX)'
+  applies_to: []
+- id: claude-recommendation
+  category: coding
+  severity: suggestion
+  text: '```'
+  applies_to: []
+- id: claude-supabase-migrations-reflete-o-schema-real-de-pro
+  category: git
+  severity: suggestion
+  text: "> **`supabase/migrations/` reflete o schema real de produ\xE7\xE3o** desde\
+    \ o baseline capturado via `supabase db pull` (commit `eb8491f`, 2026-07-11 \u2014\
+    \ 21 tabelas, 65 RLS policies, fun\xE7\xF5es, triggers, grants). A partir de agora,\
+    \ **toda mudan\xE7a de banco \xE9 uma migration nova** (`supabase migration new\
+    \ <nome>` + `supabase db push`), **nunca SQL solto direto no SQL Editor** \u2014\
+    \ SQL aplicado fora de uma migration volta a divergir o reposit\xF3rio do banco\
+    \ real, o mesmo problema que o baseline resolveu."
+  applies_to: []
+- id: claude-1-criar-a-migration-npx-supabase-migration-new-n
+  category: coding
+  severity: suggestion
+  text: '1. Criar a migration: `npx supabase migration new <nome_descritivo>`'
+  applies_to: []
+- id: claude-2-escrever-o-sql-no-arquivo-gerado-em-supabase-m
+  category: coding
+  severity: suggestion
+  text: 2. Escrever o SQL no arquivo gerado em `supabase/migrations/`
+  applies_to: []
+- id: claude-3-aplicar-em-produ-o-npx-supabase-db-push
+  category: coding
+  severity: suggestion
+  text: "3. Aplicar em produ\xE7\xE3o: `npx supabase db push`"
+  applies_to: []
