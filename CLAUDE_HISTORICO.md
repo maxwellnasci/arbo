@@ -27,6 +27,11 @@ Projeto ficou 30 dias parado; sessão de raio-x completo antes de o professor co
 
 **Veredito da auditoria:** app estava pronto para o professor usar como MVP sem risco de quebra pelos 30 dias parado. SMTP era o único item que viraria bloqueador real ao escalar para dezenas de alunos — resolvido nesta mesma sessão.
 
+**Proteção de senha vazada (HaveIBeenPwned) — investigado, não é toggle trivial:**
+- Tentativa de ligar "Prevent use of leaked passwords" em Supabase Dashboard → Authentication → Sign In / Providers → Email revelou que **não é um simples toggle**: o botão "Configure in email provider" leva ao painel do provider Email, onde o toggle existe mas ao salvar retorna erro — `"Failed to update auth configuration: Configuring leaked password protection via HaveIBeenPwned.org is available on Pro Plans and up."`
+- O projeto `arbo` está no **plano FREE** do Supabase. Essa proteção específica exige **upgrade para o plano Pro (US$25/mês)** — não existe workaround gratuito.
+- Decisão: não fazer upgrade só por essa feature isolada com a base atual (~3 alunos de teste) — risco baixo no momento (senha mínima de 6 caracteres já é exigida, e não há indício de credential stuffing). Revisitar quando o Supabase virar Pro por outro motivo de negócio (storage, limite de usuários, etc.), momento em que essa proteção vem incluída.
+
 ---
 
 ## O que foi feito em 2026-07-13 (Limpeza de repositório + loop de feedback Strava/professor/aluno + aba Calendário)
