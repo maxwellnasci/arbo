@@ -358,11 +358,9 @@ Configurado via `VitePWA({ workbox: { runtimeCaching: [...] } })`. Estratégia p
 - `VITE_SENTRY_DSN` configurada no Vercel (Production + Preview). DSN é um valor público (não secreto) — pode aparecer no bundle final sem risco.
 - **CSP:** `connect-src` em `vercel.json` precisa incluir `https://*.ingest.us.sentry.io https://*.sentry.io`, senão o navegador bloqueia o POST do evento de erro mesmo com o DSN configurado corretamente (erro aparece no console, nunca chega no painel do Sentry).
 
-### Aviso SMTP
+### SMTP — resolvido (2026-08-13)
 
-O Supabase gratuito tem limite de ~3-4 emails/hora para convites e recuperação de senha.  
-Antes de produção, configure SMTP externo (Resend ou AWS SES) em:  
-**Supabase Dashboard → Authentication → Settings → SMTP Settings**
+SMTP externo via **Resend** configurado em **Supabase Dashboard → Authentication → Settings → SMTP Settings** (host `smtp.resend.com`, domínio `mxos.com.br` verificado). O limite de ~3-4 emails/hora do Supabase gratuito para convites e recuperação de senha não se aplica mais. Testado ponta a ponta com um convite real — ver sessão 2026-08-13 em `CLAUDE_HISTORICO.md`.
 
 ## Estado atual (2026-07-13)
 
@@ -467,7 +465,6 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 - Configurar CORS no bucket R2 (Cloudflare Dashboard) para o upload de vídeo funcionar ponta a ponta
 - Endereçar treinos órfãos (`program = NULL`) na navegação por pastas do `AdminTurmaDetail.tsx`
 - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos)
-- SMTP externo (Resend ou AWS SES) antes de produção
 - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`
 - Acessibilidade 89 → 95+ (focus indicators, ARIA labels, screen reader)
 - Security scanning no CI (`npm audit`)
@@ -497,9 +494,6 @@ Antes de produção, configure SMTP externo (Resend ou AWS SES) em:
 | Calendário (histórico completo de check-ins) | aba em `/aluno` | ✅ |
 | Notificações de PR | widget em `/admin` | ✅ |
 | Integração Strava | card na aba Perfil em `/aluno` | ✅ |
-
-### Pendentes
-- SMTP externo (Resend ou AWS SES)
 
 ### Task 45 (Findings Claude Code)
 - Alta prioridade & Limpeza Rapida: padding-bottom em AlunoPerfil, tipagens catch(err: unknown), limits(200/50/500) em useAdminTreinos, AdminTurmaDetail, useProgresso, useAdminFeedbacks, useAdminAlunoDetail

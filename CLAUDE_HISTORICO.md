@@ -5,6 +5,30 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-08-13 (Auditoria pré-reunião com o professor + SMTP externo via Resend)
+
+Projeto ficou 30 dias parado; sessão de raio-x completo antes de o professor começar a usar o app como MVP, seguida da resolução do único bloqueador real de escala encontrado.
+
+**SMTP externo via Resend configurado (resolve pendência aberta desde a Task 47):**
+- O Supabase gratuito limita envio de email (convites, recuperação de senha) a ~3-4/hora — insuficiente para convidar o professor e os alunos de teste de uma vez, e um bloqueador real para escalar a 50 alunos no futuro.
+- Configurado em **Supabase Dashboard → Authentication → Settings → SMTP Settings**: host `smtp.resend.com`, porta 465, username `resend`.
+- O domínio `mxos.com.br` já estava **verificado no Resend há 3 meses** (SPF/DKIM já propagados) — não foi necessário mexer em DNS.
+- Já existia uma API key antiga ("Onboarding", usada pela última vez ~1 mês atrás), mas o Resend só exibe o valor completo da key uma vez, no momento da criação — como esse valor não estava recuperável, foi gerada uma **key nova** ("Supabase SMTP", permissão "Sending access" — não "Full access", princípio de menor privilégio) especificamente para este uso.
+- **Testado ponta a ponta**: convite real disparado em `/admin/convites` do app em produção → toast de sucesso na UI → confirmado no painel do Resend com status **"Delivered"** → confirmado na caixa de entrada real. Loop fechado.
+- Nenhuma mudança de código foi necessária — SMTP é configuração pura na camada de infraestrutura do Supabase Auth, transparente para a Edge Function `invite-user`.
+
+**Achados da auditoria (nada quebrado pelos 30 dias parado):**
+- `master` intocado desde o commit `60a9996` (13/07) — bate exatamente com o documentado aqui. Nenhuma mudança de código fora do Claude Code.
+- `tsc --noEmit`, `lint`, `build` e os 22 testes (Vitest) — todos limpos.
+- `npm audit --omit=dev` encontrou 2 vulnerabilidades moderadas novas em `react-router-dom` (sem fix não-breaking disponível na linha 6.x) — não bloqueia uso, agendado para migração futura.
+- Todos os fixes de segurança da auditoria de 2026-07-11 confirmados intactos via SQL direto no banco: trigger `trg_prevent_self_privilege_escalation`, FKs `CASCADE` de aluno, `records_select`, as 2 policies do `/preview-aluno`, GRANTs de `strava_activities` para `service_role`.
+- Os 2 tokens de conexão Strava existentes estavam expirados desde 13/07 (30 dias sem sincronizar) — causa real descoberta durante a conversa: a Strava passou a exigir **assinatura ativa do desenvolvedor** ($11,99/mês) para acesso à API a partir de 01/06/2026, e o app do Arbo (criado em 03/07) se enquadra como "desenvolvedor novo", sem direito ao período de graça de 3 meses dado a quem já tinha app antes do corte. Resolvido reassinando o Strava (plano mensal) — sincronização testada ao vivo em `/admin/alunos/:id` após a resposta, `token_expires_at` renovado com sucesso, confirmando que a API voltou a aceitar o app.
+- Repositório estava com o branch `teste-bernstein` como HEAD, contendo um framework de orquestração multiagente não relacionado ao Arbo (`.sdd/`, `templates/`) — confirmado que nunca tocou `src/`/`supabase/`/config do app; branch trocado de volta para `master` e os artefatos removidos.
+
+**Veredito da auditoria:** app estava pronto para o professor usar como MVP sem risco de quebra pelos 30 dias parado. SMTP era o único item que viraria bloqueador real ao escalar para dezenas de alunos — resolvido nesta mesma sessão.
+
+---
+
 ## O que foi feito em 2026-07-13 (Limpeza de repositório + loop de feedback Strava/professor/aluno + aba Calendário)
 
 Parte do trabalho do dia 2026-07-12 foi feita fora do Claude Code (Gemini/Antigravity), incluindo um commit (`e489de0`) que trouxe consigo vários artefatos indevidos. Esta sessão começou reconciliando esse estado antes de seguir com features novas.
