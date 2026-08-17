@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Trash2 } from 'lucide-react'
+import { Send, Trash2, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useChat } from '../../hooks/useChat'
@@ -8,9 +8,10 @@ import styles from './AlunoChat.module.css'
 
 type AlunoChatProps = {
   studentId: string
+  onClose?: () => void
 }
 
-export default function AlunoChat({ studentId }: AlunoChatProps) {
+export default function AlunoChat({ studentId, onClose }: AlunoChatProps) {
   const { messages, isLoading, sendMessage, deleteMessage } = useChat(studentId)
   const [content, setContent] = useState('')
   const [sending, setSending] = useState(false)
@@ -54,10 +55,15 @@ export default function AlunoChat({ studentId }: AlunoChatProps) {
         <div className={styles.avatar}>
           P
         </div>
-        <div>
+        <div className={styles.headerInfo}>
           <h2 className={styles.title}>Professor</h2>
           <p className={styles.subtitle}>Chat Direto</p>
         </div>
+        {onClose && (
+          <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar chat">
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       <div className={styles.messagesContainer}>

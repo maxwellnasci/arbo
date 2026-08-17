@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { useAuth } from '../../contexts/AuthContext'
@@ -126,13 +127,12 @@ function EmptyState() {
 
 // ── Bottom Navigation ─────────────────────────────────────────────────────────
 
-type NavTab = 'inicio' | 'progresso' | 'chat' | 'perfil' | 'calendario'
+type NavTab = 'inicio' | 'progresso' | 'perfil' | 'calendario'
 
 function BottomNav({ activeTab, onTabChange }: { activeTab: NavTab; onTabChange: (tab: NavTab) => void }) {
   const tabs = [
     { id: 'inicio' as NavTab,    icon: Home,          label: 'Início' },
     { id: 'progresso' as NavTab, icon: TrendingUp,    label: 'Progresso' },
-    { id: 'chat' as NavTab,      icon: MessageSquare, label: 'Chat' },
     { id: 'perfil' as NavTab,    icon: User,          label: 'Perfil' },
     { id: 'calendario' as NavTab,icon: Calendar,      label: 'Calendário' },
   ]
@@ -350,6 +350,7 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
 
   const [activeTab, setActiveTab] = useState<NavTab>('inicio')
   const [activeCheckin, setActiveCheckin] = useState<DayTraining | null>(null)
+  const [showChat, setShowChat] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
 
   useEffect(() => {
@@ -436,13 +437,7 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
           <Eye size={20} />
         </button>
       )}
-      {activeTab === 'chat' ? (
-        <div className={styles.contentWrapper}>
-          <Suspense fallback={<SkeletonLoader />}>
-            <AlunoChat studentId={effectiveUserId} />
-          </Suspense>
-        </div>
-      ) : activeTab === 'progresso' ? (
+      {activeTab === 'progresso' ? (
         <Suspense fallback={<SkeletonLoader />}>
           <AlunoProgresso studentId={effectiveUserId} />
         </Suspense>
@@ -611,6 +606,25 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
             </Suspense>
           )}
         </main>
+      )}
+
+      {!showChat && (
+        <button
+          className={styles.chatFab}
+          onClick={() => setShowChat(true)}
+          aria-label="Abrir chat com o professor"
+        >
+          <MessageSquare size={24} />
+        </button>
+      )}
+
+      {showChat && createPortal(
+        <div className={styles.chatOverlay}>
+          <Suspense fallback={<SkeletonLoader />}>
+            <AlunoChat studentId={effectiveUserId} onClose={() => setShowChat(false)} />
+          </Suspense>
+        </div>,
+        document.body
       )}
 
       <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
