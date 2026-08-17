@@ -243,6 +243,7 @@ catch (e: unknown) {
 - **`checkins.professor_feedback`** (text) / **`professor_feedback_at`** (timestamptz) — feedback do professor sobre um check-in específico, campo simples (1 por checkin, sem histórico — decisão deliberada, ver análise de 2026-07-13). Escrito pelo admin em `AdminAlunoDetail.tsx` via `CheckinDetailModal`. **`professor_feedback_seen_at`** (timestamptz) — marca se o aluno já abriu/leu aquele feedback; **escrito pelo próprio aluno** (não pelo admin) ao abrir o check-in na aba Evolução — a policy `checkins_update` já permite `student_id = auth.uid()` escrever a própria linha, então nenhuma policy nova foi necessária para nenhum dos 3 campos. Badge "não lido" na UI do aluno desaparece assim que `professor_feedback_seen_at` deixa de ser `null` (`useProgresso.ts` → `markFeedbackSeen`, só atualiza o estado local depois do `UPDATE` confirmar — nunca otimista).
 - **`CheckinDetailModal.tsx`** (`src/components/shared/`) — componente cross-role (admin escreve feedback, aluno só lê), mesmo padrão de `PaceCalculator.tsx` em `components/shared/`: um único componente, prop `readOnly?: boolean` alterna entre textarea editável + botão salvar (admin) e bloco de texto estático sem edição (aluno). Tipo de prop `CheckinDetailData` é a forma estrutural mínima usada pelo modal — tanto `CheckinWithTraining` (admin, `trainings: Training` completo) quanto `CheckinData` (aluno, `trainings` mais enxuto) satisfazem sem cast. Busca `strava_activities.raw` sob demanda via `useStravaActivityRaw.ts` (só quando o modal abre e `strava_activity_id` existe, nunca no carregamento da lista).
 - **Cadência do Strava (`raw.average_cadence`) vem por perna** (passadas de 1 pé/min), não passos totais — sempre multiplicar por 2 antes de exibir (convenção usada pelo próprio app do Strava e por relógios GPS). Ver `CheckinDetailModal.tsx`.
+- **Chat do aluno acessado via FAB, não mais aba da `BottomNav`** (2026-08-17) — o botão flutuante (`styles.chatFab`) fica fixo no canto da tela em `AlunoDashboard.tsx` e abre `AlunoChat` como overlay full-screen via `createPortal(..., document.body)` (mesmo padrão de portal usado em `DayPicker`/`CheckinSheet` para escapar de ancestrais com `transform` do Framer Motion, ver Caso 8/Sessão 2026-07-11 tarde). `AlunoChat` ganhou prop opcional `onClose?: () => void` — só renderiza o botão de fechar (`X`) quando montado dentro do overlay. **`BottomNav` atual (4 abas, nessa ordem): Início → Progresso → Perfil → Calendário** (`chat` removido do union type `NavTab`). Motivo: liberar a 1ª posição da `BottomNav` para a futura aba **Feed/Mural** (ver "Próximos passos"), e o chat ganha mais destaque/acesso rápido como FAB do que teria como uma aba entre outras quatro.
 
 ## Autenticação (implementada)
 
@@ -362,6 +363,10 @@ Configurado via `VitePWA({ workbox: { runtimeCaching: [...] } })`. Estratégia p
 
 SMTP externo via **Resend** configurado em **Supabase Dashboard → Authentication → Settings → SMTP Settings** (host `smtp.resend.com`, domínio `mxos.com.br` verificado). O limite de ~3-4 emails/hora do Supabase gratuito para convites e recuperação de senha não se aplica mais. Testado ponta a ponta com um convite real — ver sessão 2026-08-13 em `CLAUDE_HISTORICO.md`.
 
+### Sessão 2026-08-17 — Chat do aluno vira botão flutuante (FAB)
+
+`AlunoDashboard.tsx`/`AlunoChat.tsx` — o chat com o professor deixa de ser uma aba da `BottomNav` e passa a abrir como overlay full-screen (`createPortal`) acionado por um FAB fixo no canto da tela. `BottomNav` fica só com Início/Progresso/Perfil/Calendário (4 abas). Motivo: liberar a 1ª posição da `BottomNav` para a futura aba **Feed/Mural** — ver seção "Convenções" acima e "Planejadas" em "Roadmap de telas". Feed/Mural ainda não tem schema nem UI — é planejamento, não implementação.
+
 ## Estado atual (2026-07-13)
 
 - **Média geral:** 9.0/10 — Segurança 8.5 · Performance 8.8 · Qualidade 9.2 · UX/Bugs 9.2 · Arquitetura 8.5 · PWA/Mobile 9.0
@@ -391,6 +396,7 @@ SMTP externo via **Resend** configurado em **Supabase Dashboard → Authenticati
   - Push notifications (Web Push API)
   - Sentry para monitoramento de erros em produção
   - Definir com o professor se o agente Strava também deve comentar diretamente na atividade (item 7 do `ARBO_FASE3.md`)
+  - **Planejamento — aba Feed/Mural:** nova aba na 1ª posição da `BottomNav` do aluno (posição liberada pela migração do chat para FAB, ver "Sessão 2026-08-17" acima), para o professor publicar dicas de treino e comunicados em vídeo. Ainda sem schema definido (provável tabela nova tipo `posts`/`feed_items` com `video_url`, reaproveitando o mesmo `VideoPlayer.tsx` já usado em treinos) nem protótipo de UI — avaliar formato (texto+vídeo vs. só vídeo), quem publica (só admin) e se precisa de leitura/não-lida como o feedback de checkin.
 
 > Histórico detalhado de cada sessão em [CLAUDE_HISTORICO.md](CLAUDE_HISTORICO.md) — deve ser lido para contexto completo de decisões técnicas passadas.
 
@@ -488,12 +494,17 @@ SMTP externo via **Resend** configurado em **Supabase Dashboard → Authenticati
 | Painel Admin — Perfil Aluno | `/admin/alunos/:id` | ✅ |
 | Painel Admin — Treinos | `/admin/treinos` | ✅ |
 | Chat Admin → Aluno | panel em `/admin/alunos/:id` | ✅ |
-| Chat Aluno → Admin | aba em `/aluno` | ✅ |
+| Chat Aluno → Admin | botão flutuante (FAB) em `/aluno`, abre overlay full-screen | ✅ |
 | Progresso do Aluno | aba em `/aluno` | ✅ |
 | Perfil do Aluno | aba em `/aluno` | ✅ |
 | Calendário (histórico completo de check-ins) | aba em `/aluno` | ✅ |
 | Notificações de PR | widget em `/admin` | ✅ |
 | Integração Strava | card na aba Perfil em `/aluno` | ✅ |
+
+### Planejadas
+| Tela | Rota | Status |
+|---|---|---|
+| Feed / Mural (dicas de treino + comunicados em vídeo do professor) | 1ª posição da `BottomNav` em `/aluno` | 📋 planejada |
 
 ### Task 45 (Findings Claude Code)
 - Alta prioridade & Limpeza Rapida: padding-bottom em AlunoPerfil, tipagens catch(err: unknown), limits(200/50/500) em useAdminTreinos, AdminTurmaDetail, useProgresso, useAdminFeedbacks, useAdminAlunoDetail

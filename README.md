@@ -34,7 +34,7 @@
 - Check-in de treinos realizados
 - Progresso com gráfico de pace e streak semanal
 - Recordes pessoais (5km, 10km, 21km, 42km)
-- Chat direto com o professor
+- Chat direto com o professor via botão flutuante (FAB), acessível de qualquer aba
 - Perfil com dados pessoais
 - Integração com Strava — sincronização automática de corridas
 - Análise automática por IA (DeepSeek) da última corrida — resumo, avaliação de desempenho e dica para o próximo treino
@@ -63,6 +63,13 @@
 | Acessibilidade | 89 |
 | Boas Práticas | 100 |
 | SEO | 100 |
+
+## 🗺️ Próximos Passos
+
+- **Aba Feed / Mural** — nova aba na 1ª posição da navegação inferior do aluno (posição liberada pela migração do chat para botão flutuante), para o professor publicar dicas de treino e comunicados em vídeo.
+- Expandir cobertura de testes automatizados
+- Acessibilidade 89 → 95+
+- Push notifications (Web Push API)
 
 ## 🔍 Cases de Debug & Arquitetura
 
