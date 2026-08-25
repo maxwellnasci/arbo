@@ -106,7 +106,7 @@ export function AdminTreinos() {
     setTreinoToEdit(null)
   }
 
-  const handleSubmit = async (data: Omit<TrainingInsert, 'created_by'>) => {
+  const handleSubmit = async (data: Omit<TrainingInsert, 'created_by'>, videoUrlToDelete?: string | null) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
@@ -120,6 +120,15 @@ export function AdminTreinos() {
       }
       refetch()
       handleClosePanel()
+
+      // Só apaga o objeto do R2 depois que o treino foi salvo com sucesso —
+      // se o save falhasse acima, o vídeo antigo continuaria intacto no bucket
+      // (o registro no banco ainda aponta pra ele, então apagar antes deixaria
+      // um link quebrado em produção sem forma de desfazer).
+      if (videoUrlToDelete) {
+        const ok = await deleteVideo(videoUrlToDelete)
+        if (!ok) toast.error('Treino salvo, mas o vídeo antigo não pôde ser removido do armazenamento.')
+      }
     } catch (e: unknown) {
       console.error('Erro ao salvar treino:', e)
       toast.error('Erro ao salvar o treino')
@@ -246,20 +255,6 @@ export function AdminTreinos() {
       toast.error(e instanceof Error ? e.message : 'Erro ao enviar vídeo.')
       return null
     }
-  }
-
-  // Recebe a URL pública completa do vídeo (ex: https://videos.mxos.com.br/videos/abc/video.mp4),
-  // extrai a key e chama a Edge Function r2-delete. Retorna boolean para o TreinoFormPanel
-  // saber se deve ou não limpar o state local. Se falhar, o vídeo continua aparecendo
-  // na UI — usuário pode tentar de novo.
-  const handleDeleteVideo = async (publicUrl: string): Promise<boolean> => {
-    const ok = await deleteVideo(publicUrl)
-    if (ok) {
-      toast.success('Vídeo removido do armazenamento.')
-    } else {
-      toast.error('Não foi possível remover o vídeo. Tente novamente.')
-    }
-    return ok
   }
 
   return (
@@ -460,7 +455,6 @@ export function AdminTreinos() {
         onCreateTag={handleCreateTag}
         onCreateType={handleCreateType}
         onUploadVideo={handleUploadVideo}
-        onDeleteVideo={handleDeleteVideo}
       />
 
       <NewProgramModal

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link2, Upload, Film, Trash2 } from 'lucide-react'
 import type { Tag, TrainingType, TrainingCustomType, TrainingProgram } from '../../lib/types'
 import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
 import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS } from '../../lib/trainingUtils'
+import { ConfirmModal } from '../ui/ConfirmModal'
 
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
 
@@ -26,14 +28,15 @@ interface TreinoFormPanelProps {
   isOpen: boolean
   onClose: () => void
   treinoToEdit?: TrainingWithTag | null
-  onSubmit: (data: Omit<TrainingInsert, 'created_by'>) => void
   tags: Tag[]
   customTypes: TrainingCustomType[]
   programs: TrainingProgram[]
   onCreateTag: (name: string, color: string) => Promise<Tag | null>
   onCreateType: (name: string) => Promise<TrainingCustomType | null>
   onUploadVideo: (file: File, trainingId: string, onProgress: (percent: number) => void) => Promise<string | null>
-  onDeleteVideo: (publicUrl: string) => Promise<boolean>
+  // Recebe a URL do vídeo antigo (se houver) a ser apagada do R2 — só é
+  // apagada de fato depois que o treino for salvo com sucesso (ver handleSubmit).
+  onSubmit: (data: Omit<TrainingInsert, 'created_by'>, videoUrlToDelete?: string | null) => void
 }
 
 const inputStyle: React.CSSProperties = {
@@ -58,7 +61,7 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
 }
 
-export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, programs, onCreateTag, onCreateType, onUploadVideo, onDeleteVideo }: TreinoFormPanelProps) {
+export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, programs, onCreateTag, onCreateType, onUploadVideo }: TreinoFormPanelProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [distanceM, setDistanceM] = useState<number | ''>('')
@@ -77,6 +80,10 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [pendingUploadId, setPendingUploadId] = useState<string>(() => crypto.randomUUID())
+  // URL do vídeo R2 marcado para remoção — só é de fato apagada do bucket
+  // depois que o treino for salvo com sucesso (handleSubmit → onSubmit).
+  const [pendingDeleteUrl, setPendingDeleteUrl] = useState<string | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const [showNewTag, setShowNewTag] = useState(false)
   const [newTagName, setNewTagName] = useState('')
@@ -104,6 +111,8 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
     setUploadProgress(0)
     setUploadError(null)
     setPendingUploadId(crypto.randomUUID())
+    setPendingDeleteUrl(null)
+    setShowDeleteConfirm(false)
     setShowNewTag(false)
     setShowNewType(false)
   }
@@ -133,6 +142,8 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
         setVideoUrl(existingUrl)
         setUploadError(null)
         setUploadProgress(0)
+        setPendingDeleteUrl(null)
+        setShowDeleteConfirm(false)
         if (existingUrl.includes(UPLOADED_VIDEO_HOST)) {
           setVideoMode('upload')
           setUploadedFileName(getFilenameFromUrl(existingUrl))
@@ -176,8 +187,9 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
     setUploadedFileName(file.name)
   }
 
-  async function handleRemoveUploadedVideo() {
-    // Se a URL atual não é do nosso bucket R2 (ex: link do YouTube), só limpa o state
+  function handleRemoveUploadedVideo() {
+    // Se a URL atual não é do nosso bucket R2 (ex: link do YouTube), nada foi
+    // enviado ao nosso armazenamento — só limpa o state, sem confirmação.
     if (!videoUrl || !videoUrl.includes(UPLOADED_VIDEO_HOST)) {
       setVideoUrl('')
       setUploadedFileName(null)
@@ -185,21 +197,21 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
       setUploadProgress(0)
       return
     }
+    // Exclusão do objeto no R2 é permanente e sem desfazer — sempre confirma antes.
+    setShowDeleteConfirm(true)
+  }
 
-    // Guarda a URL antes de limpar — a function precisa da URL completa para extrair a key
-    const urlToDelete = videoUrl
-    setIsUploading(true)
-    const ok = await onDeleteVideo(urlToDelete)
-    setIsUploading(false)
-
-    // Só limpa o state local se a function confirmou — se falhou, o vídeo continua na UI
-    // e o usuário vê o toast de erro para tentar de novo.
-    if (ok) {
-      setVideoUrl('')
-      setUploadedFileName(null)
-      setUploadError(null)
-      setUploadProgress(0)
-    }
+  // Só marca o vídeo para remoção (state local); a Edge Function r2-delete só é
+  // chamada de fato pelo pai depois que o treino for salvo com sucesso — assim
+  // clicar em "Cancelar" no formulário nunca apaga um arquivo que ainda está
+  // referenciado pelo treino salvo no banco.
+  function confirmRemoveVideo() {
+    setShowDeleteConfirm(false)
+    setPendingDeleteUrl(videoUrl)
+    setVideoUrl('')
+    setUploadedFileName(null)
+    setUploadError(null)
+    setUploadProgress(0)
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -227,7 +239,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
       video_url: videoUrl ? videoUrl : null,
     }
 
-    onSubmit(data)
+    onSubmit(data, pendingDeleteUrl)
   }
 
   async function handleCreateTag() {
@@ -253,6 +265,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
   }
 
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -678,5 +691,17 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
         </motion.div>
       )}
     </AnimatePresence>
+    {createPortal(
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Remover vídeo"
+        description="O vídeo será apagado permanentemente do armazenamento ao salvar as alterações. Essa ação não pode ser desfeita. Deseja continuar?"
+        confirmText="Remover"
+        onConfirm={confirmRemoveVideo}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />,
+      document.body
+    )}
+    </>
   )
 }
