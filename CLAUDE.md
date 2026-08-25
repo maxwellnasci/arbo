@@ -335,7 +335,7 @@ Frontend:
 - `src/components/ui/VideoPlayer.tsx` — detecta a URL: contém `videos.mxos.com.br` → `<video>` nativo (MIME inferido pela extensão); senão tenta extrair ID do YouTube → iframe.
 - `vercel.json` — CSP com `media-src` (tocar o vídeo) e `connect-src https://*.r2.cloudflarestorage.com` (PUT direto do browser).
 
-**Pendente:** configuração manual de CORS no bucket R2 (Cloudflare Dashboard) permitindo `PUT` das origens do app — sem isso o navegador bloqueia o upload direto mesmo com a URL assinada correta. Exclusão do objeto no R2 ao remover vídeo também não implementada (só limpa `video_url`).
+**CORS do bucket R2 — RESOLVIDO e testado em produção (2026-08-25):** o bucket já tinha CORS configurado (origens `arbo.mxos.com.br`, `*.vercel.app`, `localhost:5173`; métodos GET/PUT/HEAD; headers `*`; `MaxAgeSeconds 3600`) — upload real de vídeo testado e funcionando ponta a ponta. **Continua pendente:** exclusão do objeto no R2 ao remover vídeo (hoje só limpa `video_url`, o arquivo fica órfão no bucket).
 
 ### Service Worker — estratégia de cache (`vite.config.ts`)
 
@@ -367,6 +367,10 @@ SMTP externo via **Resend** configurado em **Supabase Dashboard → Authenticati
 
 `AlunoDashboard.tsx`/`AlunoChat.tsx` — o chat com o professor deixa de ser uma aba da `BottomNav` e passa a abrir como overlay full-screen (`createPortal`) acionado por um FAB fixo no canto da tela. `BottomNav` fica só com Início/Progresso/Perfil/Calendário (4 abas). Motivo: liberar a 1ª posição da `BottomNav` para a futura aba **Feed/Mural** — ver seção "Convenções" acima e "Planejadas" em "Roadmap de telas". Feed/Mural ainda não tem schema nem UI — é planejamento, não implementação.
 
+### Sessão 2026-08-24/25 — Health check pós-2-semanas-parado + manutenção de infra (5 commits/docs)
+
+Análise completa somente-leitura do projeto após ~2 semanas sem atividade, seguida de correções operacionais: **(1) Pausa do Supabase detectada e restaurada** — free tier pausa após 7 dias sem tráfego; sintomas no diagnóstico: DNS de `*.supabase.co` não resolvia (NXDOMAIN), REST/Auth inalcançáveis, porta 5432 em timeout — o `npx supabase login` funcionava (Management API) mas `migration list` morria na conexão direta ao banco. Restauração só via Dashboard (`Restore project`), CLI não tem comando. Após restore, confirmado zero drift: schema de produção **byte a byte idêntico** a `database.types.ts`, 9 migrations locais = 9 aplicadas. **(2) npm audit 10 → 0 vulnerabilidades** (`e754d15`) — `npm audit fix` resolveu 8; os 2 restantes exigiram major: **`react-router-dom` 6.30 → 7.18** (open redirect CVE; migração já estava agendada no histórico) e `sharp-cli` 5 → 6 (dev-only). Verificado pós-upgrade: tsc zero erros, lint limpo, 22 testes, build+PWA OK — API usada pelo app (`createBrowserRouter`/`useNavigate`/`Outlet`) é drop-in no v7. **Smoke test manual de navegação ainda recomendado** (rotas não têm cobertura de teste automatizado). **(3) Keep-alive anti-pausa** (`88c8f4c`) — `.github/workflows/keep-alive.yml`: ping diário 09:00 BRT em `/auth/v1/health` + `/rest/v1/` com secret `SUPABASE_ANON_KEY` (configurado via `gh secret set`; chave nova formato `sb_publishable_`). REST root responde 401 mesmo com key válida (comportamento do projeto com chaves novas), Auth responde 200 — para keep-alive tanto faz, o que conta é a requisição chegar. Workflow falha vermelho se conexão morrer (= projeto pausado). Ping previne pausa, não restaura. **(4) Token PAT removido da URL do git remote** — estava embutido em texto plano no `.git/config`; limpo com `git remote set-url` + `gh auth setup-git` (helper por host via keyring; `git ls-remote` validou auth). **(5) CORS do R2 confirmado configurado e upload testado em produção** — bucket já tinha a policy correta desde algum momento anterior não documentado; pendência real restante é só a exclusão do objeto R2 ao remover vídeo.
+
 ## Estado atual (2026-07-13)
 
 - **Média geral:** 9.0/10 — Segurança 8.5 · Performance 8.8 · Qualidade 9.2 · UX/Bugs 9.2 · Arquitetura 8.5 · PWA/Mobile 9.0
@@ -386,7 +390,6 @@ SMTP externo via **Resend** configurado em **Supabase Dashboard → Authenticati
 - **Próxima sessão:**
   - Testar com o professor (uso real, não sintético) — prioridade nº 1 antes de qualquer nova feature ou polimento de UX
   - Achados extra do advisor de segurança do Supabase (não corrigidos nesta sessão, escopo separado): `search_path` mutável em `update_updated_at_column`/`update_group_plans_updated_at` (risco baixíssimo — nenhuma é `SECURITY DEFINER`); RPCs `SECURITY DEFINER` expostas via REST (`handle_new_user`/`rls_auto_enable`/`set_profile_role`/`set_user_role` são funções de trigger/event-trigger, não invocáveis fora desse contexto — risco zero; `get_user_email` já tem guarda interna de admin, risco baixo); proteção de senha vazada (HaveIBeenPwned) desligada no Supabase Auth — risco médio. **Não é toggle trivial**: confirmado em 2026-08-13 que essa feature exige **plano Pro do Supabase** (US$25/mês) — o projeto está no free tier, e tentar ativar retorna erro "available on Pro Plans and up". Decisão: não vale o upgrade só por isso com a base atual de alunos (~3); revisitar quando o Supabase virar Pro por outro motivo (storage, usuários). Ver sessão 2026-08-13 em `CLAUDE_HISTORICO.md`.
-  - Configurar CORS no bucket R2 (Cloudflare Dashboard) para o upload de vídeo funcionar ponta a ponta
   - Testar no celular o fluxo completo de turma flexível ponta a ponta (liberar semana → aluno ver treino → check-in)
   - Endereçar o gap de treinos órfãos (`program = NULL`) na navegação por pastas do `AdminTurmaDetail.tsx` — hoje ficam inacessíveis nesse fluxo, só editáveis via `/admin/treinos`
   - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos) — cobrir especialmente `useWeeklyPlan.ts` (cálculo de ciclo) e o branch flexível do `AdminTurmaDetail.tsx`
@@ -468,7 +471,6 @@ SMTP externo via **Resend** configurado em **Supabase Dashboard → Authenticati
 
 ### Próximos passos
 - **Testar com o professor (uso real)** — prioridade nº 1; UX do dashboard do aluno novo fica pausada de propósito até haver feedback de uso real
-- Configurar CORS no bucket R2 (Cloudflare Dashboard) para o upload de vídeo funcionar ponta a ponta
 - Endereçar treinos órfãos (`program = NULL`) na navegação por pastas do `AdminTurmaDetail.tsx`
 - Expandir testes de 22 para 50+ (hooks, componentes, fluxos críticos)
 - Service layer — abstrair chamadas Supabase para `src/lib/api.ts`
