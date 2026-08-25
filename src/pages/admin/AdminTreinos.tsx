@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useAdminTreinos } from '../../hooks/useAdminTreinos'
 import { useTreinoMutations } from '../../hooks/useTreinoMutations'
 import { useTrainingPrograms } from '../../hooks/useTrainingPrograms'
+import { useR2Delete } from '../../hooks/useR2Delete'
 import { TreinoCard } from '../../components/admin/TreinoCard'
 import { TreinoFormPanel } from '../../components/admin/TreinoFormPanel'
 import { NewProgramModal } from '../../components/admin/NewProgramModal'
@@ -23,6 +24,7 @@ export function AdminTreinos() {
   const { treinos, loading, error, refetch } = useAdminTreinos()
   const { createTraining, updateTraining, deleteTraining } = useTreinoMutations()
   const { programs, error: programsError, createProgram, deleteProgram } = useTrainingPrograms()
+  const { deleteVideo } = useR2Delete()
   const { user } = useAuth()
   const [tags, setTags] = useState<Tag[]>([])
   const [customTypes, setCustomTypes] = useState<TrainingCustomType[]>([])
@@ -246,6 +248,20 @@ export function AdminTreinos() {
     }
   }
 
+  // Recebe a URL pública completa do vídeo (ex: https://videos.mxos.com.br/videos/abc/video.mp4),
+  // extrai a key e chama a Edge Function r2-delete. Retorna boolean para o TreinoFormPanel
+  // saber se deve ou não limpar o state local. Se falhar, o vídeo continua aparecendo
+  // na UI — usuário pode tentar de novo.
+  const handleDeleteVideo = async (publicUrl: string): Promise<boolean> => {
+    const ok = await deleteVideo(publicUrl)
+    if (ok) {
+      toast.success('Vídeo removido do armazenamento.')
+    } else {
+      toast.error('Não foi possível remover o vídeo. Tente novamente.')
+    }
+    return ok
+  }
+
   return (
     <div style={{ overflowX: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
@@ -444,6 +460,7 @@ export function AdminTreinos() {
         onCreateTag={handleCreateTag}
         onCreateType={handleCreateType}
         onUploadVideo={handleUploadVideo}
+        onDeleteVideo={handleDeleteVideo}
       />
 
       <NewProgramModal

@@ -33,6 +33,7 @@ interface TreinoFormPanelProps {
   onCreateTag: (name: string, color: string) => Promise<Tag | null>
   onCreateType: (name: string) => Promise<TrainingCustomType | null>
   onUploadVideo: (file: File, trainingId: string, onProgress: (percent: number) => void) => Promise<string | null>
+  onDeleteVideo: (publicUrl: string) => Promise<boolean>
 }
 
 const inputStyle: React.CSSProperties = {
@@ -57,7 +58,7 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
 }
 
-export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, programs, onCreateTag, onCreateType, onUploadVideo }: TreinoFormPanelProps) {
+export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags, customTypes, programs, onCreateTag, onCreateType, onUploadVideo, onDeleteVideo }: TreinoFormPanelProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [distanceM, setDistanceM] = useState<number | ''>('')
@@ -175,11 +176,30 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
     setUploadedFileName(file.name)
   }
 
-  function handleRemoveUploadedVideo() {
-    setVideoUrl('')
-    setUploadedFileName(null)
-    setUploadError(null)
-    setUploadProgress(0)
+  async function handleRemoveUploadedVideo() {
+    // Se a URL atual não é do nosso bucket R2 (ex: link do YouTube), só limpa o state
+    if (!videoUrl || !videoUrl.includes(UPLOADED_VIDEO_HOST)) {
+      setVideoUrl('')
+      setUploadedFileName(null)
+      setUploadError(null)
+      setUploadProgress(0)
+      return
+    }
+
+    // Guarda a URL antes de limpar — a function precisa da URL completa para extrair a key
+    const urlToDelete = videoUrl
+    setIsUploading(true)
+    const ok = await onDeleteVideo(urlToDelete)
+    setIsUploading(false)
+
+    // Só limpa o state local se a function confirmou — se falhou, o vídeo continua na UI
+    // e o usuário vê o toast de erro para tentar de novo.
+    if (ok) {
+      setVideoUrl('')
+      setUploadedFileName(null)
+      setUploadError(null)
+      setUploadProgress(0)
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
