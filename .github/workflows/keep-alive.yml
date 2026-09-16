@@ -10,7 +10,7 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase (Auth + REST)
+      - name: Ping Supabase (Auth + query real no banco)
         env:
           SUPABASE_URL: https://jhfkflnixzivuichmkie.supabase.co
           ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -24,14 +24,25 @@ jobs:
             -H "apikey: $ANON_KEY" \
             "$SUPABASE_URL/auth/v1/health")
 
-          REST_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          # /rest/v1/ (raiz) só devolve o schema OpenAPI e nunca chega a abrir conexão
+          # com o Postgres — não conta como "atividade" para o detector de pausa do
+          # free tier. Uma query de verdade numa tabela força o PostgREST a acionar o
+          # banco (mesmo que a RLS/GRANT negue as linhas para o role anon, o que é
+          # esperado — o que importa é a conexão real ao Postgres, não o resultado).
+          DB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "apikey: $ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/")
+            -H "Authorization: Bearer $ANON_KEY" \
+            "$SUPABASE_URL/rest/v1/training_types?select=id&limit=1")
 
-          echo "Auth health: HTTP $AUTH_STATUS"
-          echo "REST root:   HTTP $REST_STATUS"
+          echo "Auth health:              HTTP $AUTH_STATUS"
+          echo "DB query (training_types): HTTP $DB_STATUS"
 
-          if [ "$AUTH_STATUS" = "000" ] || [ "$REST_STATUS" = "000" ]; then
+          if [ "$AUTH_STATUS" = "000" ] || [ "$DB_STATUS" = "000" ]; then
             echo "::error::Falha de conexão com o Supabase (projeto pode estar pausado). Restaurar em: https://supabase.com/dashboard/project/jhfkflnixzivuichmkie"
+            exit 1
+          fi
+
+          if [ "$DB_STATUS" -ge 500 ]; then
+            echo "::error::Query ao banco retornou HTTP $DB_STATUS — projeto pode estar instável."
             exit 1
           fi
