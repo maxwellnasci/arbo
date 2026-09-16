@@ -446,3 +446,27 @@ Um `grep` por todas as ocorrências do identificador daquele elemento no código
 O campo foi substituído por uma feature real: colunas `checkins.professor_feedback`/`professor_feedback_at` no banco, um modal de detalhe do check-in (`CheckinDetailModal.tsx`) com `textarea` de verdade (`value`/`onChange`/estado controlado) e botão "Salvar feedback" que persiste via `UPDATE` no Supabase.
 
 **Conhecimento demonstrado:** Mesma classe de risco do Caso 11 (algo que parece funcionar mas não está conectado a lugar nenhum) — porém este é ainda mais traiçoeiro, porque **não existe nenhum sintoma que dispare a investigação por conta própria**: sem erro, sem tela quebrada, sem log. Só foi descoberto porque o usuário tentou usar a feature de verdade e notou que o feedback nunca chegava ao aluno. Lição prática: antes de considerar um formulário "pronto", confirmar explicitamente (por leitura de código, não só visual) que todo campo tem um `onChange` real conectado a um estado — renderizar bonito não é o mesmo que funcionar.
+
+---
+
+## Estudo de Caso 16: Keep-Alive Rodando com Sucesso Todo Dia, mas o Banco Pausou Mesmo Assim (DevOps / Supabase Free Tier)
+
+**O Cenário:**
+Numa sessão anterior, um workflow diário do GitHub Actions (`keep-alive.yml`) foi criado especificamente para evitar a pausa automática por inatividade do plano gratuito do Supabase (que pausa o projeto após dias sem "atividade" detectada). O workflow batia, todo dia às 09:00 BRT, em dois endpoints com a anon key: `GET /auth/v1/health` e `GET /rest/v1/` (raiz).
+
+**O Sintoma:**
+O usuário recebeu um e-mail do GitHub Actions — "Supabase Keep-Alive: Todas as tarefas falharam" — e o app estava fora do ar. `curl` contra o domínio do Supabase devolvia falha de DNS (`couldn't resolve host`, exit code 6 do curl), a mesma assinatura de quando o projeto está pausado. O histórico do workflow mostrava algo contraintuitivo: rodou com **sucesso ininterrupto de 25/08 a 01/09** (8 dias seguidos) e, a partir de 02/09, começou a **falhar todo santo dia por 14 dias seguidos** — sem que ninguém percebesse, por baixo uso real do app nesse período.
+
+**O Diagnóstico:**
+`get_project` via MCP do Supabase confirmou `status: "INACTIVE"`: o projeto realmente havia pausado, apesar do keep-alive ter rodado diariamente com sucesso até a véspera da pausa. A causa raiz: **nenhum dos dois endpoints batidos pelo keep-alive abre uma conexão real com o Postgres**. `/auth/v1/health` é um health check stateless da camada de Auth; `/rest/v1/` (sem tabela) devolve apenas o schema OpenAPI cacheado pelo PostgREST, sem tocar em nenhuma linha de nenhuma tabela. O detector de inatividade do free tier do Supabase mede atividade no nível do banco de dados — não na borda da API —, então um "keep-alive" que nunca aciona o Postgres não conta como atividade, mesmo respondendo `HTTP 200` religiosamente todo dia. A correção de uma sessão anterior (criar o workflow) resolvia o sintoma pontual daquele dia, mas não a causa — por isso o mesmo incidente se repetiu ~3 semanas depois.
+
+**A Solução:**
+1. Projeto restaurado via `restore_project` (MCP do Supabase) — cerca de 2 minutos, sem qualquer perda de dado (restore reativa o compute, não mexe em dado).
+2. O ping foi trocado por uma **query real numa tabela**, forçando o PostgREST a acionar o Postgres de fato:
+```diff
+- "$SUPABASE_URL/rest/v1/"
++ "$SUPABASE_URL/rest/v1/training_types?select=id&limit=1"
+```
+Mesmo que a resposta seja `401`/`403` (esperado — o role `anon` não tem `GRANT` explícito nessa tabela, só `authenticated` tem), a requisição chega ao Postgres de verdade. Testado manualmente contra o projeto já restaurado: `HTTP 401` com erro Postgres genuíno (`42501 permission denied for table training_types`) — não uma falha de conexão — confirmando que a query passou a acionar o banco.
+
+**Conhecimento demonstrado:** Ceticismo saudável sobre uma correção anterior "que já devia estar funcionando" — em vez de aceitar o estado isolado do dia (workflow existe, rodou ontem), validar o **histórico completo** de execuções revelou que 8 dias de sucesso não impediram a pausa, apontando para a causa raiz real (o *tipo* de request, não a frequência do cron). Distinção entre "responder `HTTP 200`" e "gerar atividade que o mecanismo de terceiros efetivamente mede" — mesma classe de raciocínio do Caso 9 (cache mascarando falha de rede como dado válido), aplicada a um serviço de infraestrutura de terceiros em vez de código próprio. Verificação da correção contra o sistema real (curl manual pós-restore) antes de considerar o incidente encerrado, em vez de assumir que a mudança de código bastaria.
