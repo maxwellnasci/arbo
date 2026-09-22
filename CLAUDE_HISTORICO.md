@@ -5,6 +5,42 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-09-22 (cont.) — Tentativa de `db push` + roadmap pós-MVP
+
+**Push das migrations NÃO aplicado (bloqueado), registrado para a próxima sessão:**
+- Alvo: `20260921000000_add_keepalive_rpc.sql` (RPC `public.keepalive()`) +
+  `20260922000000_fix_messages_rls_policies.sql` (6 policies canônicas de `messages`).
+- Bloqueador 1 — sem credencial: `supabase/.temp/pooler-url` contém só
+  `postgres.jhfkflnixzivuichmkie@aws-1-sa-east-1.pooler.supabase.com:5432/postgres`
+  (sem senha); nenhum `SUPABASE_ACCESS_TOKEN`, login de CLI ou senha de banco no
+  ambiente (sessão do baseline em 2026-07-11 usou token pessoal via env — mesmo
+  insumo será preciso aqui).
+- Bloqueador 2 — sandbox sem rede para o pooler: mesmo o `--dry-run` falha com
+  `hostname resolving error` para `aws-1-sa-east-1.pooler.supabase.com`. O push precisa
+  rodar fora da sandbox (ou com escalação aprovada).
+- Detalhe operacional: o CLI v2 (Bun) quebra com `EROFS` em
+  `~/.supabase/telemetry.json` dentro da sandbox — contornado com `HOME=/tmp/sb-home`,
+  que normaliza o CLI (confirmado até o `--help` e o `--dry-run`).
+- Ordem de deploy mantida: `db push` primeiro, só depois disparar o `keep-alive.yml`
+  atualizado e o teste de campo (1 turma, 3 alunos, 1 professor).
+
+**Pendências arquiteturais anotadas para o ciclo pós-MVP** (detalhadas em
+`STATUS_PROJETO.md` §7 e `GEMINI.md` "Próxima sessão / Pós-MVP"):
+1. Hardening RLS `messages` — trigger `BEFORE UPDATE` espelhando
+   `trg_prevent_self_privilege_escalation` de `profiles`: com `NOT private.is_admin()`,
+   `RAISE EXCEPTION` se `NEW IS DISTINCT FROM OLD` em `content`, `sender_id`,
+   `admin_id` ou `deleted_by_admin` (a policy `aluno_update_messages` hoje só amarra
+   `student_id`, deixando essas colunas mutáveis via REST direto); aluno segue podendo
+   alterar `deleted_by_student` e `read_at`.
+2. Service Layer — criar `src/lib/api.ts`; 41 arquivos em `src/` importam
+   `lib/supabase` diretamente (acoplamento medido em 2026-09-22).
+3. Testes — expandir de 22 (4 arquivos) para 50+ (hooks, componentes, fluxos críticos).
+4. Acessibilidade — Lighthouse Mobile 89 → 95+ (focus, ARIA, screen reader).
+5. SMTP externo — revalidar Resend/SES sob carga de turmas maiores (Resend configurado
+   e testado "Delivered" em 2026-08-13; gatilho: limite gratuito do Supabase ~3-4/hora).
+
+---
+
 ## O que foi feito em 2026-09-22 (Correção de segurança RLS em `messages` — políticas OR duplicadas)
 
 **Diagnóstico — 10 políticas legadas/duplicadas se combinando por OR:**

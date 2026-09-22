@@ -912,3 +912,24 @@ Resultado Lighthouse antes:
 - **Migration `supabase/migrations/20260922000000_fix_messages_rls_policies.sql`:** drop seguro (`IF EXISTS`) das 10 legadas (incluindo o nome truncado pelo Postgres em 63 bytes: `"Alunos podem atualizar as próprias mensagens (exclusão lógic"`); `ENABLE ROW LEVEL SECURITY` reafirmado; 6 políticas canônicas recriadas — `admin_select/insert/update_messages` + `aluno_select/insert/update_messages` — todas `TO authenticated`, com `private.is_admin()`/`auth.uid()` encapsulados em `(SELECT …)` (InitPlan: avaliado 1x por statement, não por linha), `sender_id = auth.uid()` obrigatório no INSERT, e respeito à exclusão lógica (`deleted_by_admin`/`deleted_by_student = false` no SELECT).
 - **MVP pronto para teste prático de campo:** 1 turma com 3 alunos e 1 professor. Chat Aluno↔Admin agora blindado ponta a ponta; pendente apenas aplicar a migration em produção (`npx supabase db push`) antes do teste.
 - **Validação:** `rm -rf tsconfig.tsbuildinfo && npx tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm test` (Vitest) ✅.
+
+### Sessão 2026-09-22 (cont.) — Tentativa de `db push` + roadmap pós-MVP documentado
+
+- **Push das migrations NÃO aplicado (bloqueado):** `npx supabase db push` para
+  `20260921000000_add_keepalive_rpc.sql` + `20260922000000_fix_messages_rls_policies.sql`
+  falhou por (1) falta de credencial — `supabase/.temp/pooler-url` sem senha, sem
+  `SUPABASE_ACCESS_TOKEN`/login do CLI — e (2) sandbox sem rede para o pooler
+  (`hostname resolving error` em `aws-1-sa-east-1.pooler.supabase.com`). Workaround de
+  telemetria do CLI registrado: `HOME=/tmp/sb-home` evita o `EROFS` em
+  `~/.supabase/telemetry.json`. Para aplicar: informar senha do banco ou access token
+  e rodar fora da sandbox (ordem mantida: `db push` antes do `keep-alive.yml` e do
+  teste de campo). Detalhes em `STATUS_PROJETO.md` §6.
+- **Próxima sessão / Pós-MVP (roadmap registrado em `STATUS_PROJETO.md` §7):**
+  1. Hardening RLS `messages`: trigger `BEFORE UPDATE` espelhando `profiles` para
+     travar `content`/`sender_id`/`admin_id`/`deleted_by_admin` contra `UPDATE` REST
+     direto por alunos (liberar só `deleted_by_student` e `read_at`).
+  2. Service Layer: criar `src/lib/api.ts` (41 arquivos importam `lib/supabase` hoje).
+  3. Testes: expandir de 22 para 50+ (hooks, componentes, fluxos críticos).
+  4. Acessibilidade: elevar Lighthouse Mobile de 89 para 95+.
+  5. SMTP externo: revalidar Resend/SES em escala antes de turmas maiores (Resend já
+     configurado e testado em 2026-08-13; limite gratuito do Supabase ~3-4 emails/hora).

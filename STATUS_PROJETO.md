@@ -83,7 +83,45 @@ JWT de usuário autenticado, por isso o 401 com chave anônima é o esperado.
   (`admin_*` + `aluno_*`, `TO authenticated`, `(SELECT private.is_admin())` /
   `(SELECT auth.uid())`, `sender_id = auth.uid()` no INSERT, exclusão lógica
   respeitada no SELECT). Chat Aluno↔Admin blindado.
-- **Pendente:** aplicar em produção (`npx supabase db push`) antes do teste de campo.
+- **Deploy em produção — BLOQUEADO (tentativa 2026-09-22 ~09:50 UTC, `npx supabase db push` NÃO aplicado):**
+  1. Sem credencial no ambiente: `supabase/.temp/pooler-url` não contém senha
+     e não há `SUPABASE_ACCESS_TOKEN`/login do CLI — é preciso informar a senha
+     do banco (`--db-url`/`--password`) ou um access token (`--linked`).
+  2. A sandbox de execução bloqueia a conexão direta ao pooler
+     (`hostname resolving error` para `aws-1-sa-east-1.pooler.supabase.com`) —
+     o push precisa rodar fora da sandbox ou com escalação aprovada.
+  - Migrations pendentes: `20260921000000_add_keepalive_rpc.sql` (RPC `keepalive`)
+    e `20260922000000_fix_messages_rls_policies.sql` (RLS `messages`).
+    Manter a ordem de deploy: `db push` antes de disparar o `keep-alive.yml`
+    atualizado e antes do teste de campo.
+
+## 7. Roadmap pós-MVP (pendências arquiteturais — 2026-09-22)
+
+1. **Hardening RLS `messages` (trigger `BEFORE UPDATE`):** a policy
+   `aluno_update_messages` (`USING`/`WITH CHECK` só em `student_id`) ainda permite
+   que um aluno altere `content`, `sender_id`, `admin_id` e `deleted_by_admin` das
+   próprias mensagens via chamada REST direta (`UPDATE`). Criar trigger espelhando
+   `trg_prevent_self_privilege_escalation` de `profiles`
+   (`20260711215103_prevent_privilege_escalation.sql`): `BEFORE UPDATE ON
+   public.messages`, `FOR EACH ROW`, função `SECURITY DEFINER` que, quando
+   `NOT private.is_admin()`, dá `RAISE EXCEPTION` se `NEW.<col> IS DISTINCT FROM
+   OLD.<col>` para cada coluna travada — liberando ao aluno só
+   `deleted_by_student` (exclusão lógica própria) e `read_at`.
+2. **Service Layer:** criar `src/lib/api.ts` e migrar as chamadas diretas ao client
+   Supabase (hoje 41 arquivos em `src/` importam `lib/supabase`) para funções
+   desacopladas por domínio (ex.: `api.treinos.list()`, `api.chat.send()`),
+   facilitando mock em testes e troca futura de backend.
+3. **Testes:** expandir a cobertura de 22 (4 arquivos: `auth`, `trainingUtils`,
+   `formatTime`, `scheduleUtils`) para 50+ testes unitários/integração (hooks,
+   componentes e fluxos críticos — check-in, chat, convites).
+4. **Acessibilidade:** elevar o score Lighthouse Mobile de a11y de 89 para 95+
+   (focus indicators, ARIA labels, screen reader) — demais scores já em 96/100/100.
+5. **SMTP externo:** antes de abrir para turmas maiores, validar o envio em escala.
+   Contexto: o Supabase gratuito limita emails (convites, recuperação de senha) a
+   ~3-4/hora; Resend (`smtp.resend.com:465`, domínio `mxos.com.br` verificado, key
+   "Supabase SMTP" só-leitura de envio) já foi configurado e testado ponta a ponta
+   em 2026-08-13 (convite real → "Delivered"). Pendente: revalidar deliverability e
+   limites do plano Resend/SES sob carga de dezenas de alunos.
 
 ## Como reproduzir
 
