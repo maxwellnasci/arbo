@@ -73,7 +73,7 @@ fluxo de carga automática desses treinos no banco.
 
 **Fluxo de aplicação:** SQL gerado e revisado no chat antes de qualquer execução (`sql_biblioteca_treinos_1_alter.sql` + `sql_biblioteca_treinos_2_inserts.sql`, depois apagados do repo pós-commit); ALTER TABLE aplicado pelo Maxwell via Dashboard, INSERTs rodados via MCP Supabase a pedido explícito dele (confirmada a existência das colunas e de um profile admin antes de rodar). `database.types.ts` regenerado via MCP (`generate_typescript_types`) — um patch manual prévio no arquivo (necessário porque o `ALTER TABLE` ainda não tinha sido aplicado no momento de escrever o frontend) bateu 100% com o schema real, exceto por um bug de transcrição no helper `CompositeTypes<>` (indexação por `CompositeTypeName` em vez de `PublicCompositeTypeNameOrOptions` quando o schema não tem nenhum composite type — `{ [_ in never]: never }` não é indexável por um generic não estreitado a `never`), corrigido antes do commit.
 
-### 5. Upload de vídeo no admin — ✅ IMPLEMENTADO, PENDENTE CONFIGURAÇÃO MANUAL NO CLOUDFLARE (2026-07-04)
+### 5. Upload de vídeo no admin — ✅ 100% CONCLUÍDO E VALIDADO EM PRODUÇÃO (2026-07-04 / 2026-09-22)
 Decisão: upload direto para Cloudflare R2 (custom domain `videos.mxos.com.br`), mantendo o link do YouTube como alternativa — professor escolhe via toggle no formulário de treino.
 
 **Desvio de arquitetura em relação ao pedido original (documentado, não silencioso):** o pedido original previa a Edge Function `r2-upload` recebendo o arquivo via `multipart/form-data` e fazendo o proxy dos bytes até o R2. Isso foi trocado por **presigned URL**: a function valida o JWT (só `role=admin`) e devolve uma URL assinada (SigV4, via `aws4fetch`) para o navegador fazer o `PUT` **direto** no R2, sem os bytes do vídeo passarem pelo servidor. Motivo: Edge Functions (Deno Deploy) têm limites de memória e tempo de execução incompatíveis com proxiar arquivos de até 500MB — esse é também o padrão oficial recomendado pela própria Cloudflare para upload de arquivos grandes a partir do browser. Credenciais do R2 nunca saem da Edge Function.
@@ -85,9 +85,7 @@ Decisão: upload direto para Cloudflare R2 (custom domain `videos.mxos.com.br`),
 - `src/components/ui/VideoPlayer.tsx` — detecta automaticamente o tipo de vídeo pela URL: `videos.mxos.com.br` → `<video>` nativo (MIME type inferido pela extensão: mp4/webm/mov); YouTube → iframe como antes. `touch-action: pan-y` no container, padrão do projeto.
 - `vercel.json` — CSP atualizada: `media-src` liberado para `videos.mxos.com.br` (necessário pro `<video>` tocar) e `connect-src` liberado para `https://*.r2.cloudflarestorage.com` (necessário pro `PUT` direto do browser).
 
-**Pendente do lado do usuário (não é possível fazer via código/MCP):**
-- Configurar **CORS no bucket R2** no Cloudflare Dashboard (ou via `wrangler r2 bucket cors put`) permitindo `PUT` a partir de `https://arbo.mxos.com.br`, `https://arbo-weld.vercel.app` e `http://localhost:5173` — sem isso, o navegador bloqueia o upload direto por CORS mesmo com a URL assinada correta.
-- Teste ponta a ponta com um vídeo real ainda não realizado nesta sessão (sem acesso a browser/Cloudflare para simular o `PUT`).
+**Atualização 2026-09-22 — ✅ 100% CONCLUÍDO E VALIDADO EM PRODUÇÃO:** as regras de CORS foram aplicadas no bucket `arbo-videos` da Cloudflare (permitindo `PUT` a partir de `https://arbo.mxos.com.br`, `https://arbo-weld.vercel.app` e `http://localhost:5173`, via Cloudflare Dashboard ou `wrangler r2 bucket cors put`) e validadas ponta a ponta com upload e reprodução via `videos.mxos.com.br`.
 
 **Não implementado (fora do escopo pedido):** exclusão do objeto no R2 ao clicar em "remover" — hoje o botão só limpa o campo `video_url` do treino (mesmo comportamento do link do YouTube), o arquivo permanece no bucket. Se for necessário limpar o storage também, precisa de uma function adicional de delete.
 
@@ -140,7 +138,7 @@ Depende do item 6 estar pronto. Definir comportamento exato com o professor
 **Atualização 2026-07-04:** a parte de "sincronizar dado no app" está resolvida pelo Agente de análise DeepSeek acima (feedback automático visível para aluno e professor). Ainda em aberto: decidir com o professor se o agente deve também comentar diretamente na atividade do Strava ou notificar por outro canal.
 
 ## Status
-Roadmap criado em 2026-06-30. Itens 1, 3, 4 e 6 implementados, validados e **funcionando em produção** (item 6 confirmado em 2026-07-04 após fix de GRANT no `service_role`; agente de análise DeepSeek do item 6 deployado em 2026-07-04; item 4 concluído em 2026-07-09 com os 48 treinos carregados e filtros no item 2). Item 5 (upload de vídeo) implementado, pendente apenas configuração manual de CORS no bucket R2. Item 7 parcialmente resolvido pelo agente de análise (feedback em app); falta decidir com o professor se o agente também comenta direto na atividade do Strava.
+Roadmap criado em 2026-06-30. Itens 1, 3, 4 e 6 implementados, validados e **funcionando em produção** (item 6 confirmado em 2026-07-04 após fix de GRANT no `service_role`; agente de análise DeepSeek do item 6 deployado em 2026-07-04; item 4 concluído em 2026-07-09 com os 48 treinos carregados e filtros no item 2). Item 5 (upload de vídeo) 100% concluído e validado em produção em 2026-09-22 (CORS aplicado no bucket `arbo-videos`, upload e reprodução via `videos.mxos.com.br`). Item 7 parcialmente resolvido pelo agente de análise (feedback em app); falta decidir com o professor se o agente também comenta direto na atividade do Strava.
 
 ## Correções Adicionais (2026-07-01)
 - Corrigido corte de tela no `DayPicker` em dispositivos menores (scroll interno e max-height).
