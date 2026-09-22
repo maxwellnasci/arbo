@@ -16,33 +16,32 @@ jobs:
           ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           if [ -z "$ANON_KEY" ]; then
-            echo "::warning::Secret SUPABASE_ANON_KEY não configurada — configure em Settings > Secrets > Actions para o ping funcionar."
-            exit 0
-          fi
-
-          AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "apikey: $ANON_KEY" \
-            "$SUPABASE_URL/auth/v1/health")
-
-          # /rest/v1/ (raiz) só devolve o schema OpenAPI e nunca chega a abrir conexão
-          # com o Postgres — não conta como "atividade" para o detector de pausa do
-          # free tier. Uma query de verdade numa tabela força o PostgREST a acionar o
-          # banco (mesmo que a RLS/GRANT negue as linhas para o role anon, o que é
-          # esperado — o que importa é a conexão real ao Postgres, não o resultado).
-          DB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-            -H "apikey: $ANON_KEY" \
-            -H "Authorization: Bearer $ANON_KEY" \
-            "$SUPABASE_URL/rest/v1/training_types?select=id&limit=1")
-
-          echo "Auth health:              HTTP $AUTH_STATUS"
-          echo "DB query (training_types): HTTP $DB_STATUS"
-
-          if [ "$AUTH_STATUS" = "000" ] || [ "$DB_STATUS" = "000" ]; then
-            echo "::error::Falha de conexão com o Supabase (projeto pode estar pausado). Restaurar em: https://supabase.com/dashboard/project/jhfkflnixzivuichmkie"
+            echo "::error::Secret SUPABASE_ANON_KEY não configurada."
             exit 1
           fi
 
-          if [ "$DB_STATUS" -ge 500 ]; then
-            echo "::error::Query ao banco retornou HTTP $DB_STATUS — projeto pode estar instável."
+          AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 --retry 2 \
+            -H "apikey: $ANON_KEY" \
+            "$SUPABASE_URL/auth/v1/health")
+
+          # RPC keepalive força conexão real ao Postgres (conta como atividade
+          # para o detector de pausa do free tier).
+          DB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 --retry 2 \
+            -X POST \
+            -H "apikey: $ANON_KEY" \
+            -H "Authorization: Bearer $ANON_KEY" \
+            -H "Content-Type: application/json" \
+            "$SUPABASE_URL/rest/v1/rpc/keepalive")
+
+          echo "Auth health:   HTTP $AUTH_STATUS"
+          echo "Keepalive RPC: HTTP $DB_STATUS"
+
+          if [ "$AUTH_STATUS" != "200" ]; then
+            echo "::error::Auth health check falhou com HTTP $AUTH_STATUS"
+            exit 1
+          fi
+
+          if [ "$DB_STATUS" != "200" ]; then
+            echo "::error::Keepalive RPC falhou com HTTP $DB_STATUS (esperado 200). Verifique se a migration foi aplicada no Supabase."
             exit 1
           fi
