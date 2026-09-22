@@ -307,6 +307,7 @@ npx supabase login
 - **Nota geral:** 9.0/10 — Meta: 9.0+
 - **Tasks 39-68 concluídas** (incluindo 52-57, 59, 59c, 60, 61, 62, 63, 64, 67, 68)
 - **Sessão 2026-07-04 (Task 68):** Strava Fase 2 (card profissional, painel admin, `strava-sync` v2), Upload de Vídeo via Cloudflare R2 (`r2-upload` com presigned URL) e Agente DeepSeek de análise automática (`strava-analyze` + tabela `strava_analysis`). Ver `ARBO_FASE3.md` e a seção "Sessão 2026-07-04" no fim deste arquivo.
+- **Sessão 2026-09-21 — Reativação, diagnóstico e blindagem do keep-alive:** veredito OPERACIONAL (Postgres ativo, Auth HTTP 200, 9/9 Edge Functions, lint/tsc/testes/build verdes — ver `STATUS_PROJETO.md`); `.github/workflows/keep-alive.yml` agora exige HTTP 200 do Auth + `POST /rest/v1/rpc/keepalive` com `--max-time 20 --retry 2`, e secret `SUPABASE_ANON_KEY` ausente é erro fatal; nova RPC **`public.keepalive()`** (migration `20260921000000_add_keepalive_rpc.sql`, `SECURITY INVOKER`, `SET search_path = ''`, grant a `anon`/`authenticated`/`service_role`) substitui o ping em tabela de negócio — aplicar a migration antes de disparar o workflow. Ver seção "Sessão 2026-09-21" no fim deste arquivo e lições em `GEMINI_LESSONS.md` (itens 16–17).
 - **Próxima sessão:**
   - Configurar CORS no bucket R2 pro upload de vídeo funcionar ponta a ponta.
   - Expandir testes de 22 para 50+.
@@ -896,3 +897,11 @@ Resultado Lighthouse antes:
 - **Bug pego na revisão do SQL antes de aplicar:** faltava `GRANT SELECT ON strava_analysis TO authenticated` — mesma classe do incidente anterior com `strava_connections`/`service_role`. Corrigido antes de aplicar; lição em `GEMINI_LESSONS.md` item 14; Caso 7 em `docs/PORTFOLIO_DEBUG_CASES.md`.
 - **Credenciais configuradas:** `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`, `DEEPSEEK_API_KEY` (Vercel + Supabase Secrets).
 - **Validação:** `tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm run build` ✅ nas três entregas.
+
+### Sessão 2026-09-21 — Reativação, diagnóstico e blindagem do keep-alive (Supabase + GitHub Actions)
+
+- **Diagnóstico completo (veredito OPERACIONAL, em `STATUS_PROJETO.md`):** Postgres ativo — queries reais em 5 tabelas retornando o `401`/`42501` esperado da role `anon` (prova conexão real, sem `000`/`5xx`/timeout); Auth `GET /auth/v1/health` → HTTP 200; 9/9 Edge Functions no ar; `lint` 0 erros, `tsc --noEmit` 0 erros, Vitest 22/22, `build` OK.
+- **Keep-alive blindado (`.github/workflows/keep-alive.yml`):** troca do ping em tabela de negócio (`GET training_types`, 401 esperado) por `POST /rest/v1/rpc/keepalive` (HTTP 200 esperado); validação estrita de HTTP 200 nos dois checks; `--max-time 20 --retry 2`; secret `SUPABASE_ANON_KEY` ausente agora falha com `::error::` + `exit 1`.
+- **Nova RPC `public.keepalive()`** (`supabase/migrations/20260921000000_add_keepalive_rpc.sql`): `RETURNS jsonb LANGUAGE sql SECURITY INVOKER SET search_path = ''`, corpo em `pg_catalog` retornando `{"status":"ok"}`, `GRANT EXECUTE ... TO anon, authenticated, service_role`. Healthcheck dedicado que força query real no Postgres sem expor tabela de negócio.
+- **⚠️ Ordem de deploy:** aplicar a migration (`npx supabase db push`) **antes** de disparar o workflow atualizado, senão o `POST /rpc/keepalive` retorna 404 e o workflow falha vermelho por motivo falso.
+- **Lições registradas:** `GEMINI_LESSONS.md` itens 16 (healthcheck via RPC dedicada, nunca tabela sob RLS) e 17 (ordem de deploy em workflows estritos).

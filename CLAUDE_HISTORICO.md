@@ -5,6 +5,31 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-09-21 (Reativação, Diagnóstico e Blindagem do Keep-Alive — Supabase + GitHub Actions)
+
+Sessão de diagnóstico completo de saúde do projeto (registrado em `STATUS_PROJETO.md`), seguida da blindagem do keep-alive anti-pausa do Supabase free tier.
+
+**Diagnóstico — veredito OPERACIONAL, projeto não pausado:**
+- Postgres ativo: queries reais `GET /rest/v1/<tabela>?select=id&limit=1` em `profiles`, `trainings`, `groups`, `checkins` e `training_types` retornaram `401`/`42501 permission denied` (role `anon` sem GRANT) — comportamento esperado que prova conexão real ao banco; nenhum `000`, `5xx` ou timeout.
+- Auth: `GET /auth/v1/health` → **HTTP 200** (`GoTrue v2.197.0`).
+- Edge Functions 9/9 no ar (`invite-user`, `strava-sync`, `strava-auth` com 302 do OAuth, `strava-callback`, `strava-connection` com 405 de método, `strava-analyze`, `delete-user`, `r2-upload`, `r2-delete`) — nenhum `404`/`5xx`/`000`; os `401` com anon key são o esperado (funções exigem JWT de usuário).
+- App íntegro: `lint` 0 erros, `tsc --noEmit` (cache limpo) 0 erros, Vitest **22/22**, `build` OK com precache PWA regenerado.
+
+**Refatoração do keep-alive (`.github/workflows/keep-alive.yml`):**
+- Troca do ping em tabela de negócio (`GET training_types`, que respondia o 401 esperado) por `POST /rest/v1/rpc/keepalive` — endpoint dedicado que retorna **HTTP 200** com `{"status":"ok"}`, eliminando a ambiguidade entre "permissão negada esperada" e "banco fora do ar".
+- Validação estrita: Auth e RPC **exigem HTTP 200** (antes: só falhava em `000`/`5xx`); qualquer outro status → `::error::` + `exit 1` com mensagem indicando a causa provável.
+- Robustez de rede: `--max-time 20 --retry 2` nos dois `curl`.
+- Secret ausente agora é erro fatal: sem `SUPABASE_ANON_KEY` → `::error::` + `exit 1` (antes: `::warning::` + `exit 0`, que deixava o workflow "verde" sem pingar nada).
+
+**Nova RPC `public.keepalive()` (`supabase/migrations/20260921000000_add_keepalive_rpc.sql`):**
+- `RETURNS jsonb LANGUAGE sql SECURITY INVOKER SET search_path = ''`, corpo `SELECT pg_catalog.jsonb_build_object('status', 'ok', 'timestamp', pg_catalog.now())` — força execução real de query no Postgres (conta como atividade pro detector de pausa) sem expor nenhuma tabela de negócio.
+- Qualificação total em `pg_catalog` + `search_path` vazio (padrão exigido pelo advisor de segurança do Supabase); `SECURITY INVOKER`, sem escalação de privilégio (não é `DEFINER`).
+- `GRANT EXECUTE ON FUNCTION public.keepalive() TO anon, authenticated, service_role` — exposta via PostgREST para a role `anon` usada pelo cron.
+
+**⚠️ Ordem de deploy (crítico):** aplicar a migration (`npx supabase db push`) **antes** de disparar o workflow atualizado — com a validação estrita, o `POST /rpc/keepalive` retorna 404 até a função existir no banco, e o workflow falharia vermelho por motivo falso (deploy fora de ordem, não queda real).
+
+---
+
 ## O que foi feito em 2026-08-13 (Auditoria pré-reunião com o professor + SMTP externo via Resend)
 
 Projeto ficou 30 dias parado; sessão de raio-x completo antes de o professor começar a usar o app como MVP, seguida da resolução do único bloqueador real de escala encontrado.
