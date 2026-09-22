@@ -309,6 +309,7 @@ npx supabase login
 - **Sessão 2026-07-04 (Task 68):** Strava Fase 2 (card profissional, painel admin, `strava-sync` v2), Upload de Vídeo via Cloudflare R2 (`r2-upload` com presigned URL) e Agente DeepSeek de análise automática (`strava-analyze` + tabela `strava_analysis`). Ver `ARBO_FASE3.md` e a seção "Sessão 2026-07-04" no fim deste arquivo.
 - **Sessão 2026-09-21 — Reativação, diagnóstico e blindagem do keep-alive:** veredito OPERACIONAL (Postgres ativo, Auth HTTP 200, 9/9 Edge Functions, lint/tsc/testes/build verdes — ver `STATUS_PROJETO.md`); `.github/workflows/keep-alive.yml` agora exige HTTP 200 do Auth + `POST /rest/v1/rpc/keepalive` com `--max-time 20 --retry 2`, e secret `SUPABASE_ANON_KEY` ausente é erro fatal; nova RPC **`public.keepalive()`** (migration `20260921000000_add_keepalive_rpc.sql`, `SECURITY INVOKER`, `SET search_path = ''`, grant a `anon`/`authenticated`/`service_role`) substitui o ping em tabela de negócio — aplicar a migration antes de disparar o workflow. Ver seção "Sessão 2026-09-21" no fim deste arquivo e lições em `GEMINI_LESSONS.md` (itens 16–17).
 - **Sessão 2026-09-22 — Correção de segurança RLS em `messages`:** drop das 10 políticas legadas/duplicadas (semântica OR permissiva) e 6 canônicas recriadas (`admin_*`/`aluno_*`, `TO authenticated`, `(SELECT private.is_admin())`/`(SELECT auth.uid())`) — migration `20260922000000_fix_messages_rls_policies.sql`. Chat Aluno↔Admin blindado; **MVP pronto para teste de campo** (1 turma, 3 alunos, 1 professor) após `npx supabase db push`. Ver seção "Sessão 2026-09-22" no fim deste arquivo.
+- **Sessão 2026-09-22 (cont. 2) — Trigger anti-adulteração em `messages`:** `private.prevent_messages_tampering()` + `trg_prevent_messages_tampering` (`BEFORE UPDATE`) travam `id`/`student_id`/`sender_id`/`admin_id`/`content`/`deleted_by_admin`/`created_at` contra `UPDATE` REST direto por alunos (liberados só `deleted_by_student` e `read_at`) — migration `20260922010000_prevent_messages_tampering.sql`. **3 scripts pendentes de aplicação manual no Supabase Dashboard** (SQL Editor, nesta ordem): RPC `keepalive`, RLS `messages`, trigger `messages`. Ver seção "Sessão 2026-09-22 (cont. 2)" no fim deste arquivo e `STATUS_PROJETO.md` §6.
 - **Próxima sessão:**
   - Expandir testes de 22 para 50+.
   - Service layer — `src/lib/api.ts`.
@@ -925,11 +926,34 @@ Resultado Lighthouse antes:
   e rodar fora da sandbox (ordem mantida: `db push` antes do `keep-alive.yml` e do
   teste de campo). Detalhes em `STATUS_PROJETO.md` §6.
 - **Próxima sessão / Pós-MVP (roadmap registrado em `STATUS_PROJETO.md` §7):**
-  1. Hardening RLS `messages`: trigger `BEFORE UPDATE` espelhando `profiles` para
-     travar `content`/`sender_id`/`admin_id`/`deleted_by_admin` contra `UPDATE` REST
-     direto por alunos (liberar só `deleted_by_student` e `read_at`).
+  1. ~~Hardening RLS `messages`: trigger `BEFORE UPDATE`~~ ✅ **FEITO em 2026-09-22 (cont. 2)** —
+     migration `20260922010000_prevent_messages_tampering.sql` (ver seção no fim deste arquivo).
   2. Service Layer: criar `src/lib/api.ts` (41 arquivos importam `lib/supabase` hoje).
   3. Testes: expandir de 22 para 50+ (hooks, componentes, fluxos críticos).
   4. Acessibilidade: elevar Lighthouse Mobile de 89 para 95+.
   5. SMTP externo: revalidar Resend/SES em escala antes de turmas maiores (Resend já
      configurado e testado em 2026-08-13; limite gratuito do Supabase ~3-4 emails/hora).
+
+### Sessão 2026-09-22 (cont. 2) — Trigger anti-adulteração em `messages` + scripts consolidados para o Dashboard
+
+- **Gap fechado:** a policy `aluno_update_messages` (`USING`/`WITH CHECK` só em
+  `student_id`) deixava `content`, `sender_id`, `admin_id` e `deleted_by_admin`
+  mutáveis por alunos via `UPDATE` REST direto.
+- **Migration `supabase/migrations/20260922010000_prevent_messages_tampering.sql`:**
+  função `private.prevent_messages_tampering()` (`SECURITY DEFINER`,
+  `SET search_path = public, private`) que, quando `NOT private.is_admin()`, dá
+  `RAISE EXCEPTION` se `NEW.<col> IS DISTINCT FROM OLD.<col>` em `id`,
+  `student_id`, `sender_id`, `admin_id`, `content`, `deleted_by_admin` e
+  `created_at` — liberando ao aluno só `deleted_by_student` (soft-delete próprio)
+  e `read_at` (marcação de leitura); trigger `trg_prevent_messages_tampering`
+  (`BEFORE UPDATE ON public.messages FOR EACH ROW`), espelhando
+  `trg_prevent_self_privilege_escalation` de `profiles`. `DROP TRIGGER IF EXISTS`
+  antes do `CREATE` para aplicação idempotente via SQL Editor.
+- **⚠️ Pendência de aplicação no Supabase Dashboard (SQL Editor, nesta ordem)** —
+  `db push` segue bloqueado (sem credencial + sandbox sem rede para o pooler),
+  então os 3 scripts devem ser colados/aplicados manualmente antes do teste de
+  campo (detalhes em `STATUS_PROJETO.md` §6):
+  1. `20260921000000_add_keepalive_rpc.sql` — RPC `public.keepalive()`.
+  2. `20260922000000_fix_messages_rls_policies.sql` — 6 policies RLS canônicas de `messages`.
+  3. `20260922010000_prevent_messages_tampering.sql` — trigger anti-adulteração de `messages`.
+- **Validação:** `rm -rf tsconfig.tsbuildinfo && npx tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm test` (Vitest) ✅.

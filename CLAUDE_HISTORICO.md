@@ -5,6 +5,48 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-09-22 (cont. 2) — Trigger anti-adulteração em `messages` + preparação final para o MVP
+
+**Gap resolvido — mutação de colunas sensíveis via `UPDATE` REST direto:**
+- A policy `aluno_update_messages` (`USING`/`WITH CHECK` só em `student_id`)
+  impedia o aluno de mexer em mensagens alheias, mas nada impedia um aluno
+  autenticado de fazer `PATCH` nas próprias mensagens alterando `content`
+  (reescrever histórico), `sender_id`/`admin_id` (sequestrar identidade do
+  remetente), `deleted_by_admin` (reverter moderação do professor) ou até
+  `id`/`created_at`. Policies RLS não checam coluna — só trigger resolve.
+
+**Correção — migration `supabase/migrations/20260922010000_prevent_messages_tampering.sql`:**
+- Função `private.prevent_messages_tampering()` (`SECURITY DEFINER`,
+  `SET search_path = public, private`): quando `NOT private.is_admin()`,
+  `RAISE EXCEPTION` se `NEW.<col> IS DISTINCT FROM OLD.<col>` em `id`,
+  `student_id`, `sender_id`, `admin_id`, `content`, `deleted_by_admin` e
+  `created_at` (7 colunas travadas, NULL-safe via `IS DISTINCT FROM`).
+- Trigger `trg_prevent_messages_tampering` (`BEFORE UPDATE ON public.messages
+  FOR EACH ROW`), precedido de `DROP TRIGGER IF EXISTS` para aplicação
+  idempotente via SQL Editor. Espelha o padrão de
+  `trg_prevent_self_privilege_escalation` de `profiles` (mesma fonte de verdade:
+  `private.is_admin()` via `app_metadata`, nunca `profiles.role`).
+- Ao aluno restam exatamente 2 mutações legítimas: `deleted_by_student`
+  (soft-delete próprio) e `read_at` (marcação de leitura).
+
+**Preparação final para o MVP:**
+- Item 1 do roadmap pós-MVP riscado como feito (`STATUS_PROJETO.md` §6–§7,
+  `GEMINI.md` "Sessão 2026-09-22 (cont. 2)").
+- Bloco consolidado de 3 scripts para aplicação manual no Supabase Dashboard
+  (SQL Editor, nesta ordem — `db push` segue bloqueado): RPC `keepalive`,
+  RLS canônicas de `messages`, trigger anti-adulteração de `messages`.
+  Aplicar os 3 antes de disparar o `keep-alive.yml` e antes do teste de campo
+  (1 turma, 3 alunos, 1 professor).
+
+**Lição:** RLS (`USING`/`WITH CHECK`) responde "quais linhas", nunca "quais
+colunas" — toda policy de `UPDATE` amarrada só por linha precisa de um trigger
+`BEFORE UPDATE` espelho travando as colunas sensíveis, ou o `PATCH` direto pelo
+REST segue como vetor de adulteração.
+
+**Validação:** `rm -rf tsconfig.tsbuildinfo && npx tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm test` ✅.
+
+---
+
 ## O que foi feito em 2026-09-22 (cont.) — Tentativa de `db push` + roadmap pós-MVP
 
 **Push das migrations NÃO aplicado (bloqueado), registrado para a próxima sessão:**

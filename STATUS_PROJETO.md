@@ -2,8 +2,8 @@
 
 - **Data:** 2026-09-22 (atualizado; diagnóstico base de 2026-09-21 ~05:35 UTC)
 - **Veredito:** OPERACIONAL — todos os subsistemas verificados estão verdes.
-- **Segurança:** RLS de `messages` corrigida e unificada (migration `20260922000000_fix_messages_rls_policies.sql`) — ver §6.
-- **MVP:** PRONTO PARA EXECUÇÃO DE CAMPO — teste prático com 1 turma, 3 alunos e 1 professor (aplicar a migration em produção antes: `npx supabase db push`).
+- **Segurança:** RLS de `messages` corrigida e unificada + trigger anti-adulteração de colunas (migrations `20260922000000_fix_messages_rls_policies.sql` e `20260922010000_prevent_messages_tampering.sql`) — ver §6.
+- **MVP:** PRONTO PARA EXECUÇÃO DE CAMPO — teste prático com 1 turma, 3 alunos e 1 professor (aplicar os 3 scripts SQL em produção antes, via Supabase Dashboard → SQL Editor — ver §6).
 - **Supabase:** `https://jhfkflnixzivuichmkie.supabase.co` (confere com `.env.local`)
 - **Ambiente local:** Node v24.19.0 / npm 11.19.0 (CI usa Node 22 — ver Pendências)
 
@@ -83,6 +83,18 @@ JWT de usuário autenticado, por isso o 401 com chave anônima é o esperado.
   (`admin_*` + `aluno_*`, `TO authenticated`, `(SELECT private.is_admin())` /
   `(SELECT auth.uid())`, `sender_id = auth.uid()` no INSERT, exclusão lógica
   respeitada no SELECT). Chat Aluno↔Admin blindado.
+- **Proteção de colunas no chat (2026-09-22, cont. 2):** a policy
+  `aluno_update_messages` amarra só `student_id`, deixando `content`,
+  `sender_id`, `admin_id` e `deleted_by_admin` mutáveis via REST direto.
+  **Correção** (`supabase/migrations/20260922010000_prevent_messages_tampering.sql`):
+  função `private.prevent_messages_tampering()` (`SECURITY DEFINER`,
+  `SET search_path = public, private`) que, quando `NOT private.is_admin()`,
+  dá `RAISE EXCEPTION` se `NEW.<col> IS DISTINCT FROM OLD.<col>` em `id`,
+  `student_id`, `sender_id`, `admin_id`, `content`, `deleted_by_admin` e
+  `created_at` — aluno só pode alterar `deleted_by_student` (soft-delete
+  próprio) e `read_at` (leitura); trigger `trg_prevent_messages_tampering`
+  (`BEFORE UPDATE ON public.messages FOR EACH ROW`), com
+  `DROP TRIGGER IF EXISTS` para aplicação idempotente via SQL Editor.
 - **Deploy em produção — BLOQUEADO (tentativa 2026-09-22 ~09:50 UTC, `npx supabase db push` NÃO aplicado):**
   1. Sem credencial no ambiente: `supabase/.temp/pooler-url` não contém senha
      e não há `SUPABASE_ACCESS_TOKEN`/login do CLI — é preciso informar a senha
@@ -90,23 +102,24 @@ JWT de usuário autenticado, por isso o 401 com chave anônima é o esperado.
   2. A sandbox de execução bloqueia a conexão direta ao pooler
      (`hostname resolving error` para `aws-1-sa-east-1.pooler.supabase.com`) —
      o push precisa rodar fora da sandbox ou com escalação aprovada.
-  - Migrations pendentes: `20260921000000_add_keepalive_rpc.sql` (RPC `keepalive`)
-    e `20260922000000_fix_messages_rls_policies.sql` (RLS `messages`).
-    Manter a ordem de deploy: `db push` antes de disparar o `keep-alive.yml`
-    atualizado e antes do teste de campo.
+- **Scripts SQL consolidados — aplicação manual no Supabase Dashboard
+  (SQL Editor → New query → colar → Run, NESTA ORDEM, antes do teste de campo):**
+  1. `supabase/migrations/20260921000000_add_keepalive_rpc.sql` — cria a RPC
+     `public.keepalive()` (healthcheck do `keep-alive.yml`; aplicar antes de
+     disparar o workflow, senão ele falha com 404 falso).
+  2. `supabase/migrations/20260922000000_fix_messages_rls_policies.sql` — drop
+     das 10 policies legadas de `messages` + 6 canônicas (`admin_*`/`aluno_*`).
+  3. `supabase/migrations/20260922010000_prevent_messages_tampering.sql` — função
+     `private.prevent_messages_tampering()` + trigger `trg_prevent_messages_tampering`.
+  - Ordem de deploy mantida: os 3 scripts antes do `keep-alive.yml` atualizado
+    e antes do teste de campo (1 turma, 3 alunos, 1 professor).
 
 ## 7. Roadmap pós-MVP (pendências arquiteturais — 2026-09-22)
 
-1. **Hardening RLS `messages` (trigger `BEFORE UPDATE`):** a policy
-   `aluno_update_messages` (`USING`/`WITH CHECK` só em `student_id`) ainda permite
-   que um aluno altere `content`, `sender_id`, `admin_id` e `deleted_by_admin` das
-   próprias mensagens via chamada REST direta (`UPDATE`). Criar trigger espelhando
-   `trg_prevent_self_privilege_escalation` de `profiles`
-   (`20260711215103_prevent_privilege_escalation.sql`): `BEFORE UPDATE ON
-   public.messages`, `FOR EACH ROW`, função `SECURITY DEFINER` que, quando
-   `NOT private.is_admin()`, dá `RAISE EXCEPTION` se `NEW.<col> IS DISTINCT FROM
-   OLD.<col>` para cada coluna travada — liberando ao aluno só
-   `deleted_by_student` (exclusão lógica própria) e `read_at`.
+1. ~~**Hardening RLS `messages` (trigger `BEFORE UPDATE`)**~~ ✅ **FEITO em
+   2026-09-22 (cont. 2)** — migration
+   `20260922010000_prevent_messages_tampering.sql` (ver §6); pendente só a
+   aplicação manual no Dashboard junto com os outros 2 scripts.
 2. **Service Layer:** criar `src/lib/api.ts` e migrar as chamadas diretas ao client
    Supabase (hoje 41 arquivos em `src/` importam `lib/supabase`) para funções
    desacopladas por domínio (ex.: `api.treinos.list()`, `api.chat.send()`),
