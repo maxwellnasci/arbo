@@ -5,6 +5,49 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-09-22 (cont. 3) — `db push` aplicado em produção + tipos TypeScript regenerados
+
+**Bloqueio anterior resolvido:** as 3 migrations pendentes desde as sessões
+"cont." e "cont. 2" (`20260921000000_add_keepalive_rpc.sql`,
+`20260922000000_fix_messages_rls_policies.sql`,
+`20260922010000_prevent_messages_tampering.sql`) foram aplicadas em produção
+com `npx supabase db push --yes`, rodando num ambiente com CLI logado e rede
+liberada para o pooler — o bloqueio de sandbox (sem credencial, DNS do pooler
+inacessível) registrado nas sessões anteriores era específico daquele ambiente
+de execução, não do projeto em si.
+
+**Confirmação de aplicação:**
+- `npx supabase migration list --linked` antes do push mostrava as 3
+  migrations só na coluna `Local` (ausentes em `Remote`).
+- Push aplicou as 3 na ordem correta (`20260921000000` → `20260922000000` →
+  `20260922010000`). Único `NOTICE` emitido:
+  `trigger "trg_prevent_messages_tampering" for relation "public.messages"
+  does not exist, skipping` — esperado, é o `DROP TRIGGER IF EXISTS` da 3ª
+  migration na primeira aplicação (idempotência funcionando como projetado).
+- `migration list --linked` pós-push confirma as 12 migrations do projeto com
+  `Local` = `Remote` (timestamps idênticos em todas).
+
+**Tipos TypeScript regenerados:**
+- `npx supabase gen types typescript --project-id jhfkflnixzivuichmkie >
+  src/lib/database.types.ts` — exit code 0, sem erros no stderr.
+- Diff relevante: `keepalive: { Args: never; Returns: Json }` adicionado em
+  `Database["public"]["Functions"]`. Resto do diff é reformatação cosmética de
+  generics utilitários (`Tables`/`TablesInsert`/`TablesUpdate`/`Enums`/
+  `CompositeTypes`) — mudança de versão do gerador do CLI, sem impacto de
+  runtime.
+- Arquivo termina limpo em `} as const`, sem linhas residuais de aviso de
+  versão do CLI para remover.
+
+**Estado do MVP:** nenhuma pendência de banco restante para o teste de campo
+(1 turma, 3 alunos, 1 professor) — RPC `keepalive` ativa, RLS de `messages`
+unificada e trigger anti-adulteração vigente, tudo em produção.
+
+**Validação (Verificação Suprema):** `rm -rf tsconfig.tsbuildinfo && npx tsc
+--noEmit` ✅ · `npm run lint` ✅ · `npm test` ✅ · `npm run build` ✅ (ver
+resultado completo no fechamento desta sessão).
+
+---
+
 ## O que foi feito em 2026-09-22 (cont. 2) — Trigger anti-adulteração em `messages` + preparação final para o MVP
 
 **Gap resolvido — mutação de colunas sensíveis via `UPDATE` REST direto:**

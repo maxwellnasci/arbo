@@ -1,9 +1,10 @@
 # STATUS DO PROJETO — Arbo (diagnóstico de saúde e reativação)
 
-- **Data:** 2026-09-22 (atualizado; diagnóstico base de 2026-09-21 ~05:35 UTC)
+- **Data:** 2026-09-22 (atualizado; diagnóstico base de 2026-09-21 ~05:35 UTC; migrations aplicadas em produção 2026-09-22)
 - **Veredito:** OPERACIONAL — todos os subsistemas verificados estão verdes.
-- **Segurança:** RLS de `messages` corrigida e unificada + trigger anti-adulteração de colunas (migrations `20260922000000_fix_messages_rls_policies.sql` e `20260922010000_prevent_messages_tampering.sql`) — ver §6.
-- **MVP:** PRONTO PARA EXECUÇÃO DE CAMPO — teste prático com 1 turma, 3 alunos e 1 professor (aplicar os 3 scripts SQL em produção antes, via Supabase Dashboard → SQL Editor — ver §6).
+- **Segurança:** RLS de `messages` corrigida e unificada + trigger anti-adulteração de colunas (migrations `20260922000000_fix_messages_rls_policies.sql` e `20260922010000_prevent_messages_tampering.sql`) — **aplicadas em produção via `npx supabase db push`** — ver §6.
+- **Banco:** as 3 migrations pendentes (`20260921000000`, `20260922000000`, `20260922010000`) foram aplicadas em produção com sucesso — `npx supabase migration list --linked` confirma **12/12 local = remote**. `database.types.ts` regenerado (RPC `keepalive` presente).
+- **MVP:** PRONTO PARA EXECUÇÃO DE CAMPO — teste prático com 1 turma, 3 alunos e 1 professor. Bloqueio de banco resolvido; nenhuma pendência de deploy restante.
 - **Supabase:** `https://jhfkflnixzivuichmkie.supabase.co` (confere com `.env.local`)
 - **Ambiente local:** Node v24.19.0 / npm 11.19.0 (CI usa Node 22 — ver Pendências)
 
@@ -95,31 +96,23 @@ JWT de usuário autenticado, por isso o 401 com chave anônima é o esperado.
   próprio) e `read_at` (leitura); trigger `trg_prevent_messages_tampering`
   (`BEFORE UPDATE ON public.messages FOR EACH ROW`), com
   `DROP TRIGGER IF EXISTS` para aplicação idempotente via SQL Editor.
-- **Deploy em produção — BLOQUEADO (tentativa 2026-09-22 ~09:50 UTC, `npx supabase db push` NÃO aplicado):**
-  1. Sem credencial no ambiente: `supabase/.temp/pooler-url` não contém senha
-     e não há `SUPABASE_ACCESS_TOKEN`/login do CLI — é preciso informar a senha
-     do banco (`--db-url`/`--password`) ou um access token (`--linked`).
-  2. A sandbox de execução bloqueia a conexão direta ao pooler
-     (`hostname resolving error` para `aws-1-sa-east-1.pooler.supabase.com`) —
-     o push precisa rodar fora da sandbox ou com escalação aprovada.
-- **Scripts SQL consolidados — aplicação manual no Supabase Dashboard
-  (SQL Editor → New query → colar → Run, NESTA ORDEM, antes do teste de campo):**
-  1. `supabase/migrations/20260921000000_add_keepalive_rpc.sql` — cria a RPC
-     `public.keepalive()` (healthcheck do `keep-alive.yml`; aplicar antes de
-     disparar o workflow, senão ele falha com 404 falso).
-  2. `supabase/migrations/20260922000000_fix_messages_rls_policies.sql` — drop
-     das 10 policies legadas de `messages` + 6 canônicas (`admin_*`/`aluno_*`).
-  3. `supabase/migrations/20260922010000_prevent_messages_tampering.sql` — função
-     `private.prevent_messages_tampering()` + trigger `trg_prevent_messages_tampering`.
-  - Ordem de deploy mantida: os 3 scripts antes do `keep-alive.yml` atualizado
-    e antes do teste de campo (1 turma, 3 alunos, 1 professor).
+- **Deploy em produção — RESOLVIDO (2026-09-22, `npx supabase db push --yes` aplicado com sucesso):**
+  o bloqueio anterior (sandbox sem credencial/DNS bloqueado para o pooler) foi
+  contornado rodando o push num ambiente com CLI logado e rede liberada. As 3
+  migrations foram aplicadas na ordem correta (`20260921000000` →
+  `20260922000000` → `20260922010000`); único NOTICE emitido foi
+  `trigger "trg_prevent_messages_tampering" ... does not exist, skipping` no
+  `DROP TRIGGER IF EXISTS` da 3ª migration (esperado, é a primeira aplicação).
+  `npx supabase migration list --linked` pós-push confirma as 3 novas linhas
+  com `Local` e `Remote` idênticos. `database.types.ts` regenerado na sequência
+  (`npx supabase gen types typescript --project-id jhfkflnixzivuichmkie`).
 
 ## 7. Roadmap pós-MVP (pendências arquiteturais — 2026-09-22)
 
-1. ~~**Hardening RLS `messages` (trigger `BEFORE UPDATE`)**~~ ✅ **FEITO em
-   2026-09-22 (cont. 2)** — migration
-   `20260922010000_prevent_messages_tampering.sql` (ver §6); pendente só a
-   aplicação manual no Dashboard junto com os outros 2 scripts.
+1. ~~**Hardening RLS `messages` (trigger `BEFORE UPDATE`)**~~ ✅ **FEITO e
+   aplicado em produção em 2026-09-22** — migration
+   `20260922010000_prevent_messages_tampering.sql` (ver §6), via
+   `npx supabase db push`.
 2. **Service Layer:** criar `src/lib/api.ts` e migrar as chamadas diretas ao client
    Supabase (hoje 41 arquivos em `src/` importam `lib/supabase`) para funções
    desacopladas por domínio (ex.: `api.treinos.list()`, `api.chat.send()`),

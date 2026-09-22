@@ -309,7 +309,8 @@ npx supabase login
 - **Sessão 2026-07-04 (Task 68):** Strava Fase 2 (card profissional, painel admin, `strava-sync` v2), Upload de Vídeo via Cloudflare R2 (`r2-upload` com presigned URL) e Agente DeepSeek de análise automática (`strava-analyze` + tabela `strava_analysis`). Ver `ARBO_FASE3.md` e a seção "Sessão 2026-07-04" no fim deste arquivo.
 - **Sessão 2026-09-21 — Reativação, diagnóstico e blindagem do keep-alive:** veredito OPERACIONAL (Postgres ativo, Auth HTTP 200, 9/9 Edge Functions, lint/tsc/testes/build verdes — ver `STATUS_PROJETO.md`); `.github/workflows/keep-alive.yml` agora exige HTTP 200 do Auth + `POST /rest/v1/rpc/keepalive` com `--max-time 20 --retry 2`, e secret `SUPABASE_ANON_KEY` ausente é erro fatal; nova RPC **`public.keepalive()`** (migration `20260921000000_add_keepalive_rpc.sql`, `SECURITY INVOKER`, `SET search_path = ''`, grant a `anon`/`authenticated`/`service_role`) substitui o ping em tabela de negócio — aplicar a migration antes de disparar o workflow. Ver seção "Sessão 2026-09-21" no fim deste arquivo e lições em `GEMINI_LESSONS.md` (itens 16–17).
 - **Sessão 2026-09-22 — Correção de segurança RLS em `messages`:** drop das 10 políticas legadas/duplicadas (semântica OR permissiva) e 6 canônicas recriadas (`admin_*`/`aluno_*`, `TO authenticated`, `(SELECT private.is_admin())`/`(SELECT auth.uid())`) — migration `20260922000000_fix_messages_rls_policies.sql`. Chat Aluno↔Admin blindado; **MVP pronto para teste de campo** (1 turma, 3 alunos, 1 professor) após `npx supabase db push`. Ver seção "Sessão 2026-09-22" no fim deste arquivo.
-- **Sessão 2026-09-22 (cont. 2) — Trigger anti-adulteração em `messages`:** `private.prevent_messages_tampering()` + `trg_prevent_messages_tampering` (`BEFORE UPDATE`) travam `id`/`student_id`/`sender_id`/`admin_id`/`content`/`deleted_by_admin`/`created_at` contra `UPDATE` REST direto por alunos (liberados só `deleted_by_student` e `read_at`) — migration `20260922010000_prevent_messages_tampering.sql`. **3 scripts pendentes de aplicação manual no Supabase Dashboard** (SQL Editor, nesta ordem): RPC `keepalive`, RLS `messages`, trigger `messages`. Ver seção "Sessão 2026-09-22 (cont. 2)" no fim deste arquivo e `STATUS_PROJETO.md` §6.
+- **Sessão 2026-09-22 (cont. 2) — Trigger anti-adulteração em `messages`:** `private.prevent_messages_tampering()` + `trg_prevent_messages_tampering` (`BEFORE UPDATE`) travam `id`/`student_id`/`sender_id`/`admin_id`/`content`/`deleted_by_admin`/`created_at` contra `UPDATE` REST direto por alunos (liberados só `deleted_by_student` e `read_at`) — migration `20260922010000_prevent_messages_tampering.sql`. Ver seção "Sessão 2026-09-22 (cont. 2)" no fim deste arquivo e `STATUS_PROJETO.md` §6.
+- **Sessão 2026-09-22 (cont. 3) — Push em produção concluído:** as 3 migrations (`20260921000000`, `20260922000000`, `20260922010000`) foram aplicadas em produção via `npx supabase db push --yes` — `migration list --linked` confirma 12/12 local=remote. `database.types.ts` regenerado (RPC `keepalive` tipada). MVP sem pendência de banco para o teste de campo. Ver seção "Sessão 2026-09-22 (cont. 3)" no fim deste arquivo.
 - **Próxima sessão:**
   - Expandir testes de 22 para 50+.
   - Service layer — `src/lib/api.ts`.
@@ -949,11 +950,28 @@ Resultado Lighthouse antes:
   (`BEFORE UPDATE ON public.messages FOR EACH ROW`), espelhando
   `trg_prevent_self_privilege_escalation` de `profiles`. `DROP TRIGGER IF EXISTS`
   antes do `CREATE` para aplicação idempotente via SQL Editor.
-- **⚠️ Pendência de aplicação no Supabase Dashboard (SQL Editor, nesta ordem)** —
-  `db push` segue bloqueado (sem credencial + sandbox sem rede para o pooler),
-  então os 3 scripts devem ser colados/aplicados manualmente antes do teste de
-  campo (detalhes em `STATUS_PROJETO.md` §6):
-  1. `20260921000000_add_keepalive_rpc.sql` — RPC `public.keepalive()`.
-  2. `20260922000000_fix_messages_rls_policies.sql` — 6 policies RLS canônicas de `messages`.
-  3. `20260922010000_prevent_messages_tampering.sql` — trigger anti-adulteração de `messages`.
+- **Pendência de aplicação:** resolvida na sessão seguinte (cont. 3) via
+  `npx supabase db push` fora da sandbox anterior — ver abaixo.
 - **Validação:** `rm -rf tsconfig.tsbuildinfo && npx tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm test` (Vitest) ✅.
+
+### Sessão 2026-09-22 (cont. 3) — `db push` aplicado em produção + tipos regenerados
+
+- **Bloqueio anterior resolvido:** as 3 migrations pendentes (`20260921000000_add_keepalive_rpc.sql`,
+  `20260922000000_fix_messages_rls_policies.sql`, `20260922010000_prevent_messages_tampering.sql`)
+  foram aplicadas em produção com `npx supabase db push --yes`, rodando num ambiente
+  com CLI já logado e rede liberada para o pooler (o bloqueio de sandbox/credencial
+  registrado em "cont." e "cont. 2" era específico daquele ambiente).
+- **Confirmação:** `npx supabase migration list --linked` antes do push mostrava as
+  3 migrations só em `Local`; depois do push, as 12 migrations do projeto aparecem
+  em `Local` **e** `Remote` com timestamps idênticos. Único `NOTICE` emitido:
+  `trigger "trg_prevent_messages_tampering" for relation "public.messages" does not
+  exist, skipping` — esperado, é o `DROP TRIGGER IF EXISTS` na primeira aplicação.
+- **Tipos regenerados:** `npx supabase gen types typescript --project-id
+  jhfkflnixzivuichmkie > src/lib/database.types.ts` — diff mostra a função
+  `keepalive: { Args: never; Returns: Json }` adicionada em `Database.public.Functions`
+  e nenhum resíduo de aviso de versão do CLI no fim do arquivo (termina limpo em
+  `} as const`).
+- **MVP:** sem nenhuma pendência de banco restante para o teste de campo (1 turma,
+  3 alunos, 1 professor).
+- **Validação (Verificação Suprema):** `rm -rf tsconfig.tsbuildinfo && npx tsc --noEmit` ✅
+  · `npm run lint` ✅ · `npm test` ✅ · `npm run build` ✅.
