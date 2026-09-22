@@ -1,7 +1,9 @@
 # STATUS DO PROJETO — Arbo (diagnóstico de saúde e reativação)
 
-- **Data:** 2026-09-21 ~05:35 UTC (02:35 BRT)
+- **Data:** 2026-09-22 (atualizado; diagnóstico base de 2026-09-21 ~05:35 UTC)
 - **Veredito:** OPERACIONAL — todos os subsistemas verificados estão verdes.
+- **Segurança:** RLS de `messages` corrigida e unificada (migration `20260922000000_fix_messages_rls_policies.sql`) — ver §6.
+- **MVP:** PRONTO PARA EXECUÇÃO DE CAMPO — teste prático com 1 turma, 3 alunos e 1 professor (aplicar a migration em produção antes: `npx supabase db push`).
 - **Supabase:** `https://jhfkflnixzivuichmkie.supabase.co` (confere com `.env.local`)
 - **Ambiente local:** Node v24.19.0 / npm 11.19.0 (CI usa Node 22 — ver Pendências)
 
@@ -70,6 +72,18 @@ JWT de usuário autenticado, por isso o 401 com chave anônima é o esperado.
 4. **Cache TS:** `tsconfig.tsbuildinfo` foi removido antes do `tsc` conforme
    solicitado; o arquivo é `gitignored` (`*.tsbuildinfo`), sem efeito no repo.
 5. **`dist/`** regenerado pelo build; é `gitignored`, sem efeito no repo.
+
+## 6. Segurança — RLS de `messages` corrigida (2026-09-22)
+
+- **Achado:** 10 políticas legadas/duplicadas (3 gerações de nomes) se combinando
+  por OR — qualquer regra permissiva anulava as estritas (vazamento de mensagens
+  com exclusão lógica; checagem de admin via claim `app_metadata` forjável).
+- **Correção** (`supabase/migrations/20260922000000_fix_messages_rls_policies.sql`):
+  drop `IF EXISTS` das 10 legadas, RLS reafirmado, 6 políticas canônicas
+  (`admin_*` + `aluno_*`, `TO authenticated`, `(SELECT private.is_admin())` /
+  `(SELECT auth.uid())`, `sender_id = auth.uid()` no INSERT, exclusão lógica
+  respeitada no SELECT). Chat Aluno↔Admin blindado.
+- **Pendente:** aplicar em produção (`npx supabase db push`) antes do teste de campo.
 
 ## Como reproduzir
 

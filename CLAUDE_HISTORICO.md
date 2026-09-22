@@ -5,6 +5,28 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-09-22 (Correção de segurança RLS em `messages` — políticas OR duplicadas)
+
+**Diagnóstico — 10 políticas legadas/duplicadas se combinando por OR:**
+- A tabela `messages` acumulava 3 gerações de políticas criadas em épocas distintas (nomes "Admin/Aluno pode…", "Admins/Alunos …", "Alunos podem…"), confirmadas no baseline (`20260711214804_baseline_producao.sql`, linhas ~1030–1100).
+- No Postgres, múltiplas policies `PERMISSIVE` (o default) para o mesmo comando/role se combinam por **OR**: basta UMA regra permissiva para anular todas as estritas. Exemplos concretos do vazamento:
+  - `Alunos podem visualizar as próprias mensagens` — `USING (auth.uid() = student_id)` sem checar `deleted_by_student`, anulando o filtro de exclusão lógica da irmã estrita `Aluno pode ver suas mensagens`.
+  - `Admins têm acesso total às mensagens` — `FOR ALL` sem cláusula `TO`, cobrindo qualquer role autenticável, sem amarra de `sender_id`.
+  - Geração antiga checava admin via `auth.jwt() -> 'app_metadata' ->> 'role' = 'admin'` (claim legível/forjável no client) em vez da função server-side `private.is_admin()`.
+- Nome truncado pelo Postgres (limite de 63 bytes por identificador, com `ã` ocupando 2 bytes em UTF-8): `"Alunos podem atualizar as próprias mensagens (exclusão lógic"` — o `DROP POLICY IF EXISTS` precisa usar exatamente essa forma truncada, senão não remove nada.
+
+**Correção — migration `supabase/migrations/20260922000000_fix_messages_rls_policies.sql`:**
+- Drop seguro (`IF EXISTS`) das 10 legadas + `ALTER TABLE messages ENABLE ROW LEVEL SECURITY` reafirmado.
+- 6 políticas canônicas recriadas, todas `TO authenticated`: `admin_select/insert/update_messages` (via `(SELECT private.is_admin())`, `sender_id = auth.uid()` no INSERT, `deleted_by_admin = false` no SELECT) + `aluno_select/insert/update_messages` (`student_id = auth.uid()`, `sender_id = auth.uid()` no INSERT, `deleted_by_student = false` no SELECT).
+- `private.is_admin()` e `auth.uid()` encapsulados em `(SELECT …)` para o planejador avaliar uma vez por statement (InitPlan) em vez de uma vez por linha — padrão já usado no resto do schema.
+- Chat Aluno↔Admin blindado; MVP pronto para teste de campo (1 turma, 3 alunos, 1 professor) após `npx supabase db push`.
+
+**Lição:** políticas RLS duplicadas não são redundância inofensiva — são vulnerabilidade ativa por construção (semântica OR). Auditar `pg_policies` por tabela antes de cada release de segurança e nunca empilhar gerações de nomes distintos sem dropar as anteriores.
+
+**Validação:** `rm -rf tsconfig.tsbuildinfo && npx tsc --noEmit` ✅ · `npm run lint` → 0 erros ✅ · `npm test` ✅.
+
+---
+
 ## O que foi feito em 2026-09-21 (Reativação, Diagnóstico e Blindagem do Keep-Alive — Supabase + GitHub Actions)
 
 Sessão de diagnóstico completo de saúde do projeto (registrado em `STATUS_PROJETO.md`), seguida da blindagem do keep-alive anti-pausa do Supabase free tier.
