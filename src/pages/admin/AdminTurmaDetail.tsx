@@ -97,7 +97,7 @@ export default function AdminTurmaDetail() {
 
     async function load() {
       const [trainingsRes, tagsRes, typesRes] = await Promise.all([
-        supabase.from('trainings').select('id, title, duration_minutes, distance_m, type, category, program, description, sets, target_pace_seconds_per_km, tag_id, video_url, created_at, created_by, updated_at, organization_id').order('title').limit(200),
+        supabase.from('trainings').select('id, title, duration_minutes, distance_m, type, category, program, description, sets, target_pace_seconds_per_km, tag_id, video_url, created_at, created_by, updated_at, organization_id, modality, wod_format, time_cap_seconds').order('title').limit(200),
         supabase.from('tags').select('id, name, color, created_at, created_by, updated_at, organization_id').order('name'),
         supabase.from('training_types').select('id, name, is_custom, created_at, created_by, organization_id').eq('is_custom', true).order('name'),
       ])

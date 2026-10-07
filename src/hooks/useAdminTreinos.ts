@@ -33,7 +33,7 @@ export function useAdminTreinos(): UseAdminTreinosReturn {
         const { data, error: fetchError } = await supabase
           .from('trainings')
           .select(`
-            id, title, type, category, program, description, distance_m, duration_minutes, sets, target_pace_seconds_per_km, tag_id, video_url, created_at,
+            id, title, type, category, program, description, distance_m, duration_minutes, sets, target_pace_seconds_per_km, tag_id, video_url, created_at, modality, wod_format, time_cap_seconds,
             tag:tags(id, name, color)
           `)
           .order('created_at', { ascending: false })

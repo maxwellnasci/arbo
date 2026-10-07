@@ -6,6 +6,15 @@ import { supabase } from '../../lib/supabase'
 import type { Checkin } from '../../lib/types'
 import type { DayTraining } from '../../hooks/useWeeklyPlan'
 import { useStravaActivitiesLocal, type StravaActivityLocal } from '../../hooks/useStravaActivitiesLocal'
+import { useTrainingBlocks } from '../../hooks/useTrainingBlocks'
+import {
+  blockTitle,
+  describeBlockTarget,
+  formatSeconds,
+  hasBlocksModality,
+  parseTimeInput,
+} from '../../lib/modalities'
+import { toast } from 'sonner'
 import styles from './CheckinSheet.module.css'
 
 const EFFORT_EMOJIS: Record<number, string> = {
@@ -34,7 +43,50 @@ type CheckinSheetProps = {
   onSuccess: () => void
 }
 
+// Resultado de um bloco (Hyrox/CrossFit) como texto do formulário.
+type BlockResultDraft = { time: string; reps: string; load: string }
+
+function parsePositive(value: string): number | null {
+  const n = Number(value.replace(',', '.'))
+  return value.trim() && Number.isFinite(n) && n >= 0 ? n : null
+}
+
 export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, existingCheckin, usedStravaActivityIds, onClose, onSuccess }: CheckinSheetProps) {
+  const modality = dayTraining.training.modality
+  const usesBlocks = hasBlocksModality(modality)
+  const { blocks } = useTrainingBlocks(dayTraining.training.id, usesBlocks)
+  const [blockResults, setBlockResults] = useState<Record<string, BlockResultDraft>>({})
+
+  // Editando um check-in: carrega os resultados por bloco já registrados.
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      if (!usesBlocks || !existingCheckin) return
+      const { data, error } = await supabase
+        .from('checkin_block_results')
+        .select('training_block_id, actual_duration_seconds, actual_reps, actual_load_kg')
+        .eq('checkin_id', existingCheckin.id)
+      if (cancelled || error || !data) return
+      const next: Record<string, BlockResultDraft> = {}
+      for (const r of data) {
+        next[r.training_block_id] = {
+          time: formatSeconds(r.actual_duration_seconds),
+          reps: r.actual_reps != null ? String(r.actual_reps) : '',
+          load: r.actual_load_kg != null ? String(r.actual_load_kg).replace('.', ',') : '',
+        }
+      }
+      setBlockResults(next)
+    }
+    load()
+    return () => { cancelled = true }
+  }, [usesBlocks, existingCheckin])
+
+  function updateBlockResult(blockId: string, patch: Partial<BlockResultDraft>) {
+    setBlockResults(prev => ({
+      ...prev,
+      [blockId]: { ...(prev[blockId] ?? { time: '', reps: '', load: '' }), ...patch },
+    }))
+  }
   const [distance, setDistance] = useState(() =>
     existingCheckin?.actual_distance_m != null
       ? String(existingCheckin.actual_distance_m / 1000).replace('.', ',')
@@ -83,13 +135,35 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setSubmitting(true)
     setError(null)
+
+    // Resultados por bloco: valida tudo antes de gravar qualquer coisa.
+    const resultRows = blocks.flatMap(block => {
+      const draft = blockResults[block.id]
+      if (!draft) return []
+      const seconds = parseTimeInput(draft.time)
+      const reps = parsePositive(draft.reps)
+      const load = parsePositive(draft.load)
+      if (seconds === null && reps === null && load === null) return []
+      return [{ training_block_id: block.id, actual_duration_seconds: seconds, actual_reps: reps === null ? null : Math.round(reps), actual_load_kg: load }]
+    })
+    const invalidTime = blocks.some(block => {
+      const time = blockResults[block.id]?.time ?? ''
+      return time.trim() !== '' && parseTimeInput(time) === null
+    })
+    if (usesBlocks && invalidTime) {
+      setError('Tempo inválido em algum bloco. Use m:ss (ex.: 4:30).')
+      return
+    }
+
+    setSubmitting(true)
 
     const distM = distance.trim()
       ? Math.round(parseFloat(distance.trim().replace(',', '.')) * 1000)
       : null
-    const durSec = minutes ? Math.round(parseFloat(minutes) * 60) : null
+    // Sem tempo total informado, usa a soma dos tempos por bloco.
+    const blocksTotal = resultRows.reduce((sum, r) => sum + (r.actual_duration_seconds ?? 0), 0)
+    const durSec = minutes ? Math.round(parseFloat(minutes) * 60) : (usesBlocks && blocksTotal > 0 ? blocksTotal : null)
     const pace   = distM && durSec ? Math.round(durSec / (distM / 1000)) : null
 
     const payload = {
@@ -129,6 +203,21 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
         .update({ checkin_id: newCheckinId, completed_at: new Date().toISOString() })
         .eq('id', scheduleId)
       if (schedErr) console.error('Erro ao vincular agendamento:', schedErr.message)
+    }
+
+    // Resultados por bloco (Hyrox/CrossFit) — depois do check-in existir.
+    const checkinId = existingCheckin?.id ?? newCheckinId
+    if (!checkinErr && checkinId && resultRows.length > 0) {
+      const { error: resultsErr } = await supabase
+        .from('checkin_block_results')
+        .upsert(
+          resultRows.map(r => ({ ...r, checkin_id: checkinId })),
+          { onConflict: 'checkin_id,training_block_id' },
+        )
+      if (resultsErr) {
+        console.error('Erro ao salvar resultados por bloco:', resultsErr.message)
+        toast.error('Check-in salvo, mas os resultados por estação não foram salvos.')
+      }
     }
 
     setSubmitting(false)
@@ -225,8 +314,8 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
               )}
 
               <form onSubmit={handleSubmit} className={styles.form}>
-                {/* Distância */}
-                <div className={styles.field}>
+                {/* Distância (não se aplica ao CrossFit) */}
+                {modality !== 'crossfit' && <div className={styles.field}>
                   <label className={styles.label}>Distância (km)</label>
                   <div className={styles.numericInput}>
                     <button type="button" className={styles.numBtn} onClick={() => adjustDistance(-0.5)} disabled={!!selectedActivity}>−</button>
@@ -241,11 +330,11 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
                     />
                     <button type="button" className={styles.numBtn} onClick={() => adjustDistance(0.5)} disabled={!!selectedActivity}>+</button>
                   </div>
-                </div>
+                </div>}
 
                 {/* Tempo */}
                 <div className={styles.field}>
-                  <label className={styles.label}>Tempo (min)</label>
+                  <label className={styles.label}>{usesBlocks ? 'Tempo total (min) — opcional' : 'Tempo (min)'}</label>
                   <div className={styles.numericInput}>
                     <button type="button" className={styles.numBtn} onClick={() => adjustMinutes(-5)} disabled={!!selectedActivity}>−</button>
                     <input
@@ -260,6 +349,62 @@ export default function CheckinSheet({ dayTraining, planId, userId, scheduleId, 
                     <button type="button" className={styles.numBtn} onClick={() => adjustMinutes(5)} disabled={!!selectedActivity}>+</button>
                   </div>
                 </div>
+
+                {/* Resultados por bloco (Hyrox / CrossFit) */}
+                {usesBlocks && blocks.length > 0 && (
+                  <div className={styles.field}>
+                    <label className={styles.label}>
+                      {modality === 'hyrox' ? 'Tempo por estação — opcional' : 'Resultado por bloco — opcional'}
+                    </label>
+                    <div className={styles.blockResults}>
+                      {blocks.map((block, index) => {
+                        const draft = blockResults[block.id] ?? { time: '', reps: '', load: '' }
+                        const metric = block.exercises?.metric
+                        const showReps = metric === 'reps' || block.reps != null
+                        const showLoad = metric === 'load' || block.load_kg != null
+                        const target = describeBlockTarget(block)
+                        return (
+                          <div key={block.id} className={styles.blockResultRow}>
+                            <div className={styles.blockResultInfo}>
+                              <span className={styles.blockResultName}>{index + 1}. {blockTitle(block, block.exercises?.name)}</span>
+                              {target && <span className={styles.blockResultTarget}>{target}</span>}
+                            </div>
+                            <div className={styles.blockResultInputs}>
+                              <input
+                                className={styles.blockResultInput}
+                                inputMode="numeric"
+                                placeholder="m:ss"
+                                aria-label={`Tempo do bloco ${index + 1}`}
+                                value={draft.time}
+                                onChange={e => updateBlockResult(block.id, { time: e.target.value })}
+                              />
+                              {showReps && (
+                                <input
+                                  className={styles.blockResultInput}
+                                  inputMode="numeric"
+                                  placeholder="reps"
+                                  aria-label={`Repetições do bloco ${index + 1}`}
+                                  value={draft.reps}
+                                  onChange={e => updateBlockResult(block.id, { reps: e.target.value })}
+                                />
+                              )}
+                              {showLoad && (
+                                <input
+                                  className={styles.blockResultInput}
+                                  inputMode="decimal"
+                                  placeholder="kg"
+                                  aria-label={`Carga do bloco ${index + 1}`}
+                                  value={draft.load}
+                                  onChange={e => updateBlockResult(block.id, { load: e.target.value })}
+                                />
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Percepção de esforço */}
                 <div className={styles.field}>

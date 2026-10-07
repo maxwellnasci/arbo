@@ -17,6 +17,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, ChevronDown, Trash2 } from 'lucide-react'
+import { blockDraftsToPayload, hasBlocksModality, type BlockDraft } from '../../lib/modalities'
 
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
 
@@ -106,18 +107,31 @@ export function AdminTreinos() {
     setTreinoToEdit(null)
   }
 
-  const handleSubmit = async (data: Omit<TrainingInsert, 'created_by'>, videoUrlToDelete?: string | null) => {
+  const handleSubmit = async (data: Omit<TrainingInsert, 'created_by'>, videoUrlToDelete: string | null, blocks: BlockDraft[]) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
 
-      if (treinoToEdit) {
-        await updateTraining({ id: treinoToEdit.id, ...data })
-        toast.success('Treino atualizado com sucesso')
-      } else {
-        await createTraining({ ...data, created_by: user.id })
-        toast.success('Treino criado com sucesso')
+      const saved = treinoToEdit
+        ? await updateTraining({ id: treinoToEdit.id, ...data })
+        : await createTraining({ ...data, created_by: user.id })
+
+      // Blocos (Hyrox/CrossFit): RPC atômica que atualiza pelo id, insere os
+      // novos e remove os retirados — resultados dos alunos ficam preservados.
+      // Também roda com lista vazia quando um treino com blocos virou corrida.
+      const hadBlocks = treinoToEdit ? hasBlocksModality(treinoToEdit.modality) : false
+      if (blocks.length > 0 || hadBlocks) {
+        const { error: blocksError } = await supabase.rpc('save_training_blocks', {
+          p_training_id: saved.id,
+          p_blocks: blockDraftsToPayload(blocks),
+        })
+        if (blocksError) {
+          console.error('Erro ao salvar blocos:', blocksError.message)
+          toast.error('Treino salvo, mas os blocos não foram salvos. Abra o treino e tente de novo.')
+        }
       }
+
+      toast.success(treinoToEdit ? 'Treino atualizado com sucesso' : 'Treino criado com sucesso')
       refetch()
       handleClosePanel()
 

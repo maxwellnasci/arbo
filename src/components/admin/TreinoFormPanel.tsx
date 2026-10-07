@@ -7,6 +7,21 @@ import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import type { Database } from '../../lib/database.types'
 import { TAG_COLORS, TRAINING_TYPE_OPTIONS, TRAINING_TYPE_LABELS } from '../../lib/trainingUtils'
 import { ConfirmModal } from '../ui/ConfirmModal'
+import { supabase } from '../../lib/supabase'
+import { useExercises } from '../../hooks/useTrainingBlocks'
+import { TrainingBlocksEditor } from './TrainingBlocksEditor'
+import {
+  MODALITY_OPTIONS,
+  WOD_FORMAT_LABELS,
+  blockDraftFromRow,
+  formatSeconds,
+  hasBlocksModality,
+  isModality,
+  parseTimeInput,
+  type BlockDraft,
+  type Modality,
+  type WodFormat,
+} from '../../lib/modalities'
 
 type TrainingInsert = Database['public']['Tables']['trainings']['Insert']
 
@@ -36,7 +51,9 @@ interface TreinoFormPanelProps {
   onUploadVideo: (file: File, trainingId: string, onProgress: (percent: number) => void) => Promise<string | null>
   // Recebe a URL do vídeo antigo (se houver) a ser apagada do R2 — só é
   // apagada de fato depois que o treino for salvo com sucesso (ver handleSubmit).
-  onSubmit: (data: Omit<TrainingInsert, 'created_by'>, videoUrlToDelete?: string | null) => void
+  // blocks: estações/exercícios (Hyrox/CrossFit) — salvos pelo pai via RPC
+  // save_training_blocks depois que o treino existir. Corrida: lista vazia.
+  onSubmit: (data: Omit<TrainingInsert, 'created_by'>, videoUrlToDelete: string | null, blocks: BlockDraft[]) => void
 }
 
 const inputStyle: React.CSSProperties = {
@@ -73,6 +90,12 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
   const [tagId, setTagId] = useState('')
   const [programSlug, setProgramSlug] = useState('')
   const [videoUrl, setVideoUrl] = useState('')
+  const [modality, setModality] = useState<Modality>('corrida')
+  const [wodFormat, setWodFormat] = useState<WodFormat | ''>('')
+  const [timeCapText, setTimeCapText] = useState('')
+  const [blocks, setBlocks] = useState<BlockDraft[]>([])
+  const [formError, setFormError] = useState<string | null>(null)
+  const exercises = useExercises(isOpen)
 
   const [videoMode, setVideoMode] = useState<'youtube' | 'upload'>('youtube')
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null)
@@ -106,6 +129,11 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
     setTagId('')
     setProgramSlug('treinos_gerais')
     setVideoUrl('')
+    setModality('corrida')
+    setWodFormat('')
+    setTimeCapText('')
+    setBlocks([])
+    setFormError(null)
     setVideoMode('youtube')
     setUploadedFileName(null)
     setUploadProgress(0)
@@ -138,6 +166,22 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
         setType(treinoToEdit.type as TrainingType)
         setTagId(treinoToEdit.tag?.id || '')
         setProgramSlug(treinoToEdit.program || '')
+        const editModality: Modality = isModality(treinoToEdit.modality) ? treinoToEdit.modality : 'corrida'
+        setModality(editModality)
+        setWodFormat((treinoToEdit.wod_format as WodFormat | null) ?? '')
+        setTimeCapText(formatSeconds(treinoToEdit.time_cap_seconds))
+        setFormError(null)
+        setBlocks([])
+        if (hasBlocksModality(editModality)) {
+          const { data, error } = await supabase
+            .from('training_blocks')
+            .select('id, training_id, sort_order, block_type, exercise_id, distance_m, reps, load_kg, duration_seconds, target_pace_seconds_per_km, rounds, notes, created_at')
+            .eq('training_id', treinoToEdit.id)
+            .order('sort_order')
+          if (cancelled) return
+          if (error) setFormError('Não foi possível carregar os blocos deste treino.')
+          else setBlocks((data ?? []).map(blockDraftFromRow))
+        }
         const existingUrl = treinoToEdit.video_url || ''
         setVideoUrl(existingUrl)
         setUploadError(null)
@@ -226,20 +270,36 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
       return // Previne submit se URL for inválida
     }
 
+    const usesBlocks = hasBlocksModality(modality)
+    const timeCap = parseTimeInput(timeCapText)
+    if (usesBlocks && timeCapText.trim() && timeCap === null) {
+      setFormError('Time cap inválido. Use o formato m:ss (ex.: 20:00).')
+      return
+    }
+    if (usesBlocks && blocks.some(b => (b.block_type === 'station' || b.block_type === 'wod') && !b.exercise_id)) {
+      setFormError('Escolha o exercício de cada estação/exercício antes de salvar.')
+      return
+    }
+    setFormError(null)
+
     const data: Omit<TrainingInsert, 'created_by'> = {
       title,
       description: description || null,
-      distance_m: distanceM ? Number(distanceM) : null,
+      // Distância/pace/séries são da corrida; Hyrox/CrossFit usam os blocos.
+      distance_m: !usesBlocks && distanceM ? Number(distanceM) : null,
       duration_minutes: durationMinutes ? Number(durationMinutes) : null,
-      target_pace_seconds_per_km: totalPaceSeconds > 0 ? totalPaceSeconds : null,
-      sets: sets ? Number(sets) : null,
+      target_pace_seconds_per_km: !usesBlocks && totalPaceSeconds > 0 ? totalPaceSeconds : null,
+      sets: !usesBlocks && sets ? Number(sets) : null,
       type,
       tag_id: tagId || null,
       program: programSlug || null,
       video_url: videoUrl ? videoUrl : null,
+      modality,
+      wod_format: modality === 'crossfit' && wodFormat ? wodFormat : null,
+      time_cap_seconds: usesBlocks && timeCap && timeCap > 0 ? timeCap : null,
     }
 
-    onSubmit(data, pendingDeleteUrl)
+    onSubmit(data, pendingDeleteUrl, usesBlocks ? blocks : [])
   }
 
   async function handleCreateTag() {
@@ -352,6 +412,38 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                   placeholder="Ex: Tiro 5×1000m"
                   style={inputStyle}
                 />
+              </div>
+
+              {/* Modalidade */}
+              <div>
+                <label style={labelStyle}>Modalidade</label>
+                <div style={{ display: 'flex', gap: '8px' }} role="radiogroup" aria-label="Modalidade do treino">
+                  {MODALITY_OPTIONS.map(opt => {
+                    const active = modality === opt.value
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => setModality(opt.value)}
+                        style={{
+                          flex: 1,
+                          padding: '10px',
+                          borderRadius: '8px',
+                          border: active ? '1px solid var(--orange)' : '1px solid var(--border-subtle)',
+                          background: active ? 'var(--orange-subtle)' : 'var(--bg-input)',
+                          color: active ? 'var(--orange)' : 'var(--text-secondary)',
+                          fontWeight: 700,
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               {/* Descrição */}
@@ -476,9 +568,9 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                 </select>
               </div>
 
-              {/* Distância + Duração */}
+              {/* Distância + Duração (distância só na corrida) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
+                {modality === 'corrida' && <div>
                   <label style={labelStyle}>Distância (m)</label>
                   <input
                     type="number"
@@ -488,7 +580,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                     placeholder="Ex: 5000"
                     style={inputStyle}
                   />
-                </div>
+                </div>}
                 <div>
                   <label style={labelStyle}>Duração (min)</label>
                   <input
@@ -502,6 +594,7 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                 </div>
               </div>
 
+              {modality === 'corrida' && <>
               {/* Pace */}
               <div>
                 <label style={labelStyle}>Pace alvo (min : seg / km)</label>
@@ -540,6 +633,50 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                   style={inputStyle}
                 />
               </div>
+              </>}
+
+              {/* Hyrox / CrossFit: formato, time cap e blocos */}
+              {hasBlocksModality(modality) && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: modality === 'crossfit' ? '1fr 1fr' : '1fr', gap: '12px' }}>
+                    {modality === 'crossfit' && (
+                      <div>
+                        <label style={labelStyle}>Formato do WOD</label>
+                        <select
+                          value={wodFormat}
+                          onChange={e => setWodFormat(e.target.value as WodFormat | '')}
+                          style={{ ...inputStyle, cursor: 'pointer' }}
+                        >
+                          <option value="">Livre</option>
+                          {(Object.keys(WOD_FORMAT_LABELS) as WodFormat[]).map(f => (
+                            <option key={f} value={f}>{WOD_FORMAT_LABELS[f]}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                    <div>
+                      <label style={labelStyle}>Time cap (m:ss, opcional)</label>
+                      <input
+                        inputMode="numeric"
+                        value={timeCapText}
+                        onChange={e => setTimeCapText(e.target.value)}
+                        placeholder={modality === 'hyrox' ? 'Ex: 1:30:00' : 'Ex: 20:00'}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={labelStyle}>{modality === 'hyrox' ? 'Estações e corridas' : 'Blocos do WOD'}</label>
+                    <TrainingBlocksEditor
+                      modality={modality}
+                      blocks={blocks}
+                      exercises={exercises}
+                      onChange={setBlocks}
+                    />
+                  </div>
+                </>
+              )}
 
               {/* Vídeo */}
               <div>
@@ -649,6 +786,10 @@ export function TreinoFormPanel({ isOpen, onClose, treinoToEdit, onSubmit, tags,
                   </div>
                 )}
               </div>
+
+              {formError && (
+                <p role="alert" style={{ margin: 0, color: 'var(--red-accent)', fontSize: '13px' }}>{formError}</p>
+              )}
 
               {/* Botões */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', paddingTop: '8px' }}>
