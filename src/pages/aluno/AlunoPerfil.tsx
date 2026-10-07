@@ -10,6 +10,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import { CoachFeedbackCard } from '../../components/shared/CoachFeedbackCard'
+import { useBrand } from '../../contexts/BrandContext'
 import styles from './AlunoPerfil.module.css'
 
 const ACTIVITIES_PREVIEW_COUNT = 5
@@ -41,6 +42,7 @@ function formatConnectedDate(iso: string) {
 }
 
 export default function AlunoPerfil({ studentId, isPreview }: { studentId: string, isPreview?: boolean }) {
+  const { brand } = useBrand()
   const { perfil, isLoading } = useAlunoPerfil(studentId)
   const {
     isConnected,
@@ -216,7 +218,7 @@ export default function AlunoPerfil({ studentId, isPreview }: { studentId: strin
             )}
 
             <CoachFeedbackCard
-              title="Recado do seu treinador"
+              title={brand.coachDisplayName ? `Recado de ${brand.coachDisplayName}` : 'Recado do seu treinador'}
               feedback={latestAnalysis}
               isLoading={isAnalyzing}
               loadingText="Seu treinador está olhando sua última corrida..."

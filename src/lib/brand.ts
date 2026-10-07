@@ -142,3 +142,29 @@ export function brandFromOrganization(row: OrganizationRow): Brand {
 
 export const ORGANIZATION_BRAND_COLUMNS =
   'id, name, slug, brand_name, logo_url, primary_color, secondary_color, coach_display_name'
+
+// Marca pública por slug (RPC get_brand_by_slug) — usada na tela de login
+// /a/:slug, antes de existir sessão. Sem id nem dados internos da assessoria.
+export type PublicBrandRow = {
+  slug: string
+  name: string
+  brand_name: string | null
+  logo_url: string | null
+  primary_color: string
+  secondary_color: string | null
+}
+
+const SLUG_RE = /^[a-z0-9]([a-z0-9-]{0,48}[a-z0-9])?$/
+
+export function normalizeSlug(value: string | undefined): string | null {
+  const slug = value?.trim().toLowerCase() ?? ''
+  return SLUG_RE.test(slug) ? slug : null
+}
+
+export function brandFromPublicRow(row: PublicBrandRow): Brand {
+  return {
+    ...brandFromOrganization({ ...row, id: '', coach_display_name: null }),
+    id: null,
+    logoUrl: typeof row.logo_url === 'string' && row.logo_url.startsWith('https://') ? row.logo_url : null,
+  }
+}

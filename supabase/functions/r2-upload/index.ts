@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { AwsClient } from 'https://esm.sh/aws4fetch@1.0.20'
+import { buildVideoKey, isUuid } from '../_shared/r2Keys.ts'
 
 const ALLOWED_ORIGINS = [
   'https://arbo.mxos.com.br',
@@ -20,17 +21,6 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
 const ALLOWED_CONTENT_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
 const MAX_FILE_SIZE = 500 * 1024 * 1024 // 500MB
 
-// Remove acentos/caracteres especiais preservando a extensão — a chave do objeto
-// no R2 vira parte de uma URL pública, então precisa ser um path seguro.
-function sanitizeFilename(name: string): string {
-  const lastDot = name.lastIndexOf('.')
-  const base = lastDot > 0 ? name.slice(0, lastDot) : name
-  const ext = lastDot > 0 ? name.slice(lastDot) : ''
-  const safeBase = base.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w-]/g, '_').slice(0, 80)
-  const safeExt = ext.replace(/[^\w.]/g, '').slice(0, 10)
-  return `${safeBase || 'video'}${safeExt}`
-}
-
 Deno.serve(async (req) => {
   const origin = req.headers.get('Origin')
   const corsHeaders = getCorsHeaders(origin)
@@ -50,6 +40,7 @@ Deno.serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const r2AccountId = Deno.env.get('R2_ACCOUNT_ID')!
   const r2AccessKeyId = Deno.env.get('R2_ACCESS_KEY_ID')!
   const r2SecretAccessKey = Deno.env.get('R2_SECRET_ACCESS_KEY')!
@@ -101,11 +92,33 @@ Deno.serve(async (req) => {
     return new Response('Arquivo excede o limite de 500MB.', { status: 413, headers: corsHeaders })
   }
 
-  // trainingId sanitizado também — evita path traversal caso venha manipulado
-  // (ex: "../../outro-bucket-path") já que ele vira parte literal da key no R2.
-  const safeTrainingId = trainingId.replace(/[^\w-]/g, '')
-  const safeFilename = sanitizeFilename(filename)
-  const key = `videos/${safeTrainingId}/${safeFilename}`
+  // Multi-tenant: vídeo fica em videos/{org}/{trainingId}/ — a pasta da
+  // organização do professor (app_metadata.org_id, escrito só pelo servidor).
+  const orgId = user.app_metadata?.org_id
+  if (!isUuid(orgId)) {
+    return new Response('Professor sem assessoria vinculada.', { status: 403, headers: corsHeaders })
+  }
+
+  // Treino existente tem que ser da mesma organização. Id ainda inexistente é
+  // um treino novo em criação (o frontend usa um UUID provisório como pasta) —
+  // permitido, porque o arquivo vai para a pasta da própria organização.
+  const adminClient = createClient(supabaseUrl, serviceRoleKey)
+  const { data: training, error: trainingError } = await adminClient
+    .from('trainings')
+    .select('organization_id')
+    .eq('id', isUuid(trainingId) ? trainingId : '00000000-0000-0000-0000-000000000000')
+    .maybeSingle()
+
+  if (trainingError) {
+    console.error('Erro ao verificar treino:', trainingError.message)
+    return new Response('Erro ao verificar o treino.', { status: 500, headers: corsHeaders })
+  }
+  if (training && training.organization_id !== orgId) {
+    return new Response('Treino não pertence à sua assessoria.', { status: 403, headers: corsHeaders })
+  }
+
+  // trainingId e nome sanitizados (path traversal) em buildVideoKey.
+  const key = buildVideoKey(orgId, trainingId, filename)
 
   // Presigned URL (S3 SigV4 via aws4fetch) em vez de proxiar os bytes do vídeo
   // por esta function: Edge Functions têm limites de memória/tempo de execução

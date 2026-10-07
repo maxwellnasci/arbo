@@ -2,7 +2,8 @@
 // validação da resposta do DeepSeek. Sem APIs do Deno nem imports remotos para
 // poder ser testada pelo Vitest (src/test/coachPrompt.test.ts).
 
-export const PROMPT_VERSION = 2
+// v3: nome do treinador (organizations.coach_display_name) na persona.
+export const PROMPT_VERSION = 3
 
 export type CoachFeedback = {
   message: string
@@ -68,6 +69,27 @@ Responda APENAS com um objeto json válido, exatamente com estas 4 chaves (todas
   "next_step": "orientação prática para o próximo descanso ou treino em 1 frase",
   "summary": "resumo técnico curto em 1 frase (distância, tempo, pace)"
 }`
+
+// Nome que o professor configurou em "Minha Assessoria". É texto livre do
+// admin que entra no prompt: só letras/números/espaço e pontuação simples, uma
+// linha, até 80 caracteres — sem aspas nem quebras de linha.
+export function sanitizeCoachName(value: string | null | undefined): string | null {
+  const cleaned = (value ?? '')
+    .replace(/[^\p{L}\p{N} .'-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80)
+    .trim()
+  return cleaned.length > 0 ? cleaned : null
+}
+
+export function buildSystemPrompt(coachName: string | null | undefined): string {
+  const name = sanitizeCoachName(coachName)
+  if (!name) return SYSTEM_PROMPT
+  return `${SYSTEM_PROMPT}
+
+Identidade: você é ${name}, o treinador deste aluno. Fale em primeira pessoa como ${name}, sem se apresentar formalmente nem assinar a mensagem — o aluno já sabe com quem está falando.`
+}
 
 function toNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null
