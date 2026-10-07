@@ -68,7 +68,7 @@ export async function insertTag(userId: string, name: string, color: string) {
   return supabase
     .from('tags')
     .insert({ name, color, created_by: userId })
-    .select('id, name, color, created_at, created_by, updated_at')
+    .select('id, name, color, created_at, created_by, updated_at, organization_id')
     .single()
 }
 
@@ -76,6 +76,6 @@ export async function insertTrainingType(userId: string, name: string) {
   return supabase
     .from('training_types')
     .insert({ name, is_custom: true, created_by: userId })
-    .select('id, name, is_custom, created_at, created_by')
+    .select('id, name, is_custom, created_at, created_by, organization_id')
     .single()
 }

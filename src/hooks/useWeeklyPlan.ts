@@ -171,7 +171,7 @@ async function fetchWithRetry(
     // 1. Fetch Profile
     const profileRes = await supabase
       .from('profiles')
-      .select('id, full_name, avatar_url, birth_date, group_id, has_set_password, level, role, strava_athlete_id, created_at, updated_at')
+      .select('id, full_name, avatar_url, birth_date, group_id, has_set_password, level, role, strava_athlete_id, created_at, updated_at, organization_id')
       .eq('id', userId)
       .single()
 

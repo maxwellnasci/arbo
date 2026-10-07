@@ -287,6 +287,7 @@ export type Database = {
           is_active: boolean
           mode: string
           name: string
+          organization_id: string
           plan_type: string
           starts_at: string | null
           updated_at: string
@@ -299,6 +300,7 @@ export type Database = {
           is_active?: boolean
           mode?: string
           name: string
+          organization_id?: string
           plan_type?: string
           starts_at?: string | null
           updated_at?: string
@@ -311,11 +313,20 @@ export type Database = {
           is_active?: boolean
           mode?: string
           name?: string
+          organization_id?: string
           plan_type?: string
           starts_at?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "groups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invites: {
         Row: {
@@ -323,6 +334,7 @@ export type Database = {
           email: string
           id: string
           invited_by: string | null
+          organization_id: string
           role: string
           status: string
         }
@@ -331,6 +343,7 @@ export type Database = {
           email: string
           id?: string
           invited_by?: string | null
+          organization_id?: string
           role: string
           status?: string
         }
@@ -339,10 +352,19 @@ export type Database = {
           email?: string
           id?: string
           invited_by?: string | null
+          organization_id?: string
           role?: string
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "invites_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -402,6 +424,48 @@ export type Database = {
           },
         ]
       }
+      organizations: {
+        Row: {
+          ai_tone: string | null
+          brand_name: string | null
+          coach_display_name: string | null
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          primary_color: string
+          secondary_color: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          ai_tone?: string | null
+          brand_name?: string | null
+          coach_display_name?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          primary_color?: string
+          secondary_color?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          ai_tone?: string | null
+          brand_name?: string | null
+          coach_display_name?: string | null
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          primary_color?: string
+          secondary_color?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -412,6 +476,7 @@ export type Database = {
           has_set_password: boolean
           id: string
           level: Database["public"]["Enums"]["user_level"] | null
+          organization_id: string
           role: string | null
           strava_athlete_id: number | null
           updated_at: string | null
@@ -425,6 +490,7 @@ export type Database = {
           has_set_password?: boolean
           id: string
           level?: Database["public"]["Enums"]["user_level"] | null
+          organization_id?: string
           role?: string | null
           strava_athlete_id?: number | null
           updated_at?: string | null
@@ -438,6 +504,7 @@ export type Database = {
           has_set_password?: boolean
           id?: string
           level?: Database["public"]["Enums"]["user_level"] | null
+          organization_id?: string
           role?: string | null
           strava_athlete_id?: number | null
           updated_at?: string | null
@@ -448,6 +515,13 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -753,6 +827,7 @@ export type Database = {
           created_by: string
           id: string
           name: string
+          organization_id: string
           updated_at: string
         }
         Insert: {
@@ -761,6 +836,7 @@ export type Database = {
           created_by: string
           id?: string
           name: string
+          organization_id?: string
           updated_at?: string
         }
         Update: {
@@ -769,6 +845,7 @@ export type Database = {
           created_by?: string
           id?: string
           name?: string
+          organization_id?: string
           updated_at?: string
         }
         Relationships: [
@@ -777,6 +854,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tags_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -789,6 +873,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          organization_id: string
           slug: string
           updated_at: string
         }
@@ -799,6 +884,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          organization_id?: string
           slug: string
           updated_at?: string
         }
@@ -809,6 +895,7 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          organization_id?: string
           slug?: string
           updated_at?: string
         }
@@ -820,6 +907,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "training_programs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
         ]
       }
       training_types: {
@@ -829,6 +923,7 @@ export type Database = {
           id: string
           is_custom: boolean | null
           name: string
+          organization_id: string
         }
         Insert: {
           created_at?: string | null
@@ -836,6 +931,7 @@ export type Database = {
           id?: string
           is_custom?: boolean | null
           name: string
+          organization_id?: string
         }
         Update: {
           created_at?: string | null
@@ -843,6 +939,7 @@ export type Database = {
           id?: string
           is_custom?: boolean | null
           name?: string
+          organization_id?: string
         }
         Relationships: [
           {
@@ -850,6 +947,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_types_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -863,6 +967,7 @@ export type Database = {
           distance_m: number | null
           duration_minutes: number | null
           id: string
+          organization_id: string
           program: string | null
           sets: number | null
           tag_id: string | null
@@ -880,6 +985,7 @@ export type Database = {
           distance_m?: number | null
           duration_minutes?: number | null
           id?: string
+          organization_id?: string
           program?: string | null
           sets?: number | null
           tag_id?: string | null
@@ -897,6 +1003,7 @@ export type Database = {
           distance_m?: number | null
           duration_minutes?: number | null
           id?: string
+          organization_id?: string
           program?: string | null
           sets?: number | null
           tag_id?: string | null
@@ -912,6 +1019,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trainings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {
