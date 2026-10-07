@@ -43,8 +43,6 @@ vite.config.d.ts
 # Patches soltos de debug — nunca devem ficar versionados
 *.patch
 
-# Orquestra
-.orquestra_vault
-.orquestra_salt
-.orquestra_logs.md
+# Orquestra (vault, salt, logs e arquivos de sessão .orquestra_sessions_*.json)
+.orquestra*
 ideias de design/
