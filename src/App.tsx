@@ -149,6 +149,9 @@ const router = createBrowserRouter([
     errorElement: <RouterErrorElement />,
     children: [
       { path: '/login', element: <Suspense fallback={<PageLoader />}><LoginPage /></Suspense> },
+      // Link da assessoria (white-label): login já com logo e cores do box
+      { path: '/a/:slug', element: <Suspense fallback={<PageLoader />}><LoginPage /></Suspense> },
+      { path: '/a/:slug/login', element: <Suspense fallback={<PageLoader />}><LoginPage /></Suspense> },
       { path: '/set-password', element: <Suspense fallback={<PageLoader />}><SetPassword /></Suspense> },
       { path: '/strava/callback', element: <Suspense fallback={<PageLoader />}><StravaCallback /></Suspense> },
       {

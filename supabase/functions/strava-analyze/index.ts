@@ -1,7 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import {
   PROMPT_VERSION,
-  SYSTEM_PROMPT,
+  buildSystemPrompt,
   buildUserPrompt,
   extractRawMetrics,
   firstName,
@@ -133,7 +133,13 @@ Deno.serve(async (req) => {
   // Dados de saúde da anamnese (limitações, FC máxima, peso) ficam de fora de
   // propósito: só o necessário para o tom da mensagem vai para a API externa.
   const [profileRes, anamnesisRes, checkinRes, recentRes] = await Promise.all([
-    adminClient.from('profiles').select('full_name, level').eq('id', user.id).maybeSingle(),
+    // organizations(coach_display_name): JOIN N:1 pela FK profiles.organization_id
+    // → objeto. Nome que o professor configurou em "Minha Assessoria".
+    adminClient
+      .from('profiles')
+      .select('full_name, level, organizations(coach_display_name)')
+      .eq('id', user.id)
+      .maybeSingle(),
     adminClient
       .from('anamnesis')
       .select('objectives, experience_years')
@@ -175,6 +181,10 @@ Deno.serve(async (req) => {
     ? { ...checkin.trainings, perceived_effort: checkin.perceived_effort }
     : null
 
+  type CoachJoin = { coach_display_name: string | null }
+  const orgJoin = (profileRes.data as { organizations?: CoachJoin | CoachJoin[] | null } | null)?.organizations
+  const coachName = Array.isArray(orgJoin) ? orgJoin[0]?.coach_display_name : orgJoin?.coach_display_name
+
   const userPrompt = buildUserPrompt(
     activity,
     {
@@ -196,7 +206,7 @@ Deno.serve(async (req) => {
     body: JSON.stringify({
       model: 'deepseek-chat',
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: buildSystemPrompt(coachName) },
         { role: 'user', content: userPrompt },
       ],
       response_format: { type: 'json_object' },

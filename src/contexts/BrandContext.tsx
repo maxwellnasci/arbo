@@ -7,6 +7,7 @@ import {
   applyBrandVars,
   brandCssVars,
   brandFromOrganization,
+  brandFromPublicRow,
   readBrandCache,
   writeBrandCache,
   type Brand,
@@ -18,6 +19,9 @@ type BrandContextValue = {
   // Aplica e guarda no cache uma marca recém-salva (ex.: tela Minha Assessoria),
   // sem esperar um novo fetch.
   commitBrand: (next: Brand) => void
+  // Tela de login /a/:slug: aplica a marca pública da assessoria (sem sessão).
+  // Retorna false se o slug não existir.
+  loadPublicBrand: (slug: string) => Promise<boolean>
 }
 
 const BrandContext = createContext<BrandContextValue | null>(null)
@@ -76,8 +80,20 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     writeBrandCache(safeLocalStorage(), next)
   }, [])
 
+  const loadPublicBrand = useCallback(async (slug: string) => {
+    const { data, error } = await supabase.rpc('get_brand_by_slug', { p_slug: slug })
+    if (error) {
+      console.error('Erro ao carregar a marca da assessoria:', error.message)
+      return false
+    }
+    const row = data?.[0]
+    if (!row) return false
+    commitBrand(brandFromPublicRow(row))
+    return true
+  }, [commitBrand])
+
   return (
-    <BrandContext.Provider value={{ brand, isLoading, commitBrand }}>
+    <BrandContext.Provider value={{ brand, isLoading, commitBrand, loadPublicBrand }}>
       {children}
     </BrandContext.Provider>
   )

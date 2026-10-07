@@ -57,6 +57,7 @@
 }
 
 .login-title {
+  text-transform: uppercase;
   font-size: 32px;
   font-weight: 900;
   letter-spacing: 0.25em;

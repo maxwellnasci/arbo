@@ -1123,6 +1123,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_brand_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          brand_name: string
+          logo_url: string
+          name: string
+          primary_color: string
+          secondary_color: string
+          slug: string
+        }[]
+      }
       get_user_email: { Args: { user_id: string }; Returns: string }
       keepalive: { Args: never; Returns: Json }
     }

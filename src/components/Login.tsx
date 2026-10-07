@@ -1,7 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Mail, Lock } from 'lucide-react'
 import arboLogo from '../assets/arbo-run-logo.webp'
+import { useBrand } from '../contexts/BrandContext'
+import { normalizeSlug } from '../lib/brand'
 import './Login.css'
 
 export default function Login() {
@@ -10,6 +13,24 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [brandNotFound, setBrandNotFound] = useState(false)
+
+  // /a/:slug — link da assessoria: aplica logo e cores do box antes do login.
+  // Sem slug (/login) vale a última marca usada no dispositivo.
+  const { slug: slugParam } = useParams<{ slug?: string }>()
+  const { brand, loadPublicBrand } = useBrand()
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      if (slugParam === undefined) return
+      const slug = normalizeSlug(slugParam)
+      const found = slug ? await loadPublicBrand(slug) : false
+      if (!cancelled) setBrandNotFound(!found)
+    }
+    load()
+    return () => { cancelled = true }
+  }, [slugParam, loadPublicBrand])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,12 +71,15 @@ export default function Login() {
       <div className="login-card">
         <div className="login-logo-container">
           <div className="login-logo-glow" />
-          <img src={arboLogo} alt="Arbo CrossFit" width="160" height="160" className="login-logo-img" />
+          <img src={brand.logoUrl ?? arboLogo} alt={brand.brandName} width="160" height="160" className="login-logo-img" />
         </div>
         
         <div className="login-header-text">
-          <h1 className="login-title">ARBO RUN</h1>
+          <h1 className="login-title">{brand.slug === 'arbo' ? 'ARBO RUN' : brand.brandName}</h1>
           <p className="login-subtitle">A sua evolução começa aqui.</p>
+          {brandNotFound && (
+            <p className="login-subtitle" role="status">Link de assessoria não encontrado — confira com seu professor.</p>
+          )}
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>

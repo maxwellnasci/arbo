@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { AwsClient } from 'https://esm.sh/aws4fetch@1.0.20'
+import { canDeleteVideoKey } from '../_shared/r2Keys.ts'
 
 // Mesma allowlist da r2-upload — nunca '*' (CORS dinâmico por origem validada)
 const ALLOWED_ORIGINS = [
@@ -106,6 +107,12 @@ Deno.serve(async (req) => {
       status: 400,
       headers: corsHeaders,
     })
+  }
+
+  // Multi-tenant: só apaga vídeo da pasta da própria organização (chaves
+  // legadas, anteriores ao multi-tenant, só para a organização padrão).
+  if (!canDeleteVideoKey(key, user.app_metadata?.org_id)) {
+    return new Response('Vídeo não pertence à sua assessoria.', { status: 403, headers: corsHeaders })
   }
 
   const aws = new AwsClient({
