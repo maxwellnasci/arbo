@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
 import { AuthProvider } from './contexts/AuthContext'
+import { BrandProvider } from './contexts/BrandContext'
 import { initSentry } from './lib/sentry'
 
 initSentry()
@@ -10,7 +11,9 @@ initSentry()
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <App />
+      <BrandProvider>
+        <App />
+      </BrandProvider>
     </AuthProvider>
   </StrictMode>,
 )

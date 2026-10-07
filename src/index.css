@@ -8,16 +8,25 @@
   --bg-surface-hover:  #181818;
   --bg-input:          #0f0f0f;
 
+  /* Marca (white-label) — padrão Arbo. O BrandProvider (e o script
+     anti-flicker do index.html) sobrescreve estas variáveis no <html> com as
+     cores da assessoria logada. Os tons derivados abaixo são calculados a
+     partir de --brand-primary via color-mix, então acompanham a marca. */
+  --brand-primary:     #E8521A;
+  --brand-secondary:   var(--brand-primary);
+  --brand-accent:      var(--brand-primary);
+
   /* Bordas */
   --border-default:    #1e1e1e;
   --border-subtle:     #1c1c1c;
-  --border-orange:     rgba(232, 82, 26, 0.13);
+  --border-orange:     color-mix(in srgb, var(--brand-primary) 13%, transparent);
   --border-green:      rgba(74, 222, 128, 0.13);
-  --orange-border:     rgba(232, 82, 26, 0.15);
+  --orange-border:     color-mix(in srgb, var(--brand-primary) 15%, transparent);
 
-  /* Cores de marca */
-  --orange:            #E8521A;
-  --orange-subtle:     rgba(232, 82, 26, 0.06);
+  /* Cores de marca — --orange é apelido de --brand-primary (compatibilidade
+     com os ~200 usos existentes de var(--orange)) */
+  --orange:            var(--brand-primary);
+  --orange-subtle:     color-mix(in srgb, var(--brand-primary) 6%, transparent);
   --red-accent:        #ef4444;
   --red-subtle:        rgba(239, 68, 68, 0.08);
   --red-border:        rgba(239, 68, 68, 0.25);
@@ -39,10 +48,10 @@
   --text-secondary:    #888888;
   --text-tertiary:     #7d7d7d;
   --text-disabled:     #2e2e2e;
-  --text-on-brand:     #ffffff;
+  --text-on-brand:     #ffffff;  /* recalculado pelo contraste com a cor da marca */
 
   /* Cards especiais */
-  --bg-card-orange:    #110a07;
+  --bg-card-orange:    color-mix(in srgb, var(--brand-primary) 7%, #000000);
   --bg-card-green:     #071108;
 
   /* Headings */
@@ -68,13 +77,13 @@
   /* Bordas */
   --border-default:    #e4e4e7;
   --border-subtle:     #f4f4f5;
-  --border-orange:     rgba(232, 82, 26, 0.2);
+  --border-orange:     color-mix(in srgb, var(--brand-primary) 20%, transparent);
   --border-green:      rgba(74, 222, 128, 0.4);
-  --orange-border:     rgba(232, 82, 26, 0.25);
+  --orange-border:     color-mix(in srgb, var(--brand-primary) 25%, transparent);
 
-  /* Cores de marca */
-  --orange:            #E8521A;
-  --orange-subtle:     rgba(232, 82, 26, 0.08);
+  /* Cores de marca (--orange/--brand-* não são redefinidas aqui: herdam do
+     :root ou da marca aplicada no <html>) */
+  --orange-subtle:     color-mix(in srgb, var(--brand-primary) 8%, transparent);
   --red-accent:        #dc2626;
   --red-subtle:        rgba(220, 38, 38, 0.08);
   --red-border:        rgba(220, 38, 38, 0.25);
@@ -98,7 +107,7 @@
   --text-disabled:     #a1a1aa;
 
   /* Cards especiais */
-  --bg-card-orange:    #fff7ed;
+  --bg-card-orange:    color-mix(in srgb, var(--brand-primary) 5%, #ffffff);
   --bg-card-green:     #f0fdf4;
 
   /* Headings */

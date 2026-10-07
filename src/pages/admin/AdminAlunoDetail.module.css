@@ -54,13 +54,13 @@
 }
 
 .badge {
-  background: rgba(232, 82, 26, 0.1);
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
   color: var(--orange);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 700;
-  border: 1px solid rgba(232, 82, 26, 0.2);
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 20%, transparent);
 }
 
 .actions {

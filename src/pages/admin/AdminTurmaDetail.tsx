@@ -314,7 +314,7 @@ export default function AdminTurmaDetail() {
               {group.name}
             </h1>
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px' }}>
-              <span style={{ background: 'rgba(232, 82, 26, 0.1)', color: 'var(--orange)', fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', border: '1px solid rgba(232, 82, 26, 0.2)' }}>
+              <span style={{ background: 'color-mix(in srgb, var(--brand-primary) 10%, transparent)', color: 'var(--orange)', fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', border: '1px solid color-mix(in srgb, var(--brand-primary) 20%, transparent)' }}>
                 {goalLabel[group.goal] ?? group.goal}
               </span>
               <span style={{ background: 'var(--bg-input)', color: 'var(--text-secondary)', fontSize: '11px', fontWeight: 600, padding: '4px 12px', borderRadius: '20px', border: '1px solid var(--border-subtle)' }}>

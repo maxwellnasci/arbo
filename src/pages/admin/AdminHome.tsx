@@ -15,14 +15,14 @@ type Stats = {
 
 const RunnerSVG = () => (
   <svg width="140" height="200" viewBox="0 0 140 200" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'absolute', right: '-10px', bottom: 0, opacity: 0.15 }}>
-    <ellipse cx="95" cy="22" rx="14" ry="14" fill="#E8521A"/>
-    <line x1="95" y1="36" x2="88" y2="85" stroke="#E8521A" strokeWidth="8" strokeLinecap="round"/>
-    <line x1="92" y1="55" x2="60" y2="72" stroke="#E8521A" strokeWidth="6" strokeLinecap="round"/>
-    <line x1="92" y1="55" x2="115" y2="70" stroke="#E8521A" strokeWidth="6" strokeLinecap="round"/>
-    <line x1="88" y1="85" x2="65" y2="130" stroke="#E8521A" strokeWidth="7" strokeLinecap="round"/>
-    <line x1="65" y1="130" x2="45" y2="165" stroke="#E8521A" strokeWidth="6" strokeLinecap="round"/>
-    <line x1="88" y1="85" x2="108" y2="125" stroke="#E8521A" strokeWidth="7" strokeLinecap="round"/>
-    <line x1="108" y1="125" x2="120" y2="155" stroke="#E8521A" strokeWidth="6" strokeLinecap="round"/>
+    <ellipse cx="95" cy="22" rx="14" ry="14" fill="var(--brand-primary)"/>
+    <line x1="95" y1="36" x2="88" y2="85" stroke="var(--brand-primary)" strokeWidth="8" strokeLinecap="round"/>
+    <line x1="92" y1="55" x2="60" y2="72" stroke="var(--brand-primary)" strokeWidth="6" strokeLinecap="round"/>
+    <line x1="92" y1="55" x2="115" y2="70" stroke="var(--brand-primary)" strokeWidth="6" strokeLinecap="round"/>
+    <line x1="88" y1="85" x2="65" y2="130" stroke="var(--brand-primary)" strokeWidth="7" strokeLinecap="round"/>
+    <line x1="65" y1="130" x2="45" y2="165" stroke="var(--brand-primary)" strokeWidth="6" strokeLinecap="round"/>
+    <line x1="88" y1="85" x2="108" y2="125" stroke="var(--brand-primary)" strokeWidth="7" strokeLinecap="round"/>
+    <line x1="108" y1="125" x2="120" y2="155" stroke="var(--brand-primary)" strokeWidth="6" strokeLinecap="round"/>
   </svg>
 )
 
