@@ -5,6 +5,96 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-10-07 — Supabase pausado apesar do keep-alive, reativação ponta a ponta e manutenção
+
+**Contexto:** projeto parado ~2 semanas; pedido de health check completo
+(Supabase, código, GitHub) e reativação.
+
+**Diagnóstico inicial:**
+- Workflow `Supabase Keep-Alive` verde até **26/09** (Auth HTTP 200 +
+  Keepalive RPC HTTP 200) e vermelho **todo dia desde 27/09**, sempre com
+  `exit code 6` do curl (= host não resolve) — o script nem chegava a imprimir
+  o status HTTP.
+- `jhfkflnixzivuichmkie.supabase.co` com **NXDOMAIN** em `1.1.1.1` e
+  `8.8.8.8`, enquanto `google.com`, `github.com` e `api.supabase.com`
+  resolviam normal → problema específico do projeto, não da rede local.
+  Mesmo sintoma da pausa de agosto.
+- `npx supabase projects list` ainda listava o projeto (não foi excluído).
+  Status exato via Management API não pôde ser lido (token da CLI fica no
+  keyring do sistema, sem `secret-tool`/`keyring` disponíveis).
+- **Conclusão que importa:** como o ping de 26/09 passou e o projeto já
+  estava fora em 27/09, a pausa **não foi por inatividade**. O keep-alive
+  diário não garante que o projeto não seja pausado; causa exata não
+  identificada (vale olhar o motivo exibido no Dashboard/e-mail do
+  Supabase numa próxima ocorrência).
+
+**Código (antes da reativação):** `npm run lint` 0 · `npx tsc --noEmit` 0 ·
+22/22 testes · `npm run build` + PWA OK · `npm audit --omit=dev` 0
+(dependências de dev tinham vulnerabilidades: `vitest`/`@vitest/mocker`,
+`brace-expansion`, `baseline-browser-mapping`, `sharp` via `sharp-cli`).
+Obs.: `npx tsc -b --noEmit` dá `TS6310` (projeto referenciado
+`tsconfig.node.json` não pode desabilitar emit) — artefato do flag `-b`
+combinado com `--noEmit`, não erro real; usar `npx tsc --noEmit` como
+documentado no CLAUDE.md.
+
+**Git:** `master` local estava **4 commits à frente** de `origin/master` — os
+commits "Orquestra" de 22/09 (RLS unificada + trigger anti-adulteração de
+`messages`, docs, `database.types.ts` com a RPC `keepalive`) nunca tinham
+sido enviados, embora as migrations já estivessem aplicadas em produção
+desde 22/09. Enviados ao `master` (`f97e27e`) com autorização do Max.
+
+**Dependências — PR #4 (squash `7567cc7`):**
+- `npm update` dentro das faixas semver do `package.json` (sem majors):
+  react/react-dom 19.3.0, vite 8.3.3, @supabase/supabase-js 2.117.2,
+  react-router-dom 7.18.4, eslint 10.12, vitest 4.1.11, lucide-react 1.52 etc.
+- `npm audit fix` resolveu vitest, brace-expansion e baseline-browser-mapping.
+- `sharp-cli@6.1.0` fixa `sharp@0.35.4` (CVE do librsvg, "No fix
+  available"). Resolvido com `"overrides": { "sharp-cli": { "sharp":
+  "$sharp" } }` — só adicionar o override não bastou: foi preciso remover a
+  entrada aninhada `node_modules/sharp-cli/node_modules/sharp` do
+  `package-lock.json` para o npm deduplicar para o `sharp@0.35.5` raiz.
+- Resultado: **`npm audit` 0 vulnerabilidades**; lint 0, tsc 0, 22/22,
+  build OK; CI do PR e preview da Vercel verdes; CI do `master` verde pós-merge.
+- Majors deixados de fora de propósito: recharts 3 (incompatível com Vite —
+  ver CLAUDE.md), TypeScript 7, vitest 5, framer-motion 14,
+  vite-plugin-pwa 2, @sentry/react 11.
+
+**Pós-reativação (Max restaurou pelo Dashboard):**
+- DNS voltou a resolver; `GET /auth/v1/health` → 200 (GoTrue v2.197.0);
+  `POST /rest/v1/rpc/keepalive` → 200 (`{"status": "ok", ...}`); REST
+  `trainings` com `anon` → 401 (esperado, sem GRANT para `anon`).
+- 9/9 Edge Functions respondendo (`OPTIONS` com origin de produção):
+  `strava-auth` 302 (redirect esperado), demais 200.
+- `npx supabase migration list --linked` → **12/12 local = remote**.
+- `npx supabase gen types` → **idêntico** a `src/lib/database.types.ts`
+  (zero drift de schema).
+- Keep-alive disparado manualmente (`gh workflow run keep-alive.yml`) →
+  verde, Auth 200 + RPC 200.
+- Site https://arbo.mxos.com.br → 200 antes e depois do deploy do PR #4.
+
+**`.gitignore` (`1268d3f`):** seção Orquestra (`.orquestra_vault`,
+`.orquestra_salt`, `.orquestra_logs.md`) virou um único padrão `.orquestra*`,
+cobrindo também `.orquestra_sessions_*.json` que sujava o `git status`.
+Conferido com `git check-ignore`; nenhum `.orquestra*` estava versionado.
+Não usar `*.json` genérico (ignoraria `package.json`/`vercel.json`/`tsconfig.json`).
+
+**Checkout local:** `git pull --ff-only` + `npm ci` para alinhar o
+`node_modules` ao lockfile novo; `git status` limpo.
+
+**Lição de ferramenta:** worktrees em `.claude/worktrees/` entram na coleta
+do Vitest (a contagem foi 44 testes em vez de 22 enquanto existia uma) —
+remover a worktree ao terminar ou excluir `.claude/**` no `vitest.config.ts`
+se isso virar recorrente.
+
+**Docs:** CLAUDE.md atualizado (`46b76ab`) — subsection "Sessão 2026-10-07",
+linha em "Estado atual" e convenção nova sobre RLS/trigger de `messages`
+(que ainda não estava documentada lá).
+
+**Pendente:** smoke test manual em produção (login de aluno + navegação
+pelas abas) após o upgrade de dependências.
+
+---
+
 ## O que foi feito em 2026-09-22 (cont. 3) — `db push` aplicado em produção + tipos TypeScript regenerados
 
 **Bloqueio anterior resolvido:** as 3 migrations pendentes desde as sessões
