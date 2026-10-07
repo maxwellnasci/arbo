@@ -93,13 +93,43 @@ Deno.serve(async (req) => {
     return new Response('Email inválido.', { status: 400, headers: corsHeaders })
   }
 
+  // Assessoria de quem convida — app_metadata é escrito só pelo servidor.
+  const orgId = typeof user.app_metadata?.org_id === 'string' ? user.app_metadata.org_id : null
+  if (!orgId) {
+    return new Response('Professor sem assessoria vinculada.', { status: 403, headers: corsHeaders })
+  }
+
   // Envia o convite com service_role — nunca exposto ao frontend
   const adminClient = createClient(supabaseUrl, serviceRoleKey)
 
-  const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-    data: { role },   // injeta role no convite (vai para raw_user_meta_data)
+  // A role NÃO vai mais em user_metadata (editável pelo usuário): o trigger
+  // set_user_role cria toda conta como 'aluno' e a promoção/vínculo com a
+  // assessoria é feito logo abaixo pelo servidor.
+  const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
     redirectTo,
   })
+
+  if (!inviteError && inviteData?.user) {
+    const invitedId = inviteData.user.id
+
+    const { error: metaError } = await adminClient.auth.admin.updateUserById(invitedId, {
+      app_metadata: { role, org_id: orgId },
+    })
+    // service_role passa pelos triggers de proteção de role/organization_id;
+    // trg_sync_org_claim mantém app_metadata.org_id em dia.
+    const { error: profileError } = await adminClient
+      .from('profiles')
+      .update({ role, organization_id: orgId })
+      .eq('id', invitedId)
+
+    if (metaError || profileError) {
+      console.error('Erro ao vincular convidado:', metaError?.message ?? profileError?.message)
+      return new Response('Convite enviado, mas falhou ao vincular a conta à assessoria.', {
+        status: 500,
+        headers: corsHeaders,
+      })
+    }
+  }
 
   if (inviteError) {
     if (inviteError.message.includes('already been registered') || inviteError.message === 'User already registered') {
@@ -124,6 +154,7 @@ Deno.serve(async (req) => {
     role,
     status: 'sent',
     invited_by: user.id,
+    organization_id: orgId,
   })
 
   if (insertError) {

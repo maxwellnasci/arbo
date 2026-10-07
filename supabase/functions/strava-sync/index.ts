@@ -89,6 +89,25 @@ Deno.serve(async (req) => {
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey)
 
+  // Multi-tenant: professor só sincroniza/vê atividades de aluno da própria
+  // assessoria (app_metadata.org_id). service_role ignora RLS — checagem explícita.
+  if (studentId) {
+    const orgId = typeof user.app_metadata?.org_id === 'string' ? user.app_metadata.org_id : null
+    const { data: target, error: targetError } = await adminClient
+      .from('profiles')
+      .select('organization_id')
+      .eq('id', studentId)
+      .maybeSingle()
+
+    if (targetError) {
+      console.error('Erro ao buscar aluno:', targetError.message)
+      return new Response('Erro ao verificar aluno.', { status: 500, headers: corsHeaders })
+    }
+    if (!orgId || !target || target.organization_id !== orgId) {
+      return new Response('Aluno não encontrado na sua assessoria.', { status: 403, headers: corsHeaders })
+    }
+  }
+
   // Filtra explicitamente por targetUserId mesmo usando service_role (que ignora RLS)
   // — nunca confiar apenas no bypass de RLS para isolar dados entre alunos.
   const { data: connection, error: connError } = await adminClient
