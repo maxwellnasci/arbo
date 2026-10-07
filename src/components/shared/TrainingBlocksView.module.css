@@ -1,0 +1,120 @@
+.wrapper {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.badgeHyrox {
+  background: var(--orange-subtle);
+  border: 1px solid var(--orange-border);
+  color: var(--orange);
+}
+
+.badgeCrossfit {
+  background: var(--blue-subtle);
+  border: 1px solid var(--blue-border);
+  color: var(--blue-accent);
+}
+
+.meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.muted {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item {
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+}
+
+.itemRun {
+  border-left: 3px solid var(--orange);
+}
+
+.index {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+}
+
+.icon {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--text-tertiary);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.target {
+  font-size: 13px;
+  color: var(--orange);
+  font-weight: 600;
+}
+
+.notes {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}

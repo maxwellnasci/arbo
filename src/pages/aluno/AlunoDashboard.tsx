@@ -13,6 +13,7 @@ import { Home, TrendingUp, MessageSquare, User, Calendar, CheckCircle2, Medal, F
 import LockedScreen from '../../components/aluno/LockedScreen'
 import FlexibleTrainingCard from '../../components/aluno/FlexibleTrainingCard'
 import { VideoPlayer } from '../../components/ui/VideoPlayer'
+import { TrainingBlocksView } from '../../components/shared/TrainingBlocksView'
 import type { DayOfWeek } from '../../components/aluno/DayPicker'
 import styles from './AlunoDashboard.module.css'
 import arboLogo from '../../assets/arbo-run-logo.webp'
@@ -254,6 +255,7 @@ function TrainingCard({ dayTraining, planId, userId, isToday, usedStravaActivity
           )}
         </div>
 
+        <TrainingBlocksView training={training} />
         {training.video_url && <VideoPlayer videoUrl={training.video_url} />}
 
         {checkin ? (

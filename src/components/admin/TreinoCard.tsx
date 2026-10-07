@@ -3,6 +3,8 @@ import type { TrainingWithTag } from '../../hooks/useAdminTreinos'
 import { motion, AnimatePresence } from 'framer-motion'
 import { PlayCircle } from 'lucide-react'
 import { VideoPlayer } from '../ui/VideoPlayer'
+import { TrainingBlocksView } from '../shared/TrainingBlocksView'
+import { hasBlocksModality } from '../../lib/modalities'
 import { PROGRAM_COLOR_VAR_MAP, CATEGORY_LABELS } from '../../lib/trainingUtils'
 import type { TrainingProgram } from '../../lib/types'
 
@@ -220,13 +222,17 @@ export function TreinoCard({ treino, program, onClickEdit, onClickDelete }: Trei
         )}
       </AnimatePresence>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-        <StatCell label="Distância" value={formatDistance(treino.distance_m)} />
-        <StatCell label="Duração" value={treino.duration_minutes ? `${treino.duration_minutes} min` : '—'} />
-        <StatCell label="Pace alvo" value={formatPace(treino.target_pace_seconds_per_km)} />
-        <StatCell label="Séries" value={treino.sets ? String(treino.sets) : '1'} />
-      </div>
+      {/* Stats — corrida; Hyrox/CrossFit mostram os blocos */}
+      {hasBlocksModality(treino.modality) ? (
+        <TrainingBlocksView training={treino} />
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+          <StatCell label="Distância" value={formatDistance(treino.distance_m)} />
+          <StatCell label="Duração" value={treino.duration_minutes ? `${treino.duration_minutes} min` : '—'} />
+          <StatCell label="Pace alvo" value={formatPace(treino.target_pace_seconds_per_km)} />
+          <StatCell label="Séries" value={treino.sets ? String(treino.sets) : '1'} />
+        </div>
+      )}
 
       {/* Ações */}
       <div

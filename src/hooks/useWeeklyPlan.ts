@@ -298,7 +298,7 @@ async function fetchWithRetry(
         // Fetch group plan trainings
         const { data: gptData, error: gptError } = await supabase
           .from('group_plan_trainings')
-          .select('id, group_plan_id, week_number, day_of_week, training_id, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, tags(id, name, color, created_at, created_by, updated_at))')
+          .select('id, group_plan_id, week_number, day_of_week, training_id, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, modality, wod_format, time_cap_seconds, tags(id, name, color, created_at, created_by, updated_at))')
           .eq('group_plan_id', groupPlan.id)
           .eq('week_number', targetWeekNumber)
           .order('day_of_week')
@@ -352,7 +352,7 @@ async function fetchWithRetry(
         const [trainingsRes, checkinsRes] = await Promise.all([
           supabase
             .from('weekly_plan_trainings')
-            .select('id, plan_id, training_id, day_of_week, sort_order, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, tags(id, name, color, created_at, created_by, updated_at))')
+            .select('id, plan_id, training_id, day_of_week, sort_order, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, modality, wod_format, time_cap_seconds, tags(id, name, color, created_at, created_by, updated_at))')
             .eq('plan_id', plan.id)
             .order('day_of_week'),
           supabase
@@ -397,7 +397,7 @@ async function fetchWithRetry(
       const [trainingsRes, checkinsRes] = await Promise.all([
         supabase
           .from('weekly_plan_trainings')
-          .select('id, plan_id, training_id, day_of_week, sort_order, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, tags(id, name, color, created_at, created_by, updated_at))')
+          .select('id, plan_id, training_id, day_of_week, sort_order, trainings(id, title, duration_minutes, distance_m, type, description, sets, target_pace_seconds_per_km, video_url, modality, wod_format, time_cap_seconds, tags(id, name, color, created_at, created_by, updated_at))')
           .eq('plan_id', plan.id)
           .order('day_of_week'),
         supabase

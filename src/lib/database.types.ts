@@ -64,6 +64,57 @@ export type Database = {
           },
         ]
       }
+      checkin_block_results: {
+        Row: {
+          actual_distance_m: number | null
+          actual_duration_seconds: number | null
+          actual_load_kg: number | null
+          actual_reps: number | null
+          checkin_id: string
+          created_at: string
+          id: string
+          training_block_id: string
+          updated_at: string
+        }
+        Insert: {
+          actual_distance_m?: number | null
+          actual_duration_seconds?: number | null
+          actual_load_kg?: number | null
+          actual_reps?: number | null
+          checkin_id: string
+          created_at?: string
+          id?: string
+          training_block_id: string
+          updated_at?: string
+        }
+        Update: {
+          actual_distance_m?: number | null
+          actual_duration_seconds?: number | null
+          actual_load_kg?: number | null
+          actual_reps?: number | null
+          checkin_id?: string
+          created_at?: string
+          id?: string
+          training_block_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_block_results_checkin_id_fkey"
+            columns: ["checkin_id"]
+            isOneToOne: false
+            referencedRelation: "checkins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkin_block_results_training_block_id_fkey"
+            columns: ["training_block_id"]
+            isOneToOne: false
+            referencedRelation: "training_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkins: {
         Row: {
           actual_distance_m: number | null
@@ -184,6 +235,50 @@ export type Database = {
             columns: ["author_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercises: {
+        Row: {
+          created_at: string
+          default_distance_m: number | null
+          default_reps: number | null
+          id: string
+          metric: string
+          modality: string
+          name: string
+          organization_id: string | null
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          default_distance_m?: number | null
+          default_reps?: number | null
+          id?: string
+          metric: string
+          modality: string
+          name: string
+          organization_id?: string | null
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          default_distance_m?: number | null
+          default_reps?: number | null
+          id?: string
+          metric?: string
+          modality?: string
+          name?: string
+          organization_id?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercises_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -865,6 +960,69 @@ export type Database = {
           },
         ]
       }
+      training_blocks: {
+        Row: {
+          block_type: string
+          created_at: string
+          distance_m: number | null
+          duration_seconds: number | null
+          exercise_id: string | null
+          id: string
+          load_kg: number | null
+          notes: string | null
+          reps: number | null
+          rounds: number | null
+          sort_order: number
+          target_pace_seconds_per_km: number | null
+          training_id: string
+        }
+        Insert: {
+          block_type: string
+          created_at?: string
+          distance_m?: number | null
+          duration_seconds?: number | null
+          exercise_id?: string | null
+          id?: string
+          load_kg?: number | null
+          notes?: string | null
+          reps?: number | null
+          rounds?: number | null
+          sort_order: number
+          target_pace_seconds_per_km?: number | null
+          training_id: string
+        }
+        Update: {
+          block_type?: string
+          created_at?: string
+          distance_m?: number | null
+          duration_seconds?: number | null
+          exercise_id?: string | null
+          id?: string
+          load_kg?: number | null
+          notes?: string | null
+          reps?: number | null
+          rounds?: number | null
+          sort_order?: number
+          target_pace_seconds_per_km?: number | null
+          training_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_blocks_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_blocks_training_id_fkey"
+            columns: ["training_id"]
+            isOneToOne: false
+            referencedRelation: "trainings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_programs: {
         Row: {
           color: string
@@ -967,15 +1125,18 @@ export type Database = {
           distance_m: number | null
           duration_minutes: number | null
           id: string
+          modality: string
           organization_id: string
           program: string | null
           sets: number | null
           tag_id: string | null
           target_pace_seconds_per_km: number | null
+          time_cap_seconds: number | null
           title: string
           type: string
           updated_at: string | null
           video_url: string | null
+          wod_format: string | null
         }
         Insert: {
           category?: string | null
@@ -985,15 +1146,18 @@ export type Database = {
           distance_m?: number | null
           duration_minutes?: number | null
           id?: string
+          modality?: string
           organization_id?: string
           program?: string | null
           sets?: number | null
           tag_id?: string | null
           target_pace_seconds_per_km?: number | null
+          time_cap_seconds?: number | null
           title: string
           type: string
           updated_at?: string | null
           video_url?: string | null
+          wod_format?: string | null
         }
         Update: {
           category?: string | null
@@ -1003,15 +1167,18 @@ export type Database = {
           distance_m?: number | null
           duration_minutes?: number | null
           id?: string
+          modality?: string
           organization_id?: string
           program?: string | null
           sets?: number | null
           tag_id?: string | null
           target_pace_seconds_per_km?: number | null
+          time_cap_seconds?: number | null
           title?: string
           type?: string
           updated_at?: string | null
           video_url?: string | null
+          wod_format?: string | null
         }
         Relationships: [
           {
@@ -1136,6 +1303,30 @@ export type Database = {
       }
       get_user_email: { Args: { user_id: string }; Returns: string }
       keepalive: { Args: never; Returns: Json }
+      save_training_blocks: {
+        Args: { p_blocks: Json; p_training_id: string }
+        Returns: {
+          block_type: string
+          created_at: string
+          distance_m: number | null
+          duration_seconds: number | null
+          exercise_id: string | null
+          id: string
+          load_kg: number | null
+          notes: string | null
+          reps: number | null
+          rounds: number | null
+          sort_order: number
+          target_pace_seconds_per_km: number | null
+          training_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "training_blocks"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       distance_category: "1km" | "5km" | "10km" | "21km" | "42km"
