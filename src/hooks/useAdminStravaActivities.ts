@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { callStravaFunction, type StravaActivitySummary, type StravaActivityAnalysis } from './useStravaConnection'
+import { callStravaFunction, type StravaActivitySummary } from './useStravaConnection'
+import { STRAVA_ANALYSIS_COLUMNS, toCoachFeedback, type CoachFeedback } from '../lib/stravaAnalysis'
 
 // strava-sync retorna texto puro (não JSON) para respostas de erro — usado
 // para distinguir "aluno nunca conectou o Strava" de outras falhas (rede, 500).
 const NOT_CONNECTED_MESSAGE = 'Nenhuma conexão com o Strava encontrada.'
 
-async function fetchLatestStravaAnalysis(studentId: string): Promise<StravaActivityAnalysis | null> {
+async function fetchLatestStravaAnalysis(studentId: string): Promise<CoachFeedback | null> {
   const { data, error } = await supabase
     .from('strava_analysis')
-    .select('summary, analysis, tip')
+    .select(STRAVA_ANALYSIS_COLUMNS)
     .eq('student_id', studentId)
     .order('created_at', { ascending: false })
     .limit(1)
@@ -19,7 +20,7 @@ async function fetchLatestStravaAnalysis(studentId: string): Promise<StravaActiv
     console.error('Erro ao buscar análise Strava do aluno:', error.message)
     return null
   }
-  return data ?? null
+  return data ? toCoachFeedback(data) : null
 }
 
 export function useAdminStravaActivities(studentId: string | undefined) {
@@ -27,7 +28,7 @@ export function useAdminStravaActivities(studentId: string | undefined) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notConnected, setNotConnected] = useState(false)
-  const [latestAnalysis, setLatestAnalysis] = useState<StravaActivityAnalysis | null>(null)
+  const [latestAnalysis, setLatestAnalysis] = useState<CoachFeedback | null>(null)
 
   const sync = useCallback(async (): Promise<boolean> => {
     if (!studentId) return false

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { toCoachFeedback, type CoachFeedback, type StravaAnalysisFields } from '../lib/stravaAnalysis'
 
 export type StravaActivitySummary = {
   id: number
@@ -8,12 +9,6 @@ export type StravaActivitySummary = {
   paceSecondsPerKm: number | null
   durationSeconds: number
   date: string
-}
-
-export type StravaActivityAnalysis = {
-  summary: string
-  analysis: string
-  tip: string
 }
 
 // Exportado para reuso em useAdminStravaActivities.ts — mesma forma de chamada
@@ -48,17 +43,18 @@ export function useStravaConnection() {
   const [isLoadingActivities, setIsLoadingActivities] = useState(false)
   const [isSyncing, setIsSyncing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [latestAnalysis, setLatestAnalysis] = useState<StravaActivityAnalysis | null>(null)
+  const [latestAnalysis, setLatestAnalysis] = useState<CoachFeedback | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
 
   const analyzeActivity = useCallback(async (activity: StravaActivitySummary) => {
     setIsAnalyzing(true)
     try {
-      const data = await callStravaFunction('strava-analyze', {
+      // Só o id — strava-analyze lê métricas e contexto do banco, nunca do cliente.
+      const data: StravaAnalysisFields = await callStravaFunction('strava-analyze', {
         method: 'POST',
-        body: JSON.stringify({ activity }),
+        body: JSON.stringify({ activityId: activity.id }),
       })
-      setLatestAnalysis({ summary: data.summary, analysis: data.analysis, tip: data.tip })
+      setLatestAnalysis(toCoachFeedback(data))
     } catch (e: unknown) {
       console.error('Erro ao analisar atividade do Strava:', e)
     } finally {

@@ -648,8 +648,12 @@ export type Database = {
           average_speed: number
           created_at: string
           distance_m: number
+          highlight: string | null
           id: string
+          message: string | null
           moving_time_seconds: number
+          next_step: string | null
+          prompt_version: number
           student_id: string
           summary: string
           tip: string
@@ -661,8 +665,12 @@ export type Database = {
           average_speed: number
           created_at?: string
           distance_m: number
+          highlight?: string | null
           id?: string
+          message?: string | null
           moving_time_seconds: number
+          next_step?: string | null
+          prompt_version?: number
           student_id: string
           summary: string
           tip: string
@@ -674,8 +682,12 @@ export type Database = {
           average_speed?: number
           created_at?: string
           distance_m?: number
+          highlight?: string | null
           id?: string
+          message?: string | null
           moving_time_seconds?: number
+          next_step?: string | null
+          prompt_version?: number
           student_id?: string
           summary?: string
           tip?: string

@@ -1,4 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import {
+  PROMPT_VERSION,
+  SYSTEM_PROMPT,
+  buildUserPrompt,
+  extractRawMetrics,
+  firstName,
+  parseCoachFeedback,
+  type ActivityRow,
+  type PlannedTraining,
+  type RecentRun,
+} from './coach.ts'
 
 const ALLOWED_ORIGINS = [
   'https://arbo.mxos.com.br',
@@ -13,61 +24,6 @@ function getCorsHeaders(origin: string | null): Record<string, string> {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Headers': 'authorization, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  }
-}
-
-type ActivityInput = {
-  id: number
-  name: string
-  distanceKm: number
-  paceSecondsPerKm: number | null
-  durationSeconds: number
-  date: string
-}
-
-type StravaAnalysis = {
-  summary: string
-  analysis: string
-  tip: string
-}
-
-const SYSTEM_PROMPT = `Você é um coach de corrida experiente e motivador.
-Analise os dados de corrida do atleta e responda SEMPRE em português brasileiro.
-Responda APENAS em formato JSON com exatamente 3 campos:
-{
-  "summary": "resumo objetivo da atividade em 1 frase (distância, pace, tempo)",
-  "analysis": "análise do desempenho em 2-3 frases (pontos positivos e o que melhorar)",
-  "tip": "uma dica prática e motivadora para o próximo treino em 1 frase"
-}
-Seja direto, motivador e use linguagem simples. Não use markdown dentro do JSON.`
-
-function formatTime(totalSeconds: number): string {
-  const h = Math.floor(totalSeconds / 3600)
-  const m = Math.floor((totalSeconds % 3600) / 60)
-  const s = Math.floor(totalSeconds % 60)
-  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
-function formatPace(secondsPerKm: number | null): string {
-  if (!secondsPerKm) return '--:--'
-  const m = Math.floor(secondsPerKm / 60)
-  const s = Math.round(secondsPerKm % 60)
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
-
-// DeepSeek às vezes envolve o JSON em ```json ... ``` mesmo quando instruído a
-// não usar markdown — remove o fence antes de parsear.
-function parseAnalysisJson(raw: string): StravaAnalysis | null {
-  const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '')
-  try {
-    const parsed = JSON.parse(cleaned)
-    if (typeof parsed.summary === 'string' && typeof parsed.analysis === 'string' && typeof parsed.tip === 'string') {
-      return { summary: parsed.summary, analysis: parsed.analysis, tip: parsed.tip }
-    }
-    return null
-  } catch {
-    return null
   }
 }
 
@@ -104,62 +60,132 @@ Deno.serve(async (req) => {
     })
   }
 
-  let body: { activity?: ActivityInput }
+  // Só o id da atividade vem do cliente — métricas, nome e contexto são lidos do
+  // banco. A v1 confiava em distância/tempo/pace enviados no body, o que deixava
+  // o aluno gerar (e gravar) análise de uma corrida inventada.
+  // `activity.id` continua aceito para compatibilidade com o frontend antigo.
+  let body: { activityId?: unknown; activity?: { id?: unknown } }
   try {
     body = await req.json()
   } catch {
     return new Response('Corpo da requisição inválido.', { status: 400, headers: corsHeaders })
   }
 
-  const activity = body.activity
-  if (
-    !activity ||
-    typeof activity.id !== 'number' ||
-    typeof activity.name !== 'string' ||
-    typeof activity.distanceKm !== 'number' ||
-    typeof activity.durationSeconds !== 'number'
-  ) {
-    return new Response('Campo "activity" ausente ou inválido.', { status: 400, headers: corsHeaders })
+  const activityId = body.activityId ?? body.activity?.id
+  if (typeof activityId !== 'number' || !Number.isSafeInteger(activityId) || activityId <= 0) {
+    return new Response('Campo "activityId" ausente ou inválido.', { status: 400, headers: corsHeaders })
   }
-
-  const distanceM = Math.round(activity.distanceKm * 1000)
-  const movingTimeSeconds = Math.round(activity.durationSeconds)
-  const paceSecondsPerKm = activity.paceSecondsPerKm ?? (distanceM > 0 ? Math.round(movingTimeSeconds / (distanceM / 1000)) : null)
-  const averageSpeed = movingTimeSeconds > 0 ? distanceM / movingTimeSeconds : 0 // m/s
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey)
 
-  // Evita rechamar a API do DeepSeek para uma atividade já analisada —
-  // UNIQUE(student_id, activity_id) garante no máximo uma análise por corrida.
+  // service_role ignora RLS — filtro explícito por user_id para nunca analisar
+  // atividade de outro aluno.
+  const { data: activity, error: activityError } = await adminClient
+    .from('strava_activities')
+    .select('name, distance_m, duration_seconds, pace_seconds_per_km, start_date, raw')
+    .eq('user_id', user.id)
+    .eq('strava_id', activityId)
+    .maybeSingle<ActivityRow>()
+
+  if (activityError) {
+    console.error('Erro ao buscar atividade:', activityError.message)
+    return new Response('Erro ao buscar atividade.', { status: 500, headers: corsHeaders })
+  }
+  if (!activity) {
+    return new Response('Atividade não encontrada. Sincronize o Strava e tente novamente.', {
+      status: 404,
+      headers: corsHeaders,
+    })
+  }
+
+  // UNIQUE(student_id, activity_id) — no máximo uma análise por corrida. Análises
+  // de versão anterior do prompt são regeneradas (só acontece para a atividade
+  // pedida, ou seja, no máximo uma chamada extra por aluno).
   const { data: existing, error: existingError } = await adminClient
     .from('strava_analysis')
-    .select('summary, analysis, tip')
+    .select('summary, analysis, tip, message, highlight, next_step, prompt_version')
     .eq('student_id', user.id)
-    .eq('activity_id', activity.id)
+    .eq('activity_id', activityId)
     .maybeSingle()
 
   if (existingError) {
     console.error('Erro ao buscar análise existente:', existingError.message)
   }
 
-  if (existing) {
-    return new Response(JSON.stringify(existing), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+  const jsonHeaders = { ...corsHeaders, 'Content-Type': 'application/json' }
+
+  if (existing && (existing.prompt_version ?? 1) >= PROMPT_VERSION) {
+    return new Response(JSON.stringify(existing), { status: 200, headers: jsonHeaders })
   }
+
+  // Sem DeepSeek disponível, uma análise antiga ainda é melhor que erro.
+  const fallback = () =>
+    existing
+      ? new Response(JSON.stringify(existing), { status: 200, headers: jsonHeaders })
+      : null
 
   if (!deepseekApiKey) {
     console.error('DEEPSEEK_API_KEY não configurada nos Secrets do Supabase.')
-    return new Response('Serviço de análise não configurado.', { status: 500, headers: corsHeaders })
+    return fallback() ?? new Response('Serviço de análise não configurado.', { status: 500, headers: corsHeaders })
   }
 
-  const userPrompt = `Analise esta atividade de corrida:
-Nome: ${activity.name}
-Distância: ${activity.distanceKm.toFixed(2)} km
-Tempo: ${formatTime(movingTimeSeconds)}
-Pace médio: ${formatPace(paceSecondsPerKm)} min/km
-Velocidade média: ${(averageSpeed * 3.6).toFixed(1)} km/h`
+  // Contexto do aluno — falhas aqui não impedem a análise, só a deixam menos rica.
+  // Dados de saúde da anamnese (limitações, FC máxima, peso) ficam de fora de
+  // propósito: só o necessário para o tom da mensagem vai para a API externa.
+  const [profileRes, anamnesisRes, checkinRes, recentRes] = await Promise.all([
+    adminClient.from('profiles').select('full_name, level').eq('id', user.id).maybeSingle(),
+    adminClient
+      .from('anamnesis')
+      .select('objectives, experience_years')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    adminClient
+      .from('checkins')
+      .select('perceived_effort, trainings(title, type, distance_m, target_pace_seconds_per_km)')
+      .eq('student_id', user.id)
+      .eq('strava_activity_id', activityId)
+      .limit(1)
+      .maybeSingle(),
+    adminClient
+      .from('strava_activities')
+      .select('distance_m, pace_seconds_per_km')
+      .eq('user_id', user.id)
+      .eq('type', 'Run')
+      .lt('start_date', activity.start_date)
+      .order('start_date', { ascending: false })
+      .limit(5),
+  ])
+
+  for (const [label, res] of [
+    ['profiles', profileRes],
+    ['anamnesis', anamnesisRes],
+    ['checkins', checkinRes],
+    ['histórico', recentRes],
+  ] as const) {
+    if (res.error) console.error(`Erro ao buscar contexto (${label}):`, res.error.message)
+  }
+
+  // JOIN N:1 (checkins → trainings) volta como objeto, não array.
+  const checkin = checkinRes.data as
+    | { perceived_effort: number | null; trainings: Omit<PlannedTraining, 'perceived_effort'> | null }
+    | null
+  const planned: PlannedTraining | null = checkin?.trainings
+    ? { ...checkin.trainings, perceived_effort: checkin.perceived_effort }
+    : null
+
+  const userPrompt = buildUserPrompt(
+    activity,
+    {
+      firstName: firstName(profileRes.data?.full_name),
+      level: profileRes.data?.level ?? null,
+      objectives: anamnesisRes.data?.objectives ?? null,
+      experienceYears: anamnesisRes.data?.experience_years ?? null,
+    },
+    planned,
+    (recentRes.data ?? []) as RecentRun[],
+  )
 
   const deepseekRes = await fetch('https://api.deepseek.com/chat/completions', {
     method: 'POST',
@@ -173,29 +199,40 @@ Velocidade média: ${(averageSpeed * 3.6).toFixed(1)} km/h`
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userPrompt },
       ],
-      max_tokens: 300,
-      temperature: 0.7,
+      response_format: { type: 'json_object' },
+      max_tokens: 600,
+      temperature: 0.8,
     }),
   })
 
   if (!deepseekRes.ok) {
-    const text = await deepseekRes.text()
-    console.error('Erro ao chamar DeepSeek:', text)
-    return new Response('Erro ao gerar análise da atividade.', { status: 502, headers: corsHeaders })
+    console.error('Erro ao chamar DeepSeek:', await deepseekRes.text())
+    return fallback() ?? new Response('Erro ao gerar análise da atividade.', { status: 502, headers: corsHeaders })
   }
 
   const deepseekData = await deepseekRes.json()
   const rawContent: string | undefined = deepseekData?.choices?.[0]?.message?.content
 
-  if (!rawContent) {
-    console.error('Resposta do DeepSeek sem conteúdo:', JSON.stringify(deepseekData))
-    return new Response('Resposta inválida do serviço de análise.', { status: 502, headers: corsHeaders })
+  const feedback = rawContent ? parseCoachFeedback(rawContent) : null
+  if (!feedback) {
+    console.error('Resposta inválida do DeepSeek:', rawContent ?? JSON.stringify(deepseekData))
+    return fallback() ?? new Response('Não foi possível interpretar a análise gerada.', { status: 502, headers: corsHeaders })
   }
 
-  const parsed = parseAnalysisJson(rawContent)
-  if (!parsed) {
-    console.error('Falha ao interpretar JSON do DeepSeek:', rawContent)
-    return new Response('Não foi possível interpretar a análise gerada.', { status: 502, headers: corsHeaders })
+  const metrics = extractRawMetrics(activity.raw)
+  const averageSpeed = metrics.averageSpeedMs
+    ?? (activity.duration_seconds > 0 ? activity.distance_m / activity.duration_seconds : 0)
+
+  // analysis/tip (NOT NULL, formato v1) continuam preenchidos com message/next_step
+  // para o frontend antigo seguir funcionando durante a transição.
+  const row = {
+    summary: feedback.summary,
+    analysis: feedback.message,
+    tip: feedback.next_step,
+    message: feedback.message,
+    highlight: feedback.highlight,
+    next_step: feedback.next_step,
+    prompt_version: PROMPT_VERSION,
   }
 
   const { error: upsertError } = await adminClient
@@ -203,14 +240,12 @@ Velocidade média: ${(averageSpeed * 3.6).toFixed(1)} km/h`
     .upsert(
       {
         student_id: user.id,
-        activity_id: activity.id,
+        activity_id: activityId,
         activity_name: activity.name,
-        distance_m: distanceM,
-        moving_time_seconds: movingTimeSeconds,
+        distance_m: activity.distance_m,
+        moving_time_seconds: activity.duration_seconds,
         average_speed: averageSpeed,
-        summary: parsed.summary,
-        analysis: parsed.analysis,
-        tip: parsed.tip,
+        ...row,
       },
       { onConflict: 'student_id,activity_id' },
     )
@@ -220,8 +255,5 @@ Velocidade média: ${(averageSpeed * 3.6).toFixed(1)} km/h`
     // Não falha a resposta ao usuário por causa disso — a análise já foi gerada.
   }
 
-  return new Response(
-    JSON.stringify(parsed),
-    { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-  )
+  return new Response(JSON.stringify(row), { status: 200, headers: jsonHeaders })
 })
