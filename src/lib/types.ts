@@ -1,6 +1,7 @@
 import type { Database } from './database.types'
 
 // Atalhos para os tipos de cada tabela (Row = linha lida do banco)
+export type Organization    = Database['public']['Tables']['organizations']['Row']  // tenant (assessoria/box)
 export type Profile         = Database['public']['Tables']['profiles']['Row']
 export type Training        = Database['public']['Tables']['trainings']['Row']
 export type WeeklyPlan      = Database['public']['Tables']['weekly_plans']['Row']
