@@ -7,6 +7,27 @@
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Arbo Run</title>
+    <script>
+      // Anti-flicker da marca (white-label): aplica as cores da última assessoria
+      // usada neste dispositivo antes do primeiro paint, para não piscar o laranja
+      // padrão. O cache é escrito por src/lib/brand.ts (writeBrandCache); aqui só
+      // aplica, aceitando apenas as variáveis de marca e valores #RRGGBB.
+      (function () {
+        try {
+          var cached = JSON.parse(localStorage.getItem('arbo:brand') || 'null');
+          var vars = cached && cached.vars;
+          if (!vars) return;
+          var allowed = ['--brand-primary', '--brand-secondary', '--brand-accent', '--text-on-brand'];
+          var root = document.documentElement;
+          for (var i = 0; i < allowed.length; i++) {
+            var value = vars[allowed[i]];
+            if (typeof value === 'string' && /^#[0-9a-fA-F]{6}$/.test(value)) {
+              root.style.setProperty(allowed[i], value);
+            }
+          }
+        } catch (e) { /* storage indisponível: usa a marca padrão */ }
+      })();
+    </script>
     <meta name="description" content="Arbo — Assessoria esportiva de corrida. Gerencie seus treinos, acompanhe sua evolução e conecte-se com seu professor." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

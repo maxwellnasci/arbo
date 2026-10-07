@@ -16,6 +16,7 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
     { to: '/admin/treinos', label: 'Treinos', exact: false },
     { to: '/admin/feedbacks', label: 'Feedbacks', exact: false },
     { to: '/admin/convites', label: 'Convites', exact: false },
+    { to: '/admin/configuracoes', label: 'Minha Assessoria', exact: false },
   ]
 
   return (

@@ -7,9 +7,11 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useLogout } from '../../hooks/useLogout'
 import { LogOut, Sun, Moon, Settings, Eye } from 'lucide-react'
 import arboLogo from '../../assets/arbo-run-logo.webp'
+import { useBrand } from '../../contexts/BrandContext'
 
 export function AdminLayout() {
   const { user } = useAuth()
+  const { brand } = useBrand()
   const logout = useLogout()
   const navigate = useNavigate()
   const name = user?.user_metadata?.full_name || user?.email || 'A'
@@ -39,8 +41,15 @@ export function AdminLayout() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.logoContainer}>
-          <img src={arboLogo} alt="Arbo" width="32" height="32" style={{ width: 32, height: 32, objectFit: 'contain' }} />
-          <span className={styles.headerTitle}>ARBO</span>
+          <img
+            src={brand.logoUrl ?? arboLogo}
+            alt={brand.brandName}
+            width="32"
+            height="32"
+            style={{ width: 32, height: 32, objectFit: 'contain' }}
+          />
+          {/* Arbo mantém o "ARBO" curto de sempre; outras assessorias usam o nome da marca */}
+          <span className={styles.headerTitle}>{brand.slug === 'arbo' ? 'ARBO' : brand.brandName}</span>
         </div>
         
         <div className={styles.avatarContainer} ref={menuRef}>
@@ -66,8 +75,14 @@ export function AdminLayout() {
                 {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
                 {theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}
               </button>
-              <button className={styles.dropdownItem} onClick={() => alert('Configurações em breve!')}>
-                <Settings size={16} /> Configurações
+              <button
+                className={styles.dropdownItem}
+                onClick={() => {
+                  setMenuOpen(false)
+                  navigate('/admin/configuracoes')
+                }}
+              >
+                <Settings size={16} /> Minha Assessoria
               </button>
               <div className={styles.dropdownDivider} />
               <button 

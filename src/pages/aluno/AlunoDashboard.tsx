@@ -15,6 +15,8 @@ import FlexibleTrainingCard from '../../components/aluno/FlexibleTrainingCard'
 import { VideoPlayer } from '../../components/ui/VideoPlayer'
 import type { DayOfWeek } from '../../components/aluno/DayPicker'
 import styles from './AlunoDashboard.module.css'
+import arboLogo from '../../assets/arbo-run-logo.webp'
+import { useBrand } from '../../contexts/BrandContext'
 
 // Abas carregadas sob demanda — evita baixar recharts (AlunoProgresso) e o resto
 // no primeiro load de quem nunca sai da aba Início
@@ -307,6 +309,7 @@ function TrainingCard({ dayTraining, planId, userId, isToday, usedStravaActivity
 
 export default function AlunoDashboard({ previewStudentId }: { previewStudentId?: string }) {
   const { user } = useAuth()
+  const { brand } = useBrand()
   const navigate = useNavigate()
   
   const effectiveUserId = previewStudentId || user?.id
@@ -472,6 +475,16 @@ export default function AlunoDashboard({ previewStudentId }: { previewStudentId?
             <div className={styles.heroOverlay} />
             
             <div className={styles.heroContent}>
+              <div className={styles.heroBrand}>
+                <img
+                  src={brand.logoUrl ?? arboLogo}
+                  alt=""
+                  width="24"
+                  height="24"
+                  className={styles.heroBrandLogo}
+                />
+                <span className={styles.heroBrandName}>{brand.brandName}</span>
+              </div>
               <p className={styles.heroEyebrow}>MEU TREINO</p>
               <h1 className={styles.heroTitle}>
                 Bom treino,<br/>

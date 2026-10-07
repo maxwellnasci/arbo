@@ -21,6 +21,7 @@ const AdminTurmas      = lazy(() => import('./pages/admin/AdminTurmas'))
 const AdminTurmaDetail = lazy(() => import('./pages/admin/AdminTurmaDetail'))
 const AdminAlunoDetail = lazy(() => import('./pages/admin/AdminAlunoDetail'))
 const AdminTreinos     = lazy(() => import('./pages/admin/AdminTreinos'))
+const AdminMinhaAssessoria = lazy(() => import('./pages/admin/AdminMinhaAssessoria'))
 const AlunoDashboard   = lazy(() => import('./pages/aluno/AlunoDashboard'))
 const AnamnesisForm    = lazy(() => import('./pages/aluno/AnamnesisForm'))
 const StravaCallback   = lazy(() => import('./pages/aluno/StravaCallback'))
@@ -169,6 +170,7 @@ const router = createBrowserRouter([
                   { path: 'turmas/:id', element: <Suspense fallback={<PageLoader />}><AdminTurmaDetail /></Suspense> },
                   { path: 'alunos/:id', element: <Suspense fallback={<PageLoader />}><AdminAlunoDetail /></Suspense> },
                   { path: 'treinos', element: <Suspense fallback={<PageLoader />}><AdminTreinos /></Suspense> },
+                  { path: 'configuracoes', element: <Suspense fallback={<PageLoader />}><AdminMinhaAssessoria /></Suspense> },
                 ]
               },
               { path: '/preview-aluno', element: <Suspense fallback={<PageLoader />}><AlunoDashboard previewStudentId="00000000-0000-0000-0000-000000000000" /></Suspense> },

@@ -67,7 +67,7 @@ function FeedbackCard({ fb }: { fb: FeedbackItem }) {
         background: 'var(--bg-surface)',
         borderRadius: '16px',
         padding: '20px',
-        border: `1px solid ${fb.hasPR ? 'rgba(232, 82, 26, 0.3)' : 'var(--border-default)'}`,
+        border: `1px solid ${fb.hasPR ? 'color-mix(in srgb, var(--brand-primary) 30%, transparent)' : 'var(--border-default)'}`,
         borderLeft: fb.hasPR ? '4px solid var(--orange)' : '1px solid var(--border-default)',
         transition: 'all 0.2s',
       }}
@@ -85,7 +85,7 @@ function FeedbackCard({ fb }: { fb: FeedbackItem }) {
           {fb.profiles?.full_name ?? '—'}
         </span>
         {fb.hasPR && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(232, 82, 26, 0.1)', color: 'var(--orange)', fontSize: '11px', padding: '4px 10px', borderRadius: '20px', fontWeight: 700, border: '1px solid rgba(232, 82, 26, 0.2)' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'color-mix(in srgb, var(--brand-primary) 10%, transparent)', color: 'var(--orange)', fontSize: '11px', padding: '4px 10px', borderRadius: '20px', fontWeight: 700, border: '1px solid color-mix(in srgb, var(--brand-primary) 20%, transparent)' }}>
             <Trophy size={12} /> PR
           </span>
         )}
