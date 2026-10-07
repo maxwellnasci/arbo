@@ -72,6 +72,25 @@ Deno.serve(async (req) => {
   }
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey)
+
+  // Multi-tenant: o professor só exclui alunos da própria assessoria
+  // (app_metadata.org_id, escrito só pelo servidor). service_role ignora RLS,
+  // então a checagem tem que ser explícita aqui.
+  const orgId = typeof user.app_metadata?.org_id === 'string' ? user.app_metadata.org_id : null
+  const { data: target, error: targetError } = await adminClient
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', userId)
+    .maybeSingle()
+
+  if (targetError) {
+    console.error('Erro ao buscar aluno:', targetError.message)
+    return new Response('Erro ao verificar aluno.', { status: 500, headers: corsHeaders })
+  }
+  if (!orgId || !target || target.organization_id !== orgId) {
+    return new Response('Aluno não encontrado na sua assessoria.', { status: 403, headers: corsHeaders })
+  }
+
   const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId)
 
   if (deleteError) {
