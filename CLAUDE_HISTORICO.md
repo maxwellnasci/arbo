@@ -5,6 +5,83 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-10-07 (cont.) — White-label multi-tenant + Hyrox/CrossFit (PRs #5 a #10)
+
+Fase estratégica de produto: tornar o Arbo vendável para assessorias,
+boxes de CrossFit e Hyrox, cada uma com a própria marca. Decisões do Max:
+SaaS compartilhado (uma infraestrutura, isolamento por `organization_id` +
+RLS), mais de um professor por assessoria, marca pré-login pelo link
+`/a/:slug` com cache local, feedback da IA direto para o aluno.
+
+**Método usado em todas as migrations do dia (8):** antes de cada
+`db push`, ensaio no banco de produção dentro de uma transação que sempre
+aborta (`BEGIN` + migration + script de verificação que termina em
+`RAISE EXCEPTION` com o resultado na mensagem) — confirmado antes que o
+`supabase db query --linked` respeita `BEGIN/ROLLBACK` com uma tabela
+descartável. Depois do push, o mesmo script roda de novo. Scripts ficaram
+em `supabase/tests/` (`organizations_foundation_check.sql`,
+`rls_tenant_isolation_check.sql`, `brand_assets_check.sql`,
+`public_brand_by_slug_check.sql`, `modalities_check.sql`).
+
+**#5 — "Professor Digital Amigo" (`strava-analyze` v2):** a função passou
+a receber só `activityId` e ler tudo do banco (a v1 analisava e gravava
+números enviados pelo cliente). Contexto: primeiro nome, nível,
+objetivos, treino planejado, esforço percebido, histórico, FC/cadência/
+elevação. Prompt com persona de treinador, `response_format: json_object`,
+saída `{message, highlight, next_step, summary}`, `prompt_version`.
+Achado: `service_role` não tinha SELECT em `profiles/anamnesis/checkins/
+trainings` (mesma classe do Caso 13) e `strava_activities` tinha `GRANT
+ALL` aplicado fora de migration — registrado na migration.
+
+**#6 — Fundação multi-tenant:** `organizations` + organização padrão
+"Arbo Run" (UUID fixo `...0001`), `organization_id` em 7 tabelas via
+`ADD COLUMN ... DEFAULT` constante (sem UPDATE em massa), default
+`resolve_org_id()`, claim `app_metadata.org_id` nos 9 usuários,
+`trg_enforce_organization_id`. Bug pego antes de aplicar: função SQL que
+referencia coluna ainda inexistente falha na criação (ordem corrigida).
+
+**#7 — Segurança:** achado crítico — cadastro público ligado + trigger
+copiando `role` de `user_metadata` = qualquer pessoa podia se cadastrar
+como admin. Max desligou o cadastro no Dashboard; trigger blindado
+(role só de `app_metadata`), `invite-user` promove pelo servidor.
+Reescrita das policies para isolamento por organização (65 policies,
+0 `is_admin` sem filtro de org, 0 `USING true`, 0 `TO public`), checagem
+de org em `get_user_email`, `strava-sync`, `delete-user`. Edge Functions
+publicadas junto (o `invite-user` antigo transformaria convite de
+professor em aluno com o trigger novo).
+
+**#8 — Identidade visual:** `--brand-*` com `--orange` como apelido e
+`color-mix` (idêntico ao `rgba` antigo para a Arbo, conferido no
+navegador), contraste WCAG para `--text-on-brand`, anti-flicker no
+`index.html`, `BrandProvider`, bucket `brand-assets` (2 MB, PNG/WebP,
+escrita só na pasta da org), tela "Minha Assessoria". Teste no navegador:
+build local sem `.env.local` dá tela branca (o `createClient` lança erro) —
+problema do ambiente da worktree, não do código.
+
+**#9 — Arremates:** login `/a/:slug` (RPC pública só com campos de marca),
+`coach_display_name` no prompt (`PROMPT_VERSION 3`), R2 com chave
+`videos/{org}/{trainingId}/{arquivo}` e checagem de org em upload/delete
+(chaves legadas só para a Arbo). Falso alarme investigado: transição CSS
+"congelada" na aba de automação oculta do Chrome, não bug.
+
+**#10 — Hyrox & CrossFit:** `trainings.modality/wod_format/
+time_cap_seconds`, `exercises` (seed global: 8 estações Hyrox + 15
+CrossFit), `training_blocks`, `checkin_block_results`, RPC
+`save_training_blocks` que atualiza por id em vez de apagar e recriar
+(os resultados dos alunos são CASCADE com o bloco). Editor de blocos com
+"Montar Hyrox oficial", cards com a lista de estações, check-in por bloco.
+Ensaio 24/24 na primeira rodada.
+
+**Validação:** lint 0 e tsc 0 em todos os PRs; testes 22 → 65; CI e
+preview da Vercel verdes em todos.
+
+**Não testado com clique (exige login):** tela Minha Assessoria salvando,
+upload de vídeo com a chave nova, recado da IA com o nome do treinador,
+criar Hyrox e fazer check-in por estação. Ficou como item de "Próximos
+passos" no CLAUDE.md.
+
+---
+
 ## O que foi feito em 2026-10-07 — Supabase pausado apesar do keep-alive, reativação ponta a ponta e manutenção
 
 **Contexto:** projeto parado ~2 semanas; pedido de health check completo
