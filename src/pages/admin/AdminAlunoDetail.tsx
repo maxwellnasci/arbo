@@ -7,10 +7,11 @@ import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { toast } from 'sonner'
-import { MessageSquare, RefreshCw, ChevronLeft, Trash2, Pencil, Footprints, Bot, BarChart3, Lightbulb, Target } from 'lucide-react'
+import { MessageSquare, RefreshCw, ChevronLeft, Trash2, Pencil, Footprints } from 'lucide-react'
 import styles from './AdminAlunoDetail.module.css'
 import AdminChatPanel from '../../components/admin/AdminChatPanel'
 import CheckinDetailModal from '../../components/shared/CheckinDetailModal'
+import { CoachFeedbackCard } from '../../components/shared/CoachFeedbackCard'
 import { supabase } from '../../lib/supabase'
 
 const levelLabel: Record<string, string> = {
@@ -471,28 +472,12 @@ export default function AdminAlunoDetail() {
           </div>
         )}
 
-        {stravaLatestAnalysis && (
-          <div className={styles.analysisCard}>
-            <div className={styles.analysisHeader}>
-              <Bot size={16} />
-              <span>Última análise automática</span>
-            </div>
-            <div className={styles.analysisBody}>
-              <div className={styles.analysisRow}>
-                <BarChart3 size={14} />
-                <span>{stravaLatestAnalysis.summary}</span>
-              </div>
-              <div className={styles.analysisRow}>
-                <Lightbulb size={14} />
-                <span>{stravaLatestAnalysis.analysis}</span>
-              </div>
-              <div className={styles.analysisRow}>
-                <Target size={14} />
-                <span>{stravaLatestAnalysis.tip}</span>
-              </div>
-            </div>
-          </div>
-        )}
+        <CoachFeedbackCard
+          title="Última análise automática"
+          caption="Mensagem que a IA enviou ao aluno após o sync do Strava"
+          feedback={stravaLatestAnalysis}
+          tone="inset"
+        />
       </div>
 
       {/* Danger zone */}

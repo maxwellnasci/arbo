@@ -10,6 +10,7 @@ export type PersonalRecord  = Database['public']['Tables']['records']['Row']  //
 export type Comment         = Database['public']['Tables']['comments']['Row']
 export type Reaction        = Database['public']['Tables']['reactions']['Row']
 export type StravaActivity  = Database['public']['Tables']['strava_activities']['Row']
+export type StravaAnalysis  = Database['public']['Tables']['strava_analysis']['Row']
 export type Anamnesis       = Database['public']['Tables']['anamnesis']['Row']
 export type Group           = Database['public']['Tables']['groups']['Row']
 export type GroupPlan       = Database['public']['Tables']['group_plans']['Row']

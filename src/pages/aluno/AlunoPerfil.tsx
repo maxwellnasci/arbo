@@ -4,11 +4,12 @@ import { useStravaConnection } from '../../hooks/useStravaConnection'
 import { supabase } from '../../lib/supabase'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { LogOut, Activity, RefreshCw, Footprints, Bot, BarChart3, Lightbulb, Target } from 'lucide-react'
+import { LogOut, Activity, RefreshCw, Footprints } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
+import { CoachFeedbackCard } from '../../components/shared/CoachFeedbackCard'
 import styles from './AlunoPerfil.module.css'
 
 const ACTIVITIES_PREVIEW_COUNT = 5
@@ -214,32 +215,12 @@ export default function AlunoPerfil({ studentId, isPreview }: { studentId: strin
               </div>
             )}
 
-            {(isAnalyzing || latestAnalysis) && (
-              <div className={styles.analysisCard}>
-                <div className={styles.analysisHeader}>
-                  <Bot size={16} />
-                  <span>Análise do seu último treino</span>
-                </div>
-                {isAnalyzing && !latestAnalysis ? (
-                  <span className={styles.analysisLoading}>Analisando sua última corrida...</span>
-                ) : latestAnalysis && (
-                  <div className={styles.analysisBody}>
-                    <div className={styles.analysisRow}>
-                      <BarChart3 size={14} />
-                      <span>{latestAnalysis.summary}</span>
-                    </div>
-                    <div className={styles.analysisRow}>
-                      <Lightbulb size={14} />
-                      <span>{latestAnalysis.analysis}</span>
-                    </div>
-                    <div className={styles.analysisRow}>
-                      <Target size={14} />
-                      <span>{latestAnalysis.tip}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            <CoachFeedbackCard
+              title="Recado do seu treinador"
+              feedback={latestAnalysis}
+              isLoading={isAnalyzing}
+              loadingText="Seu treinador está olhando sua última corrida..."
+            />
           </>
         )}
       </section>
