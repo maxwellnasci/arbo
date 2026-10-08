@@ -7,7 +7,7 @@ import styles from './AdminLayout.module.css'
 export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: () => void }) {
   const { pathname } = useLocation()
   const logout = useLogout()
-  const { user } = useAuth()
+  const { user, isSuperAdmin } = useAuth()
 
   const links: { to: string; label: string; exact: boolean }[] = [
     { to: '/admin', label: 'Início', exact: true },
@@ -17,6 +17,8 @@ export function AdminSidebar({ isOpen, onClose }: { isOpen?: boolean; onClose?: 
     { to: '/admin/feedbacks', label: 'Feedbacks', exact: false },
     { to: '/admin/convites', label: 'Convites', exact: false },
     { to: '/admin/configuracoes', label: 'Minha Assessoria', exact: false },
+    // Painel Super Admin: só o dono da plataforma vê
+    ...(isSuperAdmin ? [{ to: '/admin/clientes', label: 'Clientes', exact: false }] : []),
   ]
 
   return (
