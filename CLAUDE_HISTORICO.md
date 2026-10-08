@@ -5,6 +5,51 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-10-08 (cont. 2) — Arbo Run vira vitrine: limpeza de contas
+
+**Decisão do Max:** a organização "Arbo Run" passa a ser vitrine (showroom)
+para demonstrações de venda e testes dele como super admin. Ficam só a conta
+dele (admin + super admin) e o Aluno Demo (fixo, usado por `/preview-aluno`).
+
+**Levantamento (somente leitura, antes de apagar):** 9 contas — 5 admins
+(Max + 4 antigos, incluindo `professor@arbo.com`) e 4 alunos (Aluno Demo, 1
+aluna real e 2 contas de teste do Max). Mapa de FKs para
+`profiles`/`auth.users` mostrou que `trainings.created_by`, `tags`,
+`training_types`, `group_plans.created_by`, `weekly_plans.created_by`,
+`checkins.approved_by`, `comments` e `reactions` são **`NO ACTION`**: apagar
+o professor direto (inclusive pela Edge Function `delete-user`) **falharia**,
+porque 54 dos 56 treinos tinham ele como autor. Os dados do aluno
+(`checkins`, `messages`, `anamnesis`, `records`, `schedules`, Strava,
+`strava_analysis`, `weekly_plans.student_id`) são `CASCADE`.
+
+**Execução:** transação única (`supabase/maintenance/20261008_arbo_showroom_cleanup.sql`):
+transferir autoria para o Max (com os triggers de `updated_at` desligados
+só dentro da transação, para os treinos não parecerem editados) → limpar
+`approved_by`/comments/reactions → `DELETE FROM auth.users` (CASCADE) →
+conferência que aborta tudo se algo não bater (2 contas, 1 admin, treinos/
+programas/turmas inalterados, nenhum treino com outro autor). Ensaio com
+abort garantido antes: `contas_removidas=7 treinos_transferidos=54
+planos_turma_transferidos=3 auth_users_apagados=7 | contas_finais=2
+treinos=56 programas=5 turmas=3`.
+
+**Permissão:** a execução real foi bloqueada pelo classificador de
+permissões do Claude Code (exclusão irreversível de contas de terceiros);
+o Max rodou ele mesmo pelo prompt (`!`). Detalhe: a primeira tentativa dele
+falhou com `NotFound` porque o arquivo da versão real seria gerado pelo
+mesmo comando bloqueado — resolvido com um comando único que gera e executa.
+
+**Resultado conferido (somente leitura):** 2 contas
+(`maxwellngg@gmail.com` admin + super admin; `demo@arborun.com` aluno), 1
+admin, 56 treinos (todos com o Max de autor, última edição ainda 14/08), 5
+programas, 3 turmas; sobram 3 check-ins, 2 anamneses, 1 conexão Strava e
+1 mensagem — todos do Max ou do Aluno Demo.
+
+**Observação:** o plano gratuito do Supabase não tem backup restaurável — a
+operação é irreversível; nenhuma cópia dos dados removidos foi guardada
+(coerente com o direito ao esquecimento da LGPD já adotado em `delete-user`).
+
+---
+
 ## O que foi feito em 2026-10-08 (cont.) — Painel Super Admin: cadastro de assessoria + convite do professor (PR #12)
 
 **Objetivo:** o Max (dono da plataforma) cadastra uma assessoria/box nova e
