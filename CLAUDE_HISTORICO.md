@@ -5,6 +5,80 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-10-08 (cont.) — Painel Super Admin: cadastro de assessoria + convite do professor (PR #12)
+
+**Objetivo:** o Max (dono da plataforma) cadastra uma assessoria/box nova e
+convida o professor responsável em ~30 s pela interface do app, sem tocar
+no Supabase — a ferramenta operacional que viabiliza vender o white-label.
+
+**Banco (migrations aplicadas com ensaio em transação abortada antes e
+checagem depois):**
+- `20261008094907_super_admin_organizations`: claim
+  `app_metadata.is_super_admin = true` gravada **só** na conta do Max
+  (conferido antes: a conta existia, era admin da Arbo e ainda não tinha a
+  claim); helper `private.is_super_admin()`; policies
+  `organizations_super_admin_select` e `organizations_super_admin_insert`
+  (+ `GRANT INSERT` em `organizations` para `authenticated`, barrado pela
+  policy para os demais). Decisão: a claim dá **apenas** esses dois poderes
+  — nenhuma outra policy muda; para o resto o Max segue admin da Arbo.
+  Ensaio 7/7: só 1 super admin, ele lista todas e insere; admin comum vê só
+  a própria e não insere; claim falsa em `user_metadata` não vale; aluno
+  não insere.
+- `20261008095114_grant_service_role_onboarding`: **bug achado ao escrever
+  a Edge Function** (mesma classe do Caso 13) — `service_role` só tinha
+  SELECT/REFERENCES/TRIGGER/TRUNCATE em `profiles` e
+  REFERENCES/TRIGGER/TRUNCATE em `invites`. Consequências: a promoção do
+  professor no `invite-user` (desde a Etapa 3, 2026-10-07) falharia sempre
+  com 500, e o **log de convites nunca gravou nada** — `invites` estava
+  vazia em produção, o erro só ia para o console da função. Antes de
+  corrigir, verificado que não houve dano: nenhuma conta criada desde a
+  Etapa 3 (último convite em 2026-08-14) e nenhum perfil com role/org
+  divergente do `app_metadata`. Falha comprovada antes (`permission denied`
+  nas duas tabelas) e funcionamento depois, ambos em transação abortada.
+
+**Edge Function `create-organization` (publicada):** exige
+`app_metadata.is_super_admin === true` (403 caso contrário); valida com
+`supabase/functions/_shared/organizationInput.ts` — módulo puro usado
+também pela tela (`slugify`, `validateCreateOrganizationInput`, mesmas
+regras dos CHECKs do banco). Fluxo: cria a organização → `inviteUserByEmail`
+→ `updateUserById(app_metadata { role: 'admin', org_id })` → `UPDATE
+profiles` → `INSERT invites`. Decisões:
+- **Tudo ou nada:** qualquer falha depois de criar a organização apaga a
+  conta convidada e a organização (nunca fica assessoria sem professor ou
+  professor sem vínculo); falha só no log de convites não desfaz.
+- **E-mail que já tem conta no Arbo não é movido de assessoria** (409 e a
+  org é desfeita): poderia ser aluno ou professor de outro box.
+- Slug duplicado → 409 com o erro no campo.
+Teste seguro em produção: OPTIONS 200, sem login 401, token anônimo 401. A
+criação real não foi executada (enviaria e-mail de verdade).
+
+**Frontend:** `useAuth().isSuperAdmin` (só `app_metadata`, booleano
+`true`), `SuperAdminRoute`, rota `/admin/clientes`, item "Clientes" na
+sidebar e no menu do avatar só para o super admin. `AdminSuperClientes.tsx`:
+cards (cor, slug, data, treinador, "Copiar Link dos Alunos"); modal de
+cadastro (slug sugerido pelo nome até ser editado, color picker + hex com
+prévia de contraste, erros por campo vindos do servidor); modal de sucesso
+("Convite enviado para [e-mail]!", link `/a/:slug`, "Copiar Mensagem para
+WhatsApp" com texto pronto de boas-vindas — `buildWelcomeWhatsappMessage`).
+
+**Validação:** lint 0, tsc 0, **89/89 testes** (+15: validação/slugify,
+`isSuperAdminUser`, mensagem do WhatsApp e 4 testes de componente da tela
+com o hook mockado), build OK, `deno check` OK, tipos do banco inalterados,
+CI e preview verdes. Conferido no deploy de produção que a tela e a
+checagem `is_super_admin === true` (chunk `superAdmin-*.js`) estão no ar.
+
+**Pendente:** o Max sair/entrar para carregar a claim e cadastrar o
+primeiro cliente de teste; não existe ainda tela para editar/excluir
+cliente (assessoria de teste precisa ser apagada pelo SQL Editor).
+
+**Lição:** pela terceira vez um GRANT ausente do `service_role` só apareceu
+quando um fluxo novo dependeu dele (Caso 13, Etapa 1, agora). Todo fluxo
+com `service_role` que **escreve** numa tabela deve ser checado contra
+`information_schema.role_table_grants` antes do deploy — o script
+`supabase/tests/service_role_grants_check.sql` serve de modelo.
+
+---
+
 ## O que foi feito em 2026-10-08 — App lento + TypeError no celular após trocar a cor (PR #11)
 
 **Relato:** o Max testou "Minha Assessoria" no celular em produção — trocou
