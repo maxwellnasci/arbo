@@ -5,6 +5,81 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-10-08 — App lento + TypeError no celular após trocar a cor (PR #11)
+
+**Relato:** o Max testou "Minha Assessoria" no celular em produção — trocou
+a cor, salvou, fechou o app e, ao reabrir, o app ficou lento e mostrou
+mensagens de TypeError.
+
+**Diagnóstico (somente leitura antes de qualquer código):**
+- **Banco ok:** `organizations` da Arbo com `primary_color = #FF8648`
+  (hex válido, `updated_at` 2026-10-08 08:55 UTC); demais campos intactos
+  (logo nula, sem nome de treinador). A gravação não foi a causa.
+- **Supabase ok:** Auth 200 em ~0,1 s.
+- **Sem acesso ao Sentry** daqui (nem token nem CLI) → o TypeError exato
+  não foi visto; conclusão por evidência de produção + leitura do código.
+- **Causa provável (erro de chunk):** cada deploy gera chunks com hash
+  novo e a Vercel deixa de servir os antigos — confirmado em produção:
+  `/assets/<chunk-antigo>.js` → **404**. O service worker serve a navegação
+  com `NetworkFirst` e **timeout de 5 s** (`html-cache`): em rede móvel
+  lenta entrega o **HTML antigo**, que pede chunks inexistentes →
+  `TypeError: Failed to fetch dynamically imported module`. Após os 7+
+  deploys seguidos de 2026-10-07, o cenário era bem provável.
+- **A recuperação que já existia piorava o quadro:**
+  - `ErrorBoundary` recarregava **sem trava** e **sem limpar cache** → o
+    reload pegava o mesmo HTML velho → **loop de reload** (a "lentidão");
+    só reconhecia 2 das mensagens de erro de chunk.
+  - `RouterErrorElement` (Task 38) tinha trava em `sessionStorage`
+    (`arbo_chunk_reload`) **nunca limpa** → no 2º erro de chunk da mesma
+    sessão, ficava **num spinner para sempre**.
+- **Código de marca:** com dados reais não lançava TypeError (a cor é
+  validada antes de qualquer cálculo), mas `relativeLuminance` fazia
+  `hex.slice` sem checar tipo e `readBrandCache` espalhava o objeto do
+  cache sem validar campo a campo — frágil para cache corrompido/antigo.
+
+**Correção (PR #11, `5df325b`, publicado pela Vercel):**
+- **`src/lib/chunkRecovery.ts`** (novo): `isChunkLoadError()` reconhece as
+  mensagens de Chrome, Safari/iOS, Firefox, preload de CSS e
+  ChunkLoadError; `recoverFromChunkError()` **remove os service workers e
+  todos os caches antes de recarregar**, com trava de **60 s**
+  (`arbo:chunk-recovery-at`) — sem loop e sem ficar preso (depois da
+  janela volta a recuperar); `hardReload()` para o botão manual (sempre
+  limpa os caches); `installChunkErrorHandlers()` cobre erros fora de
+  Error Boundary (`vite:preloadError` + `unhandledrejection`), instalado no
+  `main.tsx`.
+- **`ErrorBoundary`** mostra "Atualizando o app..." durante a recuperação;
+  **`RouterErrorElement`** mostra o spinner só enquanto recupera e, dentro
+  da janela de 60 s, a tela de erro com botão "Recarregar" (antes: spinner
+  eterno).
+- **`brand.ts`:** `relativeLuminance`/`contrastRatio`/`pickTextOnBrand`
+  aceitam qualquer valor e caem na cor padrão em vez de lançar TypeError;
+  `readBrandCache` valida campo a campo; `brandFromOrganization` tolera
+  `name`/`slug`/logo inválidos.
+- **`AuthContext`:** se a sessão não tiver `app_metadata.org_id` (token
+  anterior ao multi-tenant), chama `supabase.auth.refreshSession()` uma
+  vez — o `onAuthStateChange` entrega o token novo com a claim.
+
+**Validação:** lint 0, tsc 0, **74/74 testes** (+9: mensagens de chunk,
+limpeza antes do reload, trava contra loop, liberação após a janela,
+cache e contraste blindados), build OK, CI do PR e do `master` verdes.
+Conferido no bundle publicado (`index-BtiwKGsQ.js`) que produção já serve
+a trava, o handler `vite:preloadError` e a tela "Atualizando o app...".
+
+**Não testado no navegador:** a extensão do Chrome estava desconectada —
+o fluxo de recuperação está coberto por testes unitários. Validar no
+celular depois de um próximo deploy, em rede ruim: deve aparecer
+"Atualizando o app..." e voltar sozinho.
+
+**Lições:**
+- Recarregar sem limpar o cache do service worker não resolve erro de
+  chunk quando o HTML vem do cache — limpar antes, sempre.
+- Toda trava anti-loop precisa de prazo; trava permanente vira tela presa.
+- Com `NetworkFirst` + timeout curto na navegação, deploys em sequência
+  aumentam a chance de HTML velho em rede lenta — a recuperação automática
+  é o que torna isso inofensivo.
+
+---
+
 ## O que foi feito em 2026-10-07 (cont.) — White-label multi-tenant + Hyrox/CrossFit (PRs #5 a #10)
 
 Fase estratégica de produto: tornar o Arbo vendável para assessorias,
