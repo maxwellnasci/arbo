@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { isSuperAdminUser } from '../lib/superAdmin'
 
 type Role = 'admin' | 'aluno' | null
 
@@ -9,6 +10,8 @@ type AuthContextValue = {
   user: User | null
   role: Role
   isAdmin: boolean
+  // Dono da plataforma (Painel Super Admin) — só app_metadata, nunca user_metadata
+  isSuperAdmin: boolean
   isLoading: boolean
 }
 
@@ -52,9 +55,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const rawRole = user?.app_metadata?.role
   const role: Role = rawRole === 'admin' ? 'admin' : user ? 'aluno' : null
   const isAdmin = role === 'admin'
+  const isSuperAdmin = isSuperAdminUser(user)
 
   return (
-    <AuthContext.Provider value={{ session, user, role, isAdmin, isLoading }}>
+    <AuthContext.Provider value={{ session, user, role, isAdmin, isSuperAdmin, isLoading }}>
       {children}
     </AuthContext.Provider>
   )

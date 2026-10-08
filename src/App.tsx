@@ -6,6 +6,7 @@ import { useAuth } from './contexts/AuthContext'
 // Componentes estruturais — estáticos (necessários no primeiro render)
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
+import SuperAdminRoute from './components/SuperAdminRoute'
 import { AdminLayout } from './pages/admin/AdminLayout'
 import ErrorBoundary from './components/ErrorBoundary'
 import { hardReload, isChunkLoadError, recoverFromChunkError } from './lib/chunkRecovery'
@@ -23,6 +24,7 @@ const AdminTurmaDetail = lazy(() => import('./pages/admin/AdminTurmaDetail'))
 const AdminAlunoDetail = lazy(() => import('./pages/admin/AdminAlunoDetail'))
 const AdminTreinos     = lazy(() => import('./pages/admin/AdminTreinos'))
 const AdminMinhaAssessoria = lazy(() => import('./pages/admin/AdminMinhaAssessoria'))
+const AdminSuperClientes = lazy(() => import('./pages/admin/AdminSuperClientes'))
 const AlunoDashboard   = lazy(() => import('./pages/aluno/AlunoDashboard'))
 const AnamnesisForm    = lazy(() => import('./pages/aluno/AnamnesisForm'))
 const StravaCallback   = lazy(() => import('./pages/aluno/StravaCallback'))
@@ -176,6 +178,13 @@ const router = createBrowserRouter([
                   { path: 'alunos/:id', element: <Suspense fallback={<PageLoader />}><AdminAlunoDetail /></Suspense> },
                   { path: 'treinos', element: <Suspense fallback={<PageLoader />}><AdminTreinos /></Suspense> },
                   { path: 'configuracoes', element: <Suspense fallback={<PageLoader />}><AdminMinhaAssessoria /></Suspense> },
+                  {
+                    // Painel Super Admin (dono da plataforma)
+                    element: <SuperAdminRoute />,
+                    children: [
+                      { path: 'clientes', element: <Suspense fallback={<PageLoader />}><AdminSuperClientes /></Suspense> },
+                    ],
+                  },
                 ]
               },
               { path: '/preview-aluno', element: <Suspense fallback={<PageLoader />}><AlunoDashboard previewStudentId="00000000-0000-0000-0000-000000000000" /></Suspense> },

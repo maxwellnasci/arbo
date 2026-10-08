@@ -5,12 +5,12 @@ import AdminBottomNav from '../../components/AdminBottomNav'
 import styles from './AdminLayout.module.css'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLogout } from '../../hooks/useLogout'
-import { LogOut, Sun, Moon, Settings, Eye } from 'lucide-react'
+import { LogOut, Sun, Moon, Settings, Eye, Building2 } from 'lucide-react'
 import arboLogo from '../../assets/arbo-run-logo.webp'
 import { useBrand } from '../../contexts/BrandContext'
 
 export function AdminLayout() {
-  const { user } = useAuth()
+  const { user, isSuperAdmin } = useAuth()
   const { brand } = useBrand()
   const logout = useLogout()
   const navigate = useNavigate()
@@ -84,6 +84,17 @@ export function AdminLayout() {
               >
                 <Settings size={16} /> Minha Assessoria
               </button>
+              {isSuperAdmin && (
+                <button
+                  className={styles.dropdownItem}
+                  onClick={() => {
+                    setMenuOpen(false)
+                    navigate('/admin/clientes')
+                  }}
+                >
+                  <Building2 size={16} /> Clientes (Super Admin)
+                </button>
+              )}
               <div className={styles.dropdownDivider} />
               <button 
                 className={styles.dropdownItem} 

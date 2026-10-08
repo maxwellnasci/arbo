@@ -1,0 +1,264 @@
+import { useState } from 'react'
+import { createPortal } from 'react-dom'
+import { toast } from 'sonner'
+import { Building2, Copy, Plus, X, Check, MessageCircle, Link2 } from 'lucide-react'
+import { useSuperAdminOrganizations } from '../../hooks/useSuperAdminOrganizations'
+import {
+  buildWelcomeWhatsappMessage,
+  studentAccessUrl,
+  type ManagedOrganization,
+} from '../../lib/superAdmin'
+import {
+  slugify,
+  validateCreateOrganizationInput,
+  type CreateOrganizationInput,
+  type InputErrors,
+} from '../../../supabase/functions/_shared/organizationInput'
+import { pickTextOnBrand } from '../../lib/brand'
+import styles from './AdminSuperClientes.module.css'
+
+async function copyText(text: string, successMessage: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    toast.success(successMessage)
+  } catch {
+    toast.error('Não foi possível copiar. Selecione o texto e copie manualmente.')
+  }
+}
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+type CreatedState = { organization: ManagedOrganization; studentUrl: string; adminEmail: string }
+
+// Painel Super Admin — gestão de assessorias (só o dono da plataforma; a rota
+// é protegida por SuperAdminRoute e o servidor exige is_super_admin).
+export default function AdminSuperClientes() {
+  const { organizations, isLoading, error, createOrganization } = useSuperAdminOrganizations()
+  const [showForm, setShowForm] = useState(false)
+  const [created, setCreated] = useState<CreatedState | null>(null)
+
+  return (
+    <div className={styles.page}>
+      <header className={styles.header}>
+        <div>
+          <h1 className={styles.title}>Clientes</h1>
+          <p className={styles.subtitle}>Assessorias e boxes que usam o Arbo.</p>
+        </div>
+        <button type="button" className={styles.primaryBtn} onClick={() => setShowForm(true)}>
+          <Plus size={16} /> Novo Cliente
+        </button>
+      </header>
+
+      {isLoading && <p className={styles.muted}>Carregando assessorias...</p>}
+      {error && <p className={styles.errorText}>Erro ao carregar: {error}</p>}
+
+      {!isLoading && !error && (
+        <div className={styles.grid}>
+          {organizations.map(org => {
+            const url = studentAccessUrl(window.location.origin, org.slug)
+            return (
+              <article key={org.id} className={styles.card}>
+                <div className={styles.cardTop}>
+                  <span className={styles.swatch} style={{ background: org.primary_color }} aria-hidden="true" />
+                  <div className={styles.cardInfo}>
+                    <h2 className={styles.cardName}>{org.brand_name || org.name}</h2>
+                    <span className={styles.cardSlug}>/a/{org.slug}</span>
+                  </div>
+                </div>
+                <dl className={styles.meta}>
+                  <div><dt>Cor</dt><dd>{org.primary_color}</dd></div>
+                  <div><dt>Cadastro</dt><dd>{formatDate(org.created_at)}</dd></div>
+                  {org.coach_display_name && <div><dt>Treinador</dt><dd>{org.coach_display_name}</dd></div>}
+                </dl>
+                <button type="button" className={styles.secondaryBtn} onClick={() => copyText(url, 'Link dos alunos copiado!')}>
+                  <Copy size={14} /> Copiar Link dos Alunos
+                </button>
+              </article>
+            )
+          })}
+          {organizations.length === 0 && (
+            <p className={styles.muted}>
+              <Building2 size={16} /> Nenhuma assessoria cadastrada.
+            </p>
+          )}
+        </div>
+      )}
+
+      {showForm && (
+        <NovaAssessoriaModal
+          onClose={() => setShowForm(false)}
+          onSubmit={createOrganization}
+          onCreated={(state) => {
+            setShowForm(false)
+            setCreated(state)
+          }}
+        />
+      )}
+
+      {created && <SucessoModal created={created} onClose={() => setCreated(null)} />}
+    </div>
+  )
+}
+
+function NovaAssessoriaModal({ onClose, onSubmit, onCreated }: {
+  onClose: () => void
+  onSubmit: ReturnType<typeof useSuperAdminOrganizations>['createOrganization']
+  onCreated: (state: CreatedState) => void
+}) {
+  const [name, setName] = useState('')
+  const [slug, setSlug] = useState('')
+  const [slugEdited, setSlugEdited] = useState(false)
+  const [primaryColor, setPrimaryColor] = useState('#E8521A')
+  const [hexInput, setHexInput] = useState('#E8521A')
+  const [coachDisplayName, setCoachDisplayName] = useState('')
+  const [adminEmail, setAdminEmail] = useState('')
+  const [errors, setErrors] = useState<InputErrors>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+
+  function handleName(value: string) {
+    setName(value)
+    // Slug acompanha o nome até ser editado à mão.
+    if (!slugEdited) setSlug(slugify(value))
+  }
+
+  function handleHex(value: string) {
+    const normalized = (value.startsWith('#') ? value : `#${value}`).toUpperCase()
+    setHexInput(normalized)
+    if (/^#[0-9A-F]{6}$/.test(normalized)) setPrimaryColor(normalized)
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setFormError(null)
+    const input = { name, slug, primaryColor: hexInput, adminEmail, coachDisplayName }
+    const parsed = validateCreateOrganizationInput(input)
+    if (!parsed.ok) {
+      setErrors(parsed.errors)
+      return
+    }
+    setErrors({})
+    setIsSaving(true)
+    const result = await onSubmit(parsed.value as CreateOrganizationInput)
+    setIsSaving(false)
+    if (!result.ok) {
+      setFormError(result.error)
+      if (result.fields) setErrors(result.fields)
+      return
+    }
+    onCreated({ organization: result.organization, studentUrl: result.studentAccessUrl, adminEmail: parsed.value.adminEmail })
+  }
+
+  return createPortal(
+    <div className={styles.overlay} onClick={isSaving ? undefined : onClose}>
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="nova-assessoria-title" onClick={e => e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2 id="nova-assessoria-title" className={styles.modalTitle}>Cadastrar Nova Assessoria</h2>
+          <button type="button" className={styles.iconBtn} onClick={onClose} disabled={isSaving} aria-label="Fechar">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+          <label className={styles.field}>
+            <span className={styles.label}>Nome da Assessoria</span>
+            <input className={styles.input} value={name} maxLength={120} placeholder="Ex.: Alpha Cross"
+              onChange={e => handleName(e.target.value)} aria-invalid={Boolean(errors.name)} />
+            {errors.name && <span className={styles.fieldError}>{errors.name}</span>}
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.label}>Slug do link</span>
+            <div className={styles.slugRow}>
+              <span className={styles.slugPrefix}>/a/</span>
+              <input className={styles.input} value={slug} maxLength={50} placeholder="alpha-cross"
+                onChange={e => { setSlugEdited(true); setSlug(e.target.value.toLowerCase()) }}
+                aria-invalid={Boolean(errors.slug)} />
+            </div>
+            <span className={styles.hint}>Os alunos entram por {studentAccessUrl(window.location.origin, slug || 'slug')}</span>
+            {errors.slug && <span className={styles.fieldError}>{errors.slug}</span>}
+          </label>
+
+          <div className={styles.field}>
+            <span className={styles.label}>Cor Primária</span>
+            <div className={styles.colorRow}>
+              <input type="color" className={styles.colorPicker} value={primaryColor.toLowerCase()}
+                onChange={e => { setPrimaryColor(e.target.value.toUpperCase()); setHexInput(e.target.value.toUpperCase()) }}
+                aria-label="Escolher cor primária" />
+              <input className={`${styles.input} ${styles.hexInput}`} value={hexInput} maxLength={7}
+                onChange={e => handleHex(e.target.value)} aria-label="Cor primária em hexadecimal"
+                aria-invalid={Boolean(errors.primaryColor)} />
+              <span className={styles.colorPreview} style={{ background: primaryColor, color: pickTextOnBrand(primaryColor) }}>
+                Aa
+              </span>
+            </div>
+            {errors.primaryColor && <span className={styles.fieldError}>{errors.primaryColor}</span>}
+          </div>
+
+          <label className={styles.field}>
+            <span className={styles.label}>Nome do Treinador Principal (opcional)</span>
+            <input className={styles.input} value={coachDisplayName} maxLength={80} placeholder="Ex.: Coach Carlos"
+              onChange={e => setCoachDisplayName(e.target.value)} aria-invalid={Boolean(errors.coachDisplayName)} />
+            {errors.coachDisplayName && <span className={styles.fieldError}>{errors.coachDisplayName}</span>}
+          </label>
+
+          <label className={styles.field}>
+            <span className={styles.label}>E-mail do Professor / Responsável</span>
+            <input className={styles.input} type="email" inputMode="email" autoComplete="off" value={adminEmail}
+              placeholder="professor@exemplo.com" onChange={e => setAdminEmail(e.target.value)}
+              aria-invalid={Boolean(errors.adminEmail)} />
+            <span className={styles.hint}>Recebe o convite e entra como professor (admin) desta assessoria.</span>
+            {errors.adminEmail && <span className={styles.fieldError}>{errors.adminEmail}</span>}
+          </label>
+
+          {formError && <p className={styles.formError} role="alert">{formError}</p>}
+
+          <button type="submit" className={styles.primaryBtn} disabled={isSaving}>
+            {isSaving ? 'Cadastrando e enviando convite...' : 'Cadastrar e enviar convite'}
+          </button>
+        </form>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+function SucessoModal({ created, onClose }: { created: CreatedState; onClose: () => void }) {
+  const message = buildWelcomeWhatsappMessage({
+    organizationName: created.organization.brand_name || created.organization.name,
+    coachName: created.organization.coach_display_name,
+    adminEmail: created.adminEmail,
+    studentUrl: created.studentUrl,
+  })
+
+  return createPortal(
+    <div className={styles.overlay} onClick={onClose}>
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="sucesso-title" onClick={e => e.stopPropagation()}>
+        <div className={styles.successIcon}><Check size={28} /></div>
+        <h2 id="sucesso-title" className={styles.successTitle}>Convite enviado para {created.adminEmail}!</h2>
+        <p className={styles.successText}>
+          <strong>{created.organization.brand_name || created.organization.name}</strong> foi cadastrada. O professor recebe o
+          e-mail para criar a senha e já entra como admin da assessoria.
+        </p>
+
+        <div className={styles.linkBox}>
+          <Link2 size={16} aria-hidden="true" />
+          <span className={styles.linkText}>{created.studentUrl}</span>
+          <button type="button" className={styles.iconBtn} onClick={() => copyText(created.studentUrl, 'Link dos alunos copiado!')} aria-label="Copiar link dos alunos">
+            <Copy size={16} />
+          </button>
+        </div>
+
+        <pre className={styles.messagePreview}>{message}</pre>
+
+        <button type="button" className={styles.whatsappBtn} onClick={() => copyText(message, 'Mensagem copiada! Cole no WhatsApp do professor.')}>
+          <MessageCircle size={16} /> Copiar Mensagem para WhatsApp
+        </button>
+        <button type="button" className={styles.ghostBtn} onClick={onClose}>Fechar</button>
+      </div>
+    </div>,
+    document.body,
+  )
+}
