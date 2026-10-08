@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate, useRouteError } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { useAuth } from './contexts/AuthContext'
@@ -8,6 +8,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import { AdminLayout } from './pages/admin/AdminLayout'
 import ErrorBoundary from './components/ErrorBoundary'
+import { hardReload, isChunkLoadError, recoverFromChunkError } from './lib/chunkRecovery'
 
 // ── Lazy imports por rota ────────────────────────────────────────────────────
 const Login            = lazy(() => import('./components/Login'))
@@ -64,23 +65,24 @@ function RouterErrorElement() {
   const error = useRouteError()
   const msg = error instanceof Error ? error.message : String(error ?? 'Erro desconhecido')
 
-  const isChunkError =
-    msg.includes('Failed to fetch dynamically imported module') ||
-    msg.includes('Importing a module script failed') ||
-    msg.includes('Failed to load module script') ||
-    msg.includes('Unable to preload CSS') ||
-    msg.includes('error loading dynamically imported module')
+  const isChunkError = isChunkLoadError(error)
+  // true quando a recuperação automática já foi tentada há menos de 60 s:
+  // mostra a tela de erro (antes ficava num spinner para sempre).
+  const [gaveUp, setGaveUp] = useState(false)
 
   useEffect(() => {
-    if (!isChunkError) return
-    const key = 'arbo_chunk_reload'
-    if (!sessionStorage.getItem(key)) {
-      sessionStorage.setItem(key, '1')
-      window.location.reload()
+    let cancelled = false
+    async function recover() {
+      if (!isChunkError) return
+      // limpa service worker + caches e recarrega (trava de 60 s contra loop)
+      const recovered = await recoverFromChunkError()
+      if (!recovered && !cancelled) setGaveUp(true)
     }
+    recover()
+    return () => { cancelled = true }
   }, [isChunkError])
 
-  if (isChunkError) return <PageLoader />
+  if (isChunkError && !gaveUp) return <PageLoader />
 
   return (
     <div style={{
@@ -124,7 +126,7 @@ function RouterErrorElement() {
           </code>
         </div>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => { void hardReload() }}
           style={{
             background: 'var(--orange)',
             color: 'var(--text-primary)',
