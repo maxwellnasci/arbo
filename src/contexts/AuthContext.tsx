@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 
@@ -30,6 +30,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe()
   }, [])
+
+  // Sessão anterior à migration multi-tenant (2026-10-07): o JWT não tem
+  // app_metadata.org_id e as policies por organização não liberam nada
+  // (falha fechada). Renova o token uma vez — o app_metadata atual do servidor
+  // já tem org_id, e o onAuthStateChange acima entrega a sessão nova.
+  const refreshedForOrgRef = useRef(false)
+  useEffect(() => {
+    async function refreshIfMissingOrg() {
+      if (!session || refreshedForOrgRef.current) return
+      if (typeof session.user.app_metadata?.org_id === 'string') return
+      refreshedForOrgRef.current = true
+      const { error } = await supabase.auth.refreshSession()
+      if (error) console.error('Erro ao renovar sessão sem org_id:', error.message)
+    }
+    refreshIfMissingOrg()
+  }, [session])
 
   const user = session?.user ?? null
   // Role sempre de app_metadata — nunca de user_metadata (editável pelo usuário)

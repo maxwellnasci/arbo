@@ -1,5 +1,6 @@
 import React, { ErrorInfo, ReactNode } from 'react';
 import { Sentry } from '../lib/sentry';
+import { hardReload, isChunkLoadError, recoverFromChunkError } from '../lib/chunkRecovery';
 
 interface Props {
   children?: ReactNode;
@@ -8,6 +9,8 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  // erro de chunk: limpando cache do service worker e recarregando
+  recovering?: boolean;
 }
 
 class ErrorBoundary extends React.Component<Props, State> {
@@ -17,7 +20,7 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   public static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI.
-    return { hasError: true, error };
+    return { hasError: true, error, recovering: isChunkLoadError(error) };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
@@ -27,16 +30,34 @@ class ErrorBoundary extends React.Component<Props, State> {
       contexts: { react: { componentStack: errorInfo.componentStack } },
     });
 
-    // Auto-reload on dynamic import failure (usually means a new version was deployed)
-    if (
-      error.message.includes('Failed to fetch dynamically imported module') ||
-      error.message.includes('Importing a module script failed')
-    ) {
-      window.location.reload();
+    // Erro de chunk (deploy novo + HTML antigo em cache): limpa service worker e
+    // caches e recarrega. Se já tentou há menos de 60 s, mostra a tela de erro
+    // em vez de entrar em loop de reload.
+    if (isChunkLoadError(error)) {
+      void recoverFromChunkError().then(recovered => {
+        if (!recovered) this.setState({ recovering: false });
+      });
     }
   }
 
   public render() {
+    if (this.state.hasError && this.state.recovering) {
+      return (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100dvh',
+          background: 'var(--bg-primary)',
+          color: 'var(--text-secondary)',
+          fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+          fontSize: '15px',
+        }}>
+          Atualizando o app...
+        </div>
+      );
+    }
+
     if (this.state.hasError) {
       return (
         <div style={{
@@ -95,7 +116,7 @@ class ErrorBoundary extends React.Component<Props, State> {
               </code>
             </div>
             <button 
-              onClick={() => window.location.reload()}
+              onClick={() => { void hardReload(); }}
               style={{
                 background: 'var(--orange)',
                 color: 'var(--text-primary)',

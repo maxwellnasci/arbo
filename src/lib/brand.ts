@@ -36,16 +36,18 @@ export function isHexColor(value: unknown): value is string {
   return typeof value === 'string' && HEX_RE.test(value)
 }
 
-// Luminância relativa WCAG 2.x
-export function relativeLuminance(hex: string): number {
+// Luminância relativa WCAG 2.x. Valor fora de #RRGGBB (cache corrompido, dado
+// inesperado) cai na cor padrão em vez de lançar TypeError em `hex.slice`.
+export function relativeLuminance(hex: unknown): number {
+  const safe = isHexColor(hex) ? hex : DEFAULT_BRAND.primaryColor
   const channel = (i: number) => {
-    const c = parseInt(hex.slice(i, i + 2), 16) / 255
+    const c = parseInt(safe.slice(i, i + 2), 16) / 255
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
   }
   return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5)
 }
 
-export function contrastRatio(a: string, b: string): number {
+export function contrastRatio(a: unknown, b: unknown): number {
   const la = relativeLuminance(a)
   const lb = relativeLuminance(b)
   const [hi, lo] = la > lb ? [la, lb] : [lb, la]
@@ -61,7 +63,7 @@ export const TEXT_ON_BRAND_DARK = '#111111'
 // O laranja da Arbo dá 3,7:1 com branco, então continua branco como hoje.
 export const MIN_TEXT_ON_BRAND_CONTRAST = 3
 
-export function pickTextOnBrand(primary: string): string {
+export function pickTextOnBrand(primary: unknown): string {
   return contrastRatio(primary, TEXT_ON_BRAND_LIGHT) >= MIN_TEXT_ON_BRAND_CONTRAST
     ? TEXT_ON_BRAND_LIGHT
     : TEXT_ON_BRAND_DARK
@@ -94,13 +96,21 @@ export function readBrandCache(storage: Pick<Storage, 'getItem'> | null): Brand 
   try {
     const raw = storage?.getItem(BRAND_CACHE_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw) as Partial<BrandCache>
-    const b = parsed.brand
-    if (!b || typeof b.brandName !== 'string' || !isHexColor(b.primaryColor)) return null
+    const parsed = JSON.parse(raw) as { brand?: Record<string, unknown> } | null
+    const b = parsed?.brand
+    if (!b || typeof b !== 'object' || typeof b.brandName !== 'string' || !isHexColor(b.primaryColor)) return null
+    // Campo a campo (nunca espalhar o objeto do cache): o localStorage pode ter
+    // sido gravado por uma versão antiga do app ou corrompido.
+    const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v : null)
     return {
-      ...DEFAULT_BRAND,
-      ...b,
+      id: str(b.id),
+      name: str(b.name) ?? DEFAULT_BRAND.name,
+      slug: str(b.slug) ?? DEFAULT_BRAND.slug,
+      brandName: b.brandName.trim() || DEFAULT_BRAND.brandName,
       logoUrl: typeof b.logoUrl === 'string' && b.logoUrl.startsWith('https://') ? b.logoUrl : null,
+      primaryColor: b.primaryColor,
+      secondaryColor: isHexColor(b.secondaryColor) ? b.secondaryColor : null,
+      coachDisplayName: str(b.coachDisplayName),
     }
   } catch {
     return null
@@ -130,10 +140,10 @@ type OrganizationRow = {
 export function brandFromOrganization(row: OrganizationRow): Brand {
   return {
     id: row.id,
-    name: row.name,
-    slug: row.slug,
-    brandName: row.brand_name?.trim() || row.name,
-    logoUrl: row.logo_url,
+    name: row.name || DEFAULT_BRAND.name,
+    slug: row.slug || DEFAULT_BRAND.slug,
+    brandName: row.brand_name?.trim() || row.name || DEFAULT_BRAND.brandName,
+    logoUrl: typeof row.logo_url === 'string' && row.logo_url.startsWith('https://') ? row.logo_url : null,
     primaryColor: isHexColor(row.primary_color) ? row.primary_color : DEFAULT_BRAND.primaryColor,
     secondaryColor: isHexColor(row.secondary_color) ? row.secondary_color : null,
     coachDisplayName: row.coach_display_name?.trim() || null,

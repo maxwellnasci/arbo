@@ -87,6 +87,36 @@ describe('cache da marca', () => {
   })
 })
 
+describe('blindagem contra valores inesperados (nunca TypeError)', () => {
+  it('contraste e texto sobre a marca toleram valor inválido', () => {
+    expect(() => contrastRatio(undefined, '#ffffff')).not.toThrow()
+    expect(() => contrastRatio(null, 42)).not.toThrow()
+    expect(pickTextOnBrand(undefined)).toBe(pickTextOnBrand(DEFAULT_BRAND.primaryColor))
+    expect(pickTextOnBrand({ cor: 'x' })).toBe('#ffffff')
+  })
+
+  it('cache com tipos errados é saneado campo a campo', () => {
+    const storage = memoryStorage()
+    storage.setItem(BRAND_CACHE_KEY, JSON.stringify({
+      brand: { brandName: 'Box', primaryColor: '#1D4ED8', id: 123, slug: { x: 1 }, name: null, secondaryColor: 'azul', coachDisplayName: ['x'] },
+    }))
+    expect(readBrandCache(storage)).toEqual({
+      id: null,
+      name: DEFAULT_BRAND.name,
+      slug: DEFAULT_BRAND.slug,
+      brandName: 'Box',
+      logoUrl: null,
+      primaryColor: '#1D4ED8',
+      secondaryColor: null,
+      coachDisplayName: null,
+    })
+    storage.setItem(BRAND_CACHE_KEY, 'null')
+    expect(readBrandCache(storage)).toBeNull()
+    storage.setItem(BRAND_CACHE_KEY, JSON.stringify({ brand: 'texto' }))
+    expect(readBrandCache(storage)).toBeNull()
+  })
+})
+
 describe('brandFromOrganization', () => {
   it('usa name quando brand_name está vazio', () => {
     const b = brandFromOrganization({
