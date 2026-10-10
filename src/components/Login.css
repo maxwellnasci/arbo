@@ -46,9 +46,14 @@
 }
 
 .login-logo-img {
-  width: 100px;
-  height: auto;
+  position: relative;
   z-index: 1;
+}
+
+/* Espaço reservado enquanto a marca do link /a/:slug carrega */
+.login-logo-placeholder {
+  width: 120px;
+  height: 120px;
 }
 
 .login-header-text {

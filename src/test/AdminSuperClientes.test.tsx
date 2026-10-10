@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import AdminSuperClientes from '../pages/admin/AdminSuperClientes'
 
@@ -35,6 +35,11 @@ vi.mock('../contexts/BrandContext', () => ({
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 
 describe('AdminSuperClientes', () => {
+  beforeAll(() => {
+    URL.createObjectURL = vi.fn(() => 'blob:preview')
+    URL.revokeObjectURL = vi.fn()
+  })
+
   beforeEach(() => {
     createOrganization.mockReset()
     updateOrganization.mockReset()
@@ -86,7 +91,7 @@ describe('AdminSuperClientes', () => {
       primaryColor: '#E8521A',
       adminEmail: 'coach@exemplo.com',
       coachDisplayName: 'Coach Carlos',
-    })
+    }, null)
     expect(screen.getAllByText('https://arbo.mxos.com.br/a/alpha-cross').length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: /Copiar Mensagem para WhatsApp/ })).toBeTruthy()
   })
@@ -149,9 +154,9 @@ describe('AdminSuperClientes', () => {
   })
 
   it('edita a assessoria com cores opcionais e tom da IA', async () => {
-    updateOrganization.mockImplementation(async (id: string) => ({
+    updateOrganization.mockImplementation(async (org: { id: string }) => ({
       ok: true,
-      organization: { ...ORG_BASE, id, name: 'Box Azul', slug: 'box-azul' },
+      organization: { ...ORG_BASE, id: org.id, name: 'Box Azul', slug: 'box-azul' },
     }))
     render(<AdminSuperClientes />)
     fireEvent.click(screen.getAllByRole('button', { name: /Editar/ })[1])
@@ -161,7 +166,7 @@ describe('AdminSuperClientes', () => {
     fireEvent.change(screen.getByPlaceholderText(/direto e motivador/), { target: { value: 'Animado e direto' } })
     fireEvent.click(screen.getByRole('button', { name: /Salvar alterações/ }))
 
-    await waitFor(() => expect(updateOrganization).toHaveBeenCalledWith('org-2', {
+    await waitFor(() => expect(updateOrganization).toHaveBeenCalledWith(expect.objectContaining({ id: 'org-2' }), {
       name: 'Box Azul',
       slug: 'box-azul',
       brandName: null,
@@ -170,7 +175,7 @@ describe('AdminSuperClientes', () => {
       secondaryColor: null,
       accentColor: '#22C55E',
       aiTone: 'Animado e direto',
-    }))
+    }, { file: null, remove: false }))
     expect(commitBrand).not.toHaveBeenCalled()
   })
 
@@ -178,5 +183,46 @@ describe('AdminSuperClientes', () => {
     render(<AdminSuperClientes />)
     fireEvent.click(screen.getAllByRole('button', { name: /Editar/ })[0])
     expect((screen.getByDisplayValue('arbo') as HTMLInputElement).disabled).toBe(true)
+  })
+
+  it('card de assessoria sem logo mostra o monograma, nunca a logo da Arbo', () => {
+    render(<AdminSuperClientes />)
+    const monograms = screen.getAllByTestId('brand-monogram')
+    expect(monograms.map(m => m.textContent)).toEqual(['BA'])
+  })
+
+  it('logo escolhida no cadastro vai junto para o servidor', async () => {
+    createOrganization.mockResolvedValue({
+      ok: true,
+      organization: { ...ORG_BASE, id: 'org-3', name: 'Run Club', slug: 'run-club', logo_url: 'https://cdn/logo.png' },
+      studentAccessUrl: 'https://arbo.mxos.com.br/a/run-club',
+    })
+    render(<AdminSuperClientes />)
+    fireEvent.click(screen.getByRole('button', { name: /Novo Cliente/ }))
+    fireEvent.change(screen.getByPlaceholderText('Ex.: Alpha Cross'), { target: { value: 'Run Club' } })
+    fireEvent.change(screen.getByPlaceholderText('professor@exemplo.com'), { target: { value: 'coach@run.com' } })
+    const png = new File(['x'], 'logo.png', { type: 'image/png' })
+    fireEvent.change(screen.getByLabelText('Arquivo da logo'), { target: { files: [png] } })
+    fireEvent.click(screen.getByRole('button', { name: /Cadastrar e enviar convite/ }))
+
+    await waitFor(() => expect(createOrganization).toHaveBeenCalledWith(expect.objectContaining({ slug: 'run-club' }), png))
+  })
+
+  it('logo que falhou no cadastro avisa sem perder o convite', async () => {
+    const { toast } = await import('sonner')
+    createOrganization.mockResolvedValue({
+      ok: true,
+      organization: { ...ORG_BASE, id: 'org-4', name: 'Nitro', slug: 'nitro' },
+      studentAccessUrl: 'https://arbo.mxos.com.br/a/nitro',
+      logoError: 'storage fora do ar',
+    })
+    render(<AdminSuperClientes />)
+    fireEvent.click(screen.getByRole('button', { name: /Novo Cliente/ }))
+    fireEvent.change(screen.getByPlaceholderText('Ex.: Alpha Cross'), { target: { value: 'Nitro' } })
+    fireEvent.change(screen.getByPlaceholderText('professor@exemplo.com'), { target: { value: 'coach@nitro.com' } })
+    fireEvent.click(screen.getByRole('button', { name: /Cadastrar e enviar convite/ }))
+
+    await waitFor(() => expect(screen.getByText('Convite enviado para coach@nitro.com!')).toBeTruthy())
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('storage fora do ar'))
   })
 })

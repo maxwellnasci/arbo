@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { toast } from 'sonner'
 import {
@@ -26,6 +26,9 @@ import { brandFromOrganization, pickTextOnBrand } from '../../lib/brand'
 import { ConfirmModal } from '../../components/ui/ConfirmModal'
 import BrandColorField from '../../components/admin/BrandColorField'
 import BrandPreview from '../../components/admin/BrandPreview'
+import BrandLogo from '../../components/shared/BrandLogo'
+import LogoPicker from '../../components/admin/LogoPicker'
+import { EMPTY_LOGO_SELECTION, effectiveLogoUrl, type LogoSelection } from '../../lib/logoSelection'
 import styles from './AdminSuperClientes.module.css'
 
 async function copyText(text: string, successMessage: string) {
@@ -97,7 +100,13 @@ export default function AdminSuperClientes() {
             return (
               <article key={org.id} className={`${styles.card} ${org.is_active ? '' : styles.cardPaused}`}>
                 <div className={styles.cardTop}>
-                  <span className={styles.swatch} style={{ background: org.primary_color }} aria-hidden="true" />
+                  <BrandLogo
+                    brand={{ slug: org.slug, brandName: displayName(org), logoUrl: org.logo_url }}
+                    size={40}
+                    alt=""
+                    className={styles.swatch}
+                    style={{ '--brand-logo-bg': org.primary_color, '--brand-logo-fg': pickTextOnBrand(org.primary_color) } as CSSProperties}
+                  />
                   <div className={styles.cardInfo}>
                     <h2 className={styles.cardName}>{displayName(org)}</h2>
                     <span className={styles.cardSlug}>/a/{org.slug}</span>
@@ -212,6 +221,7 @@ function EditarAssessoriaModal({ organization, onClose, onSubmit, onSaved }: {
   const [secondaryColor, setSecondaryColor] = useState<string | null>(organization.secondary_color?.toUpperCase() ?? null)
   const [accentColor, setAccentColor] = useState<string | null>(organization.accent_color?.toUpperCase() ?? null)
   const [aiTone, setAiTone] = useState(organization.ai_tone ?? '')
+  const [logo, setLogo] = useState<LogoSelection>(EMPTY_LOGO_SELECTION)
   const [errors, setErrors] = useState<UpdateInputErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -228,7 +238,7 @@ function EditarAssessoriaModal({ organization, onClose, onSubmit, onSaved }: {
     }
     setErrors({})
     setIsSaving(true)
-    const result = await onSubmit(organization.id, parsed.value)
+    const result = await onSubmit(organization, parsed.value, { file: logo.file, remove: logo.remove })
     setIsSaving(false)
     if (!result.ok) {
       setFormError(result.error)
@@ -255,6 +265,20 @@ function EditarAssessoriaModal({ organization, onClose, onSubmit, onSaved }: {
               aria-invalid={Boolean(errors.name)} />
             {errors.name && <span className={styles.fieldError}>{errors.name}</span>}
           </label>
+
+          <div className={styles.field}>
+            <span className={styles.label}>Logo</span>
+            <LogoPicker
+              slug={organization.slug}
+              brandName={brandName.trim() || name}
+              currentUrl={organization.logo_url}
+              value={logo}
+              onChange={setLogo}
+              onInvalid={message => toast.error(message)}
+              monogramColors={{ background: primaryColor, color: pickTextOnBrand(primaryColor) }}
+              size={56}
+            />
+          </div>
 
           <label className={styles.field}>
             <span className={styles.label}>Nome da Marca (opcional)</span>
@@ -294,8 +318,9 @@ function EditarAssessoriaModal({ organization, onClose, onSubmit, onSaved }: {
             fallback={primaryColor} optional error={errors.accentColor} />
 
           <BrandPreview
+            slug={organization.slug}
             brandName={brandName.trim() || name}
-            logoUrl={organization.logo_url}
+            logoUrl={effectiveLogoUrl(organization.logo_url, logo)}
             coachName={coachDisplayName}
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
@@ -399,6 +424,7 @@ function NovaAssessoriaModal({ onClose, onSubmit, onCreated }: {
   const [hexInput, setHexInput] = useState('#E8521A')
   const [coachDisplayName, setCoachDisplayName] = useState('')
   const [adminEmail, setAdminEmail] = useState('')
+  const [logo, setLogo] = useState<LogoSelection>(EMPTY_LOGO_SELECTION)
   const [errors, setErrors] = useState<InputErrors>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -426,12 +452,15 @@ function NovaAssessoriaModal({ onClose, onSubmit, onCreated }: {
     }
     setErrors({})
     setIsSaving(true)
-    const result = await onSubmit(parsed.value as CreateOrganizationInput)
+    const result = await onSubmit(parsed.value as CreateOrganizationInput, logo.file)
     setIsSaving(false)
     if (!result.ok) {
       setFormError(result.error)
       if (result.fields) setErrors(result.fields)
       return
+    }
+    if (result.logoError) {
+      toast.error(`Assessoria criada, mas a logo não foi enviada (${result.logoError}). Envie de novo pelo Editar.`)
     }
     onCreated({ organization: result.organization, studentUrl: result.studentAccessUrl, adminEmail: parsed.value.adminEmail })
   }
@@ -465,6 +494,21 @@ function NovaAssessoriaModal({ onClose, onSubmit, onCreated }: {
             <span className={styles.hint}>Os alunos entram por {studentAccessUrl(window.location.origin, slug || 'slug')}</span>
             {errors.slug && <span className={styles.fieldError}>{errors.slug}</span>}
           </label>
+
+          <div className={styles.field}>
+            <span className={styles.label}>Logo (opcional)</span>
+            <LogoPicker
+              slug={slug || 'nova-assessoria'}
+              brandName={name || 'Nova Assessoria'}
+              currentUrl={null}
+              value={logo}
+              onChange={setLogo}
+              onInvalid={message => toast.error(message)}
+              monogramColors={{ background: primaryColor, color: pickTextOnBrand(primaryColor) }}
+              size={56}
+            />
+            <span className={styles.hint}>A logo sobe logo depois do cadastro, antes de você mandar o link ao professor.</span>
+          </div>
 
           <div className={styles.field}>
             <span className={styles.label}>Cor Primária</span>

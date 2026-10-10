@@ -6,7 +6,7 @@ import styles from './AdminLayout.module.css'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLogout } from '../../hooks/useLogout'
 import { LogOut, Sun, Moon, Settings, Eye, Building2 } from 'lucide-react'
-import arboLogo from '../../assets/arbo-run-logo.webp'
+import BrandLogo from '../../components/shared/BrandLogo'
 import { useBrand } from '../../contexts/BrandContext'
 
 export function AdminLayout() {
@@ -41,13 +41,7 @@ export function AdminLayout() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.logoContainer}>
-          <img
-            src={brand.logoUrl ?? arboLogo}
-            alt={brand.brandName}
-            width="32"
-            height="32"
-            style={{ width: 32, height: 32, objectFit: 'contain' }}
-          />
+          <BrandLogo brand={brand} size={32} />
           {/* Arbo mantém o "ARBO" curto de sempre; outras assessorias usam o nome da marca */}
           <span className={styles.headerTitle}>{brand.slug === 'arbo' ? 'ARBO' : brand.brandName}</span>
         </div>

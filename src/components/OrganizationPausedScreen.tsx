@@ -1,7 +1,7 @@
 import { PauseCircle, LogOut } from 'lucide-react'
 import { useBrand } from '../contexts/BrandContext'
 import { useLogout } from '../hooks/useLogout'
-import arboLogo from '../assets/arbo-run-logo.webp'
+import BrandLogo from './shared/BrandLogo'
 
 // Tela mostrada para alunos/professores de uma assessoria pausada pelo dono da
 // plataforma. Os dados já estão bloqueados no banco; isto é só a mensagem.
@@ -35,7 +35,7 @@ export default function OrganizationPausedScreen() {
         alignItems: 'center',
         gap: '14px',
       }}>
-        <img src={brand.logoUrl ?? arboLogo} alt={brand.brandName} width="64" height="64" style={{ width: 64, height: 64, objectFit: 'contain' }} />
+        <BrandLogo brand={brand} size={64} />
         <PauseCircle size={28} style={{ color: 'var(--yellow-accent)' }} aria-hidden="true" />
         <h1 style={{ margin: 0, fontSize: '20px', color: 'var(--text-primary)' }}>
           Assessoria temporariamente pausada

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { MANAGED_ORGANIZATION_COLUMNS, type ManagedOrganization } from '../lib/superAdmin'
+import { removeOldOrganizationLogo, removeOrganizationLogoPath, uploadOrganizationLogo } from '../lib/organizationLogo'
 import type {
   CreateOrganizationInput,
   InputErrors,
@@ -9,7 +10,9 @@ import type {
 } from '../../supabase/functions/_shared/organizationInput'
 
 export type CreateOrganizationResult =
-  | { ok: true; organization: ManagedOrganization; studentAccessUrl: string }
+  // logoError: a assessoria foi criada, mas a logo não subiu (dá para enviar
+  // depois pelo Editar) — nunca desfaz o cadastro/convite por causa da logo.
+  | { ok: true; organization: ManagedOrganization; studentAccessUrl: string; logoError?: string }
   | { ok: false; error: string; fields?: InputErrors }
 
 export type UpdateOrganizationResult =
@@ -17,6 +20,9 @@ export type UpdateOrganizationResult =
   | { ok: false; error: string; fields?: UpdateInputErrors }
 
 export type SimpleResult = { ok: true } | { ok: false; error: string }
+
+// Troca de logo na edição: arquivo novo, remover a atual, ou nada.
+export type LogoChange = { file: File | null; remove: boolean }
 
 async function callFunction(name: string, body: unknown): Promise<{ res: Response; json: unknown } | { error: string }> {
   const { data: { session } } = await supabase.auth.getSession()
@@ -72,7 +78,10 @@ export function useSuperAdminOrganizations() {
     setOrganizations(list => list.map(o => (o.id === org.id ? org : o)))
   }, [])
 
-  const createOrganization = useCallback(async (input: CreateOrganizationInput): Promise<CreateOrganizationResult> => {
+  const createOrganization = useCallback(async (
+    input: CreateOrganizationInput,
+    logoFile: File | null = null,
+  ): Promise<CreateOrganizationResult> => {
     const call = await callFunction('create-organization', input)
     if ('error' in call) return { ok: false, error: call.error }
     const body = call.json as
@@ -83,14 +92,56 @@ export function useSuperAdminOrganizations() {
       return { ok: false, error: body?.error ?? 'Erro ao cadastrar a assessoria.', fields: body?.fields }
     }
 
+    // Logo depois do cadastro (a pasta {orgId}/ só existe com a org criada).
+    let organization = body.organization
+    let logoError: string | undefined
+    if (logoFile) {
+      let uploadedPath: string | null = null
+      try {
+        const uploaded = await uploadOrganizationLogo(organization.id, logoFile)
+        uploadedPath = uploaded.path
+        const { data, error: updateError } = await supabase
+          .from('organizations')
+          .update({ logo_url: uploaded.publicUrl })
+          .eq('id', organization.id)
+          .select(MANAGED_ORGANIZATION_COLUMNS)
+          .single()
+        if (updateError || !data) throw new Error(updateError?.message ?? 'sem permissão')
+        organization = data
+      } catch (e: unknown) {
+        if (uploadedPath) await removeOrganizationLogoPath(uploadedPath)
+        logoError = e instanceof Error ? e.message : 'Erro desconhecido'
+      }
+    }
+
     setReloadKey(k => k + 1)
-    return { ok: true, organization: body.organization, studentAccessUrl: body.studentAccessUrl }
+    return { ok: true, organization, studentAccessUrl: body.studentAccessUrl, logoError }
   }, [])
 
-  const updateOrganization = useCallback(async (id: string, input: UpdateOrganizationInput): Promise<UpdateOrganizationResult> => {
+  // Mesma ordem segura da "Minha Assessoria": upload → UPDATE → (falhou: apaga
+  // o upload) → (deu certo: apaga a logo antiga).
+  const updateOrganization = useCallback(async (
+    current: ManagedOrganization,
+    input: UpdateOrganizationInput,
+    logo: LogoChange = { file: null, remove: false },
+  ): Promise<UpdateOrganizationResult> => {
+    const id = current.id
+    let logoUrl = logo.remove ? null : current.logo_url
+    let uploadedPath: string | null = null
+    if (logo.file) {
+      try {
+        const uploaded = await uploadOrganizationLogo(id, logo.file)
+        uploadedPath = uploaded.path
+        logoUrl = uploaded.publicUrl
+      } catch (e: unknown) {
+        return { ok: false, error: e instanceof Error ? e.message : 'Erro ao enviar a logo.' }
+      }
+    }
+
     const { data, error: updateError } = await supabase
       .from('organizations')
       .update({
+        logo_url: logoUrl,
         name: input.name,
         slug: input.slug,
         brand_name: input.brandName,
@@ -105,11 +156,13 @@ export function useSuperAdminOrganizations() {
       .single()
 
     if (updateError || !data) {
+      if (uploadedPath) await removeOrganizationLogoPath(uploadedPath)
       if (updateError?.code === '23505') {
         return { ok: false, error: 'Esse slug já está em uso. Escolha outro link.', fields: { slug: 'Slug já em uso.' } }
       }
       return { ok: false, error: `Erro ao salvar: ${updateError?.message ?? 'sem permissão'}` }
     }
+    await removeOldOrganizationLogo(id, current.logo_url, logoUrl)
     replaceLocal(data)
     return { ok: true, organization: data }
   }, [replaceLocal])
