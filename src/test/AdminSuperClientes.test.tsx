@@ -225,4 +225,16 @@ describe('AdminSuperClientes', () => {
     await waitFor(() => expect(screen.getByText('Convite enviado para coach@nitro.com!')).toBeTruthy())
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('storage fora do ar'))
   })
+
+  it('exclusão com vídeo que ficou no armazenamento avisa sem travar', async () => {
+    const { toast } = await import('sonner')
+    deleteOrganization.mockResolvedValue({ ok: true, warning: 'Alguns vídeos dos treinos não foram apagados do armazenamento (ficaram órfãos).' })
+    render(<AdminSuperClientes />)
+    fireEvent.click(screen.getByRole('button', { name: /Excluir/ }))
+    expect(screen.getByText(/os vídeos dos treinos/)).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Nome da assessoria para confirmar a exclusão'), { target: { value: 'Box Azul' } })
+    fireEvent.click(screen.getByRole('button', { name: /Excluir definitivamente/ }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('vídeos')))
+    expect(toast.success).toHaveBeenCalledWith('Box Azul foi excluída.')
+  })
 })

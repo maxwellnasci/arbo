@@ -46,3 +46,37 @@ export function canDeleteVideoKey(key: string, organizationId: string): boolean 
   if (parts.length === 3) return organizationId === DEFAULT_ORG_ID
   return false
 }
+
+// Exclusão de assessoria (delete-organization): pasta inteira de vídeos da
+// organização. Nunca a da organização padrão (Arbo) nem id inválido — e o
+// prefixo termina em "/" para "videos/{id}" não casar com "videos/{id}xyz".
+export function organizationVideoPrefix(organizationId: string): string | null {
+  if (!isUuid(organizationId) || organizationId.toLowerCase() === DEFAULT_ORG_ID) return null
+  return `videos/${organizationId.toLowerCase()}/`
+}
+
+export type ListObjectsPage = { keys: string[]; isTruncated: boolean; nextContinuationToken: string | null }
+
+function decodeXml(value: string): string {
+  return value
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+}
+
+// Resposta do ListObjectsV2 (S3/R2) — só o que a exclusão precisa.
+export function parseListObjectsV2(xml: string): ListObjectsPage {
+  const keys = [...xml.matchAll(/<Contents>[\s\S]*?<Key>([\s\S]*?)<\/Key>[\s\S]*?<\/Contents>/g)].map((m) => decodeXml(m[1]))
+  const isTruncated = /<IsTruncated>\s*true\s*<\/IsTruncated>/i.test(xml)
+  const token = xml.match(/<NextContinuationToken>([\s\S]*?)<\/NextContinuationToken>/)
+  return { keys, isTruncated, nextContinuationToken: token ? decodeXml(token[1]) : null }
+}
+
+// Só apaga o que está de fato na pasta da organização excluída (defesa em
+// profundidade contra uma listagem inesperada).
+export function isOrganizationVideoKey(key: string, organizationId: string): boolean {
+  const prefix = organizationVideoPrefix(organizationId)
+  return prefix !== null && key.startsWith(prefix) && canDeleteVideoKey(key, organizationId.toLowerCase())
+}

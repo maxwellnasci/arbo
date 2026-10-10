@@ -470,3 +470,66 @@ O usuário recebeu um e-mail do GitHub Actions — "Supabase Keep-Alive: Todas a
 Mesmo que a resposta seja `401`/`403` (esperado — o role `anon` não tem `GRANT` explícito nessa tabela, só `authenticated` tem), a requisição chega ao Postgres de verdade. Testado manualmente contra o projeto já restaurado: `HTTP 401` com erro Postgres genuíno (`42501 permission denied for table training_types`) — não uma falha de conexão — confirmando que a query passou a acionar o banco.
 
 **Conhecimento demonstrado:** Ceticismo saudável sobre uma correção anterior "que já devia estar funcionando" — em vez de aceitar o estado isolado do dia (workflow existe, rodou ontem), validar o **histórico completo** de execuções revelou que 8 dias de sucesso não impediram a pausa, apontando para a causa raiz real (o *tipo* de request, não a frequência do cron). Distinção entre "responder `HTTP 200`" e "gerar atividade que o mecanismo de terceiros efetivamente mede" — mesma classe de raciocínio do Caso 9 (cache mascarando falha de rede como dado válido), aplicada a um serviço de infraestrutura de terceiros em vez de código próprio. Verificação da correção contra o sistema real (curl manual pós-restore) antes de considerar o incidente encerrado, em vez de assumir que a mudança de código bastaria.
+
+---
+
+## Estudo de Caso 17: Policy de Storage Que Negava Tudo por Sombra de Coluna (PostgreSQL / RLS)
+
+**O Cenário:**
+O dono da plataforma (super admin) precisava enviar a logo de qualquer assessoria cliente no bucket `brand-assets`, onde cada arquivo fica em `{organization_id}/logo-….webp`. A nova policy liberava o super admin só se a pasta fosse o id de uma organização existente:
+```sql
+AND EXISTS (
+  SELECT 1 FROM public.organizations o
+  WHERE o.id::text = (storage.foldername(name))[1]
+)
+```
+
+**O Sintoma:**
+No ensaio em produção (migration + teste dentro de uma transação que sempre aborta), o upload do super admin para a pasta de uma org que existia foi **negado** por RLS — o mesmo resultado de uma org inexistente.
+
+**O Diagnóstico:**
+Uma consulta de diagnóstico (também abortada) mostrou a claim correta e a org visível para o super admin — o problema não era permissão. A causa: dentro da subconsulta sobre `organizations`, o identificador sem qualificação `name` resolve para **`organizations.name`** (a tabela tem uma coluna `name`), não para `storage.objects.name`. A policy comparava o id da org com a pasta extraída do *nome da assessoria* — nunca batia.
+
+**A Solução:**
+Calcular a pasta **fora** da subconsulta, onde `name` só pode ser a coluna de `storage.objects`:
+```sql
+AND (storage.foldername(name))[1] IN (SELECT o.id::text FROM public.organizations o)
+```
+Ensaio repetido: 10/10 (super admin grava em org existente; org inexistente, fora de pasta, admin comum e claim em `user_metadata` negados).
+
+**Conhecimento demonstrado:** regras de resolução de nomes do SQL em subconsultas correlacionadas; ensaiar migration de segurança contra o banco real antes de aplicar (o erro era silencioso — a policy "funcionava", só que negando tudo); e escrever o teste cobrindo tanto o caso que deve passar quanto os que devem falhar.
+
+---
+
+## Estudo de Caso 18: "Pausar Assessoria" Contornável — RLS Controla Linhas, Não Colunas (Segurança / PostgreSQL)
+
+**O Cenário:**
+O Painel Super Admin ganharia "Pausar assessoria" com `organizations.is_active = false`. A tabela já tinha uma policy de UPDATE para o professor editar a marca da própria assessoria (`id = minha org AND is_admin()`).
+
+**O Problema (achado em revisão, antes de ir ao ar):**
+A policy amarra **qual linha** o professor pode tocar, não **quais colunas**. Com ela, o professor de uma assessoria pausada poderia mandar um `PATCH` direto no REST (`is_active: true`) e se reativar — ou trocar `name`/`slug` da própria org. É a mesma classe do Caso 10 (aluno se promovendo a admin em `profiles`).
+
+**A Solução (duas camadas):**
+1. **Trigger `trg_protect_organization_fields`** (BEFORE UPDATE): `id` imutável, slug da org padrão fixo e, para quem não é super admin, `name`/`slug`/`is_active` não podem mudar — a edição legítima de cor/logo/treinador continua livre.
+2. **Pausa com efeito real e falha fechada:** em vez de acrescentar `is_active` em dezenas de policies, `private.current_org_id()` (usado por todas as policies de isolamento por organização) passou a devolver `NULL` quando a org está pausada — exceto para o super admin. Sem org, nenhuma policy libera nada. A tela "Assessoria temporariamente pausada" é só a camada amigável por cima.
+
+**Conhecimento demonstrado:** pensar no que o cliente REST consegue fazer além do que a UI oferece; corrigir num ponto central (o helper usado por todas as policies) em vez de espalhar condições; e testar com SQL que simula cada papel (25 checagens em `organization_lifecycle_check.sql`).
+
+---
+
+## Estudo de Caso 19: Testes de Banco Que Dependiam de Dado Real Apagado (Testes / Fixtures)
+
+**O Cenário:**
+Os scripts SQL de verificação (`rls_tenant_isolation_check.sql`, `modalities_check.sql`) rodam contra produção dentro de uma transação que sempre aborta. Eles pegavam "um aluno qualquer da Arbo" com `SELECT … LIMIT 1` para simular o papel de aluno.
+
+**O Sintoma:**
+Ao ensaiar uma migration nova, os dois scripts falharam em itens de aluno sem relação com a mudança.
+
+**O Diagnóstico:**
+Rodar os mesmos scripts **sem** a migration nova reproduziu a falha — logo, não era regressão. Pouco antes (2026-10-08), a organização Arbo tinha virado vitrine e todos os alunos reais foram removidos: o `SELECT` devolvia `NULL` e os testes simulavam um "aluno" sem id.
+
+**A Solução:**
+Cada script passou a criar o próprio aluno de teste (`INSERT` em `auth.users` → o trigger cria o perfil) dentro da transação que aborta — nada é gravado e o teste não depende mais do estado dos dados de produção. Isolamento voltou a 34/34.
+
+**Conhecimento demonstrado:** separar "o teste quebrou" de "o código quebrou" rodando o mesmo teste sem a mudança; e fixtures autocontidas em vez de depender de dados reais que mudam com decisões de negócio.
+

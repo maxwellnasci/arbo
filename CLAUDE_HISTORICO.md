@@ -5,6 +5,101 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-10-10 — Gestão de assessorias, cores, logo white-label e limpeza do R2 (PRs #13, #14 e #15)
+
+Três entregas seguidas no Painel Super Admin, cada uma em branch própria,
+PR em draft, CI verde e merge só com o ok do Max. Toda migration foi
+ensaiada em produção numa transação que sempre aborta antes do `db push`.
+
+### PR #13 (`63b9e94`) — Editar, pausar e excluir assessorias + cores secundária e de destaque
+
+**Banco (migration `20261010003849_organization_lifecycle_and_accent`):**
+`organizations.is_active` e `accent_color`; policies
+`organizations_super_admin_update/_delete` + `GRANT UPDATE, DELETE`;
+`trg_protect_arbo_default` (a vitrine Arbo nunca é apagada);
+`trg_protect_organization_fields` (id imutável, slug da Arbo fixo, admin
+comum não muda `name`/`slug`/`is_active`). **Achado de segurança:** a
+policy de UPDATE do admin amarrava só a *linha* da própria org — RLS não
+controla colunas —, então o professor de uma assessoria pausada poderia se
+reativar com um PATCH direto (Caso 18). **Pausa de verdade:**
+`private.current_org_id()` passou a devolver NULL quando a org está
+pausada (exceto para o super admin), então todas as policies por
+organização falham fechadas sem precisar mexer em nenhuma delas.
+`get_brand_by_slug` devolve `accent_color`/`is_active`. RPC
+`delete_organization_cascade` (só `service_role`) apaga, numa transação,
+dados de treino/turma/check-ins, contas da org e a própria org — recusando
+a Arbo e qualquer org que tenha super admin.
+
+**Edge Function `delete-organization`:** exige `is_super_admin`, recusa a
+Arbo, confere o nome digitado, chama a RPC e só depois limpa a pasta da
+org no bucket `brand-assets`.
+
+**Frontend:** tela `OrganizationPausedScreen` (via `ProtectedRoute` +
+`useBrand().isPaused`, que só vale depois de a marca vir do servidor —
+nunca do cache); Clientes com badge Ativo/Pausado, modal Editar, Pausar/
+Reativar com `ConfirmModal` e Excluir digitando o nome exato; cores
+`--brand-secondary`/`--brand-accent` com fallback na primária (assessoria
+que só escolheu a principal vê o app igual), aplicadas no topo do aluno,
+badge Hyrox, metas dos blocos e ponto alto do recado da IA;
+`BrandColorField` e `BrandPreview` (prévia ao vivo) na Minha Assessoria e
+no modal do Super Admin.
+
+**Testes SQL quebrados pela limpeza da vitrine:** `rls_tenant_isolation_check`
+e `modalities_check` supunham um aluno real na Arbo, que deixou de existir
+em 2026-10-08 — falhavam também sem a migration nova. Agora criam o próprio
+aluno de teste dentro da transação abortada (Caso 19). Resultado:
+`organization_lifecycle_check` 25/25, isolamento 34/34. Vitest 89 → 106.
+
+### PR #14 (`10cecef`) — Monograma no lugar da logo da Arbo + logo do cliente pelo Super Admin
+
+**Problema levantado pelo Max:** assessoria sem `logo_url` caía no
+fallback `arboLogo` — aluno de um box via a logo da Arbo, quebrando o
+white-label.
+
+**Solução:** `BrandLogo` (`components/shared`) — logo enviada → imagem;
+Arbo sem logo → logo da Arbo; qualquer outra sem logo → monograma com as
+iniciais (`brandInitials`: "Run Club"→RC, "Alpha"→AL, conectivos
+ignorados) em `--brand-primary`/`--text-on-brand`. Substituiu os 6 usos de
+`brand.logoUrl ?? arboLogo` (Login 120 px, AdminLayout, hero do aluno,
+tela de pausa, `BrandPreview`, Minha Assessoria) e os cards de Clientes.
+No Login `/a/:slug`, logo e nome ficam ocultos até a marca do link chegar
+(num aparelho novo a Arbo não pisca para o aluno do box).
+
+**Logo pelo Super Admin:** `LogoPicker` reutilizável (PNG/WebP até 2 MB,
+prévia local, nada sobe antes de salvar) nos modais Novo/Editar de
+Clientes e na Minha Assessoria; upload/remoção centralizados em
+`lib/organizationLogo.ts` (upload → UPDATE → se falhar apaga o upload → só
+depois apaga a antiga). No cadastro a logo sobe depois da org criada; se
+falhar, a assessoria e o convite continuam e a tela avisa.
+
+**Banco (migration `20261010012143_super_admin_brand_assets`):** policies
+`brand_assets_super_admin_*` — super admin grava na pasta de qualquer org
+**existente**. O ensaio pegou a primeira versão negando tudo: dentro de
+`EXISTS (SELECT … FROM organizations o WHERE … foldername(name))`, `name`
+era `organizations.name` (Caso 17). Também: o Storage proíbe `DELETE`
+direto em SQL (`storage.protect_delete`), então o teste prova a exclusão
+pelo trigger ter disparado (o RLS liberou a linha).
+`super_admin_brand_assets_check` 10/10. Vitest 106 → 124.
+
+### PR #15 — `delete-organization` apaga os vídeos do R2
+
+Pendência do PR #13: os vídeos dos treinos (`videos/{orgId}/…` no bucket
+`arbo-videos`) ficavam órfãos ao excluir uma assessoria. Agora, depois do
+banco e da logo, a Edge Function lista a pasta com `ListObjectsV2`
+(paginado, teto de 20 páginas × 1000) e apaga objeto a objeto (8 em
+paralelo, SigV4 via `aws4fetch` igual ao `r2-delete`; 404 conta como
+apagado). Regras puras em `_shared/r2Keys.ts`, testadas no Vitest:
+`organizationVideoPrefix` (nunca a pasta da Arbo nem id inválido; prefixo
+com `/` final para `videos/{id}` não casar com `videos/{id}xyz`),
+`isOrganizationVideoKey` e `parseListObjectsV2` (XML com entidades). Melhor
+esforço: falha deixa arquivo órfão e a tela de Clientes avisa, sem
+desfazer a exclusão. Resposta com `videosRemoved`/`videosFailed`/
+`videosSkipped`. Publicada (OPTIONS 200, sem login 401; secrets R2
+presentes). **Não testado ponta a ponta**: exige excluir uma assessoria
+real com vídeo — fica no roteiro de teste do Max. Vitest 124 → 129.
+
+---
+
 ## O que foi feito em 2026-10-08 (cont. 2) — Arbo Run vira vitrine: limpeza de contas
 
 **Decisão do Max:** a organização "Arbo Run" passa a ser vitrine (showroom)
