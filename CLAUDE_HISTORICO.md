@@ -81,7 +81,7 @@ direto em SQL (`storage.protect_delete`), então o teste prova a exclusão
 pelo trigger ter disparado (o RLS liberou a linha).
 `super_admin_brand_assets_check` 10/10. Vitest 106 → 124.
 
-### PR #15 — `delete-organization` apaga os vídeos do R2
+### PR #15 (`a46c36e`) — `delete-organization` apaga os vídeos do R2 + documentação
 
 Pendência do PR #13: os vídeos dos treinos (`videos/{orgId}/…` no bucket
 `arbo-videos`) ficavam órfãos ao excluir uma assessoria. Agora, depois do
@@ -97,6 +97,32 @@ desfazer a exclusão. Resposta com `videosRemoved`/`videosFailed`/
 `videosSkipped`. Publicada (OPTIONS 200, sem login 401; secrets R2
 presentes). **Não testado ponta a ponta**: exige excluir uma assessoria
 real com vídeo — fica no roteiro de teste do Max. Vitest 124 → 129.
+
+No mesmo PR, a documentação da sessão: este histórico, CLAUDE.md, Casos
+17–19 em `docs/PORTFOLIO_DEBUG_CASES.md` e README (que ainda não citava
+white-label, Super Admin nem Hyrox/CrossFit).
+
+### Fechamento do dia
+
+- **3 PRs mesclados no `master`** (squash, cada um só depois do ok do Max):
+  #13 `63b9e94`, #14 `10cecef`, #15 `a46c36e`. Em todos: CI verde no PR e no
+  `master`, deploy de produção da Vercel concluído e site respondendo 200
+  com o bundle novo (conferido pelo conteúdo do JS publicado).
+- **Banco:** 2 migrations aplicadas (`20261010003849`, `20261010012143`),
+  ambas ensaiadas antes numa transação que aborta. Edge Function
+  `delete-organization` criada e publicada (2 versões).
+- **Testes:** Vitest 89 → 129 (17 arquivos). Scripts SQL novos:
+  `organization_lifecycle_check.sql` (25) e
+  `super_admin_brand_assets_check.sql` (10); isolamento 34/34.
+- **Fluxo:** worktree + branch por entrega; antes de descartar cada
+  worktree, conferido que o *tree* do commit da branch era idêntico ao do
+  squash no `master` (nada perdido). O `supabase/.temp` (vínculo do CLI) não
+  vai para a worktree — copiar do checkout principal antes de `db query`.
+- **Nada disso teve teste de clique ainda** — só existe a org Arbo
+  (vitrine). Roteiro no topo de "Próximos passos" do CLAUDE.md: cadastrar
+  assessoria de teste → editar cores/logo e ver o monograma → pausar (tela
+  de pausa logado como o professor dela) → reativar → subir vídeo num
+  treino → excluir e conferir no R2 que `videos/{orgId}/` sumiu.
 
 ---
 
