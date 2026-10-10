@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { Sentry } from '../lib/sentry'
 import { ORGANIZATION_BRAND_COLUMNS, brandFromOrganization, type Brand } from '../lib/brand'
-import { BRAND_ASSETS_BUCKET, brandAssetPathFromUrl, buildLogoPath, validateLogoFile } from '../lib/brandAssets'
+import { removeOldOrganizationLogo, removeOrganizationLogoPath, uploadOrganizationLogo } from '../lib/organizationLogo'
 
 export type BrandingForm = {
   brandName: string
@@ -41,16 +40,9 @@ export function useOrganizationBranding() {
       let logoUrl = form.removeLogo ? null : current.logoUrl
 
       if (form.logoFile) {
-        const invalid = validateLogoFile(form.logoFile)
-        if (invalid) throw new Error(invalid)
-
-        const path = buildLogoPath(orgId, form.logoFile.type)
-        const { error: uploadError } = await supabase.storage
-          .from(BRAND_ASSETS_BUCKET)
-          .upload(path, form.logoFile, { contentType: form.logoFile.type, cacheControl: '3600', upsert: false })
-        if (uploadError) throw new Error(`Erro ao enviar a logo: ${uploadError.message}`)
-        uploadedPath = path
-        logoUrl = supabase.storage.from(BRAND_ASSETS_BUCKET).getPublicUrl(path).data.publicUrl
+        const uploaded = await uploadOrganizationLogo(orgId, form.logoFile)
+        uploadedPath = uploaded.path
+        logoUrl = uploaded.publicUrl
       }
 
       const { data, error: updateError } = await supabase
@@ -72,21 +64,11 @@ export function useOrganizationBranding() {
       }
 
       // Logo antiga trocada ou removida: apaga do bucket só agora.
-      const oldPath = brandAssetPathFromUrl(current.logoUrl, orgId)
-      if (oldPath && current.logoUrl !== logoUrl) {
-        const { error: removeError } = await supabase.storage.from(BRAND_ASSETS_BUCKET).remove([oldPath])
-        if (removeError) {
-          console.error('Logo antiga não removida (arquivo órfão):', removeError.message)
-          Sentry.captureException(removeError)
-        }
-      }
+      await removeOldOrganizationLogo(orgId, current.logoUrl, logoUrl)
 
       return brandFromOrganization(data)
     } catch (e: unknown) {
-      if (uploadedPath) {
-        const { error: cleanupError } = await supabase.storage.from(BRAND_ASSETS_BUCKET).remove([uploadedPath])
-        if (cleanupError) Sentry.captureException(cleanupError)
-      }
+      if (uploadedPath) await removeOrganizationLogoPath(uploadedPath)
       setError(e instanceof Error ? e.message : 'Erro desconhecido')
       return null
     } finally {

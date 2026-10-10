@@ -1,0 +1,25 @@
+/* Monograma da marca (assessoria sem logo). Cores da marca por padrão;
+   --brand-logo-bg / --brand-logo-fg permitem prévia com cores não salvas. */
+.monogram {
+  --monogram-bg: var(--brand-logo-bg, var(--brand-primary));
+  --monogram-fg: var(--brand-logo-fg, var(--text-on-brand));
+
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  user-select: none;
+  color: var(--monogram-fg);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--monogram-bg) 78%, var(--monogram-fg)) 0%, var(--monogram-bg) 62%);
+  box-shadow:
+    0 4px 14px color-mix(in srgb, var(--monogram-bg) 35%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--monogram-fg) 25%, transparent);
+  font-family: var(--sans);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-transform: uppercase;
+}

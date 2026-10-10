@@ -1,18 +1,18 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { ImagePlus, Trash2, Save, AlertTriangle } from 'lucide-react'
+import { Save, AlertTriangle } from 'lucide-react'
 import { useBrand } from '../../contexts/BrandContext'
 import { useOrganizationBranding } from '../../hooks/useOrganizationBranding'
 import BrandColorField from '../../components/admin/BrandColorField'
 import BrandPreview from '../../components/admin/BrandPreview'
+import LogoPicker from '../../components/admin/LogoPicker'
+import { EMPTY_LOGO_SELECTION, effectiveLogoUrl, type LogoSelection } from '../../lib/logoSelection'
 import {
   DARK_APP_BACKGROUND,
   contrastRatio,
   pickTextOnBrand,
   type Brand,
 } from '../../lib/brand'
-import { LOGO_MIME_TYPES, validateLogoFile } from '../../lib/brandAssets'
-import arboLogo from '../../assets/arbo-run-logo.webp'
 import styles from './AdminMinhaAssessoria.module.css'
 
 export default function AdminMinhaAssessoria() {
@@ -40,33 +40,14 @@ export default function AdminMinhaAssessoria() {
 function BrandingForm({ brand }: { brand: Brand }) {
   const { commitBrand } = useBrand()
   const { save, isSaving } = useOrganizationBranding()
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [brandName, setBrandName] = useState(brand.brandName)
   const [coachDisplayName, setCoachDisplayName] = useState(brand.coachDisplayName ?? '')
   const [primaryColor, setPrimaryColor] = useState(brand.primaryColor.toUpperCase())
   const [secondaryColor, setSecondaryColor] = useState<string | null>(brand.secondaryColor?.toUpperCase() ?? null)
   const [accentColor, setAccentColor] = useState<string | null>(brand.accentColor?.toUpperCase() ?? null)
-  const [logoFile, setLogoFile] = useState<File | null>(null)
-  const [removeLogo, setRemoveLogo] = useState(false)
-
-  // Prévia local da logo escolhida — nenhum upload antes de salvar. A URL é
-  // criada no handler (não em memo/efeito) e revogada na troca/desmontagem.
-  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null)
-  const previewUrlRef = useRef<string | null>(null)
-  useEffect(() => () => {
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
-  }, [])
-
-  function replacePreview(file: File | null) {
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
-    previewUrlRef.current = file ? URL.createObjectURL(file) : null
-    setFilePreviewUrl(previewUrlRef.current)
-    setLogoFile(file)
-  }
-
-  const previewLogo = filePreviewUrl ?? (removeLogo ? null : brand.logoUrl) ?? arboLogo
-  const hasCustomLogo = Boolean(logoFile || (brand.logoUrl && !removeLogo))
+  // Logo escolhida — nenhum upload antes de salvar.
+  const [logo, setLogo] = useState<LogoSelection>(EMPTY_LOGO_SELECTION)
 
   const textOnBrand = pickTextOnBrand(primaryColor)
   const buttonContrast = contrastRatio(primaryColor, textOnBrand)
@@ -80,26 +61,8 @@ function BrandingForm({ brand }: { brand: Brand }) {
     primaryColor.toLowerCase() !== brand.primaryColor.toLowerCase() ||
     (secondaryColor ?? '').toLowerCase() !== (brand.secondaryColor ?? '').toLowerCase() ||
     (accentColor ?? '').toLowerCase() !== (brand.accentColor ?? '').toLowerCase() ||
-    logoFile !== null ||
-    removeLogo
-
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null
-    e.target.value = '' // permite escolher o mesmo arquivo de novo
-    if (!file) return
-    const invalid = validateLogoFile(file)
-    if (invalid) {
-      toast.error(invalid)
-      return
-    }
-    replacePreview(file)
-    setRemoveLogo(false)
-  }
-
-  function handleRemoveLogo() {
-    replacePreview(null)
-    setRemoveLogo(Boolean(brand.logoUrl))
-  }
+    logo.file !== null ||
+    logo.remove
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -110,8 +73,8 @@ function BrandingForm({ brand }: { brand: Brand }) {
       primaryColor,
       secondaryColor,
       accentColor,
-      logoFile,
-      removeLogo,
+      logoFile: logo.file,
+      removeLogo: logo.remove,
     })
     if (!saved) {
       toast.error('Não foi possível salvar a marca. Tente novamente.')
@@ -126,29 +89,15 @@ function BrandingForm({ brand }: { brand: Brand }) {
       <section className={styles.card}>
         <div className={styles.field}>
           <span className={styles.label}>Logo</span>
-          <div className={styles.logoRow}>
-            <div className={styles.logoBox}>
-              <img src={previewLogo} alt="Prévia da logo" className={styles.logoImg} />
-            </div>
-            <div className={styles.logoActions}>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={LOGO_MIME_TYPES.join(',')}
-                className={styles.hiddenInput}
-                onChange={handleFileChange}
-              />
-              <button type="button" className={styles.secondaryBtn} onClick={() => fileInputRef.current?.click()}>
-                <ImagePlus size={16} /> {hasCustomLogo ? 'Trocar logo' : 'Enviar logo'}
-              </button>
-              {hasCustomLogo && (
-                <button type="button" className={styles.ghostBtn} onClick={handleRemoveLogo}>
-                  <Trash2 size={16} /> Remover
-                </button>
-              )}
-              <span className={styles.hint}>PNG ou WebP, até 2 MB. Fundo transparente fica melhor.</span>
-            </div>
-          </div>
+          <LogoPicker
+            slug={brand.slug}
+            brandName={trimmedName || brand.brandName}
+            currentUrl={brand.logoUrl}
+            value={logo}
+            onChange={setLogo}
+            onInvalid={message => toast.error(message)}
+            monogramColors={{ background: primaryColor, color: textOnBrand }}
+          />
         </div>
 
         <label className={styles.field}>
@@ -216,7 +165,8 @@ function BrandingForm({ brand }: { brand: Brand }) {
         <span className={styles.label}>Prévia</span>
         <BrandPreview
           brandName={trimmedName}
-          logoUrl={filePreviewUrl ?? (removeLogo ? null : brand.logoUrl)}
+          slug={brand.slug}
+          logoUrl={effectiveLogoUrl(brand.logoUrl, logo)}
           coachName={coachDisplayName}
           primaryColor={primaryColor}
           secondaryColor={secondaryColor}

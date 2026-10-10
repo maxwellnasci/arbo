@@ -1,10 +1,12 @@
 import type { CSSProperties } from 'react'
 import { Sparkles, Timer, MessageCircle } from 'lucide-react'
 import { brandCssVars } from '../../lib/brand'
-import arboLogo from '../../assets/arbo-run-logo.webp'
+import BrandLogo from '../shared/BrandLogo'
 import styles from './BrandPreview.module.css'
 
 type Props = {
+  // slug decide o fallback sem logo: Arbo → logo da Arbo; outras → monograma
+  slug: string
   brandName: string
   logoUrl: string | null
   coachName: string | null
@@ -18,7 +20,7 @@ type Props = {
 // de modalidade e recado da IA (destaque). As cores entram como variáveis
 // locais (--pv-*) — mesmo cálculo de fallback do app (brandCssVars), sem mexer
 // na marca aplicada no resto da tela.
-export default function BrandPreview({ brandName, logoUrl, coachName, primaryColor, secondaryColor, accentColor }: Props) {
+export default function BrandPreview({ slug, brandName, logoUrl, coachName, primaryColor, secondaryColor, accentColor }: Props) {
   const vars = brandCssVars({ primaryColor, secondaryColor, accentColor })
   const style = {
     '--pv-primary': vars['--brand-primary'],
@@ -31,7 +33,13 @@ export default function BrandPreview({ brandName, logoUrl, coachName, primaryCol
   return (
     <div className={styles.preview} style={style} aria-label="Prévia do app do aluno">
       <div className={styles.topbar}>
-        <img src={logoUrl ?? arboLogo} alt="" className={styles.logo} />
+        <BrandLogo
+          brand={{ slug, brandName: brandName.trim() || 'Sua marca', logoUrl }}
+          size={24}
+          alt=""
+          className={styles.logo}
+          style={{ '--brand-logo-bg': 'var(--pv-primary)', '--brand-logo-fg': 'var(--pv-on-primary)' } as CSSProperties}
+        />
         <span className={styles.brandName}>{brandName.trim() || 'Sua marca'}</span>
       </div>
 
