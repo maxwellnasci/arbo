@@ -72,8 +72,8 @@
   gap: 10px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: var(--orange-subtle);
-  border: 1px solid var(--orange-border);
+  background: var(--accent-subtle);
+  border: 1px solid var(--accent-border);
   color: var(--text-primary);
   font-size: 13px;
   line-height: 1.5;
@@ -82,7 +82,7 @@
 .highlight svg {
   flex-shrink: 0;
   margin-top: 2px;
-  color: var(--orange);
+  color: var(--brand-accent);
 }
 
 .row {

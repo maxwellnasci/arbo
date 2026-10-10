@@ -15,6 +15,9 @@
   --brand-primary:     #E8521A;
   --brand-secondary:   var(--brand-primary);
   --brand-accent:      var(--brand-primary);
+  /* Tons derivados do destaque (badges e destaques — ex.: ponto alto da IA) */
+  --accent-subtle:     color-mix(in srgb, var(--brand-accent) 8%, transparent);
+  --accent-border:     color-mix(in srgb, var(--brand-accent) 25%, transparent);
 
   /* Bordas */
   --border-default:    #1e1e1e;

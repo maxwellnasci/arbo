@@ -1,0 +1,88 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.picker {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Cor herdada da principal: seletor esmaecido */
+.pickerInherited {
+  opacity: 0.45;
+}
+
+.hex {
+  box-sizing: border-box;
+  width: 150px;
+  max-width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  padding: 11px 12px;
+  color: var(--text-primary);
+  font-size: 16px; /* 16px evita zoom no iOS */
+  font-family: ui-monospace, monospace;
+  text-transform: uppercase;
+}
+
+.hex::placeholder {
+  text-transform: none;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--text-tertiary);
+  opacity: 1;
+}
+
+.hex:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
+.hex[aria-invalid='true'] {
+  border-color: var(--red-accent);
+}
+
+.clear {
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.error {
+  font-size: 12px;
+  color: var(--red-accent);
+}

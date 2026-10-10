@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { SLUG_RE, slugify, validateCreateOrganizationInput } from '../../supabase/functions/_shared/organizationInput'
+import {
+  AI_TONE_MAX_LENGTH,
+  SLUG_RE,
+  slugify,
+  validateCreateOrganizationInput,
+  validateUpdateOrganizationInput,
+} from '../../supabase/functions/_shared/organizationInput'
 
 describe('slugify', () => {
   it('gera slug em minúsculas, sem acento e com hífen', () => {
@@ -55,5 +61,50 @@ describe('validateCreateOrganizationInput', () => {
   it('tolera corpo ausente ou com tipos errados', () => {
     expect(validateCreateOrganizationInput(null).ok).toBe(false)
     expect(validateCreateOrganizationInput({ name: 42, slug: ['x'] }).ok).toBe(false)
+  })
+})
+
+describe('validateUpdateOrganizationInput', () => {
+  const base = {
+    name: ' Box Azul ', slug: 'Box-Azul', brandName: '', coachDisplayName: '  ',
+    primaryColor: '#1d4ed8', secondaryColor: '', accentColor: '#22c55e', aiTone: '',
+  }
+
+  it('normaliza e transforma opcionais vazios em null', () => {
+    const r = validateUpdateOrganizationInput(base)
+    expect(r).toEqual({
+      ok: true,
+      value: {
+        name: 'Box Azul', slug: 'box-azul', brandName: null, coachDisplayName: null,
+        primaryColor: '#1D4ED8', secondaryColor: null, accentColor: '#22C55E', aiTone: null,
+      },
+    })
+  })
+
+  it('cor secundária/destaque preenchida tem que ser #RRGGBB; a primária é obrigatória', () => {
+    const r = validateUpdateOrganizationInput({ ...base, primaryColor: '', secondaryColor: 'azul', accentColor: '#12345' })
+    expect(r.ok).toBe(false)
+    if (r.ok) return
+    expect(Object.keys(r.errors).sort()).toEqual(['accentColor', 'primaryColor', 'secondaryColor'])
+  })
+
+  it('respeita os limites do banco (marca/treinador 80, tom da IA 500, slug)', () => {
+    const r = validateUpdateOrganizationInput({
+      ...base,
+      brandName: 'b'.repeat(81),
+      coachDisplayName: 'c'.repeat(81),
+      aiTone: 't'.repeat(AI_TONE_MAX_LENGTH + 1),
+      slug: '-ruim-',
+      name: '',
+    })
+    expect(r.ok).toBe(false)
+    if (r.ok) return
+    expect(Object.keys(r.errors).sort()).toEqual(['aiTone', 'brandName', 'coachDisplayName', 'name', 'slug'])
+    expect(validateUpdateOrganizationInput({ ...base, aiTone: 't'.repeat(AI_TONE_MAX_LENGTH) }).ok).toBe(true)
+  })
+
+  it('corpo inválido não lança', () => {
+    expect(validateUpdateOrganizationInput(null).ok).toBe(false)
+    expect(validateUpdateOrganizationInput({ name: 42 }).ok).toBe(false)
   })
 })

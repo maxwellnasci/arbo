@@ -113,7 +113,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 2.5px;
-  color: var(--orange);
+  color: var(--brand-secondary);
   margin: 0;
 }
 
@@ -180,11 +180,11 @@
   cursor: pointer;
 }
 
-.mcIconOrange { color: var(--orange); }
+.mcIconOrange { color: var(--brand-secondary); }
 .mcIconGreen { color: var(--green-accent); }
 .mcIconDefault { color: var(--text-tertiary); }
 
-.mcNumberOrange { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: var(--orange); line-height: 1; }
+.mcNumberOrange { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: var(--brand-secondary); line-height: 1; }
 .mcNumberGreen { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: var(--green-accent); line-height: 1; }
 .mcNumberDefault { font-size: 30px; font-weight: 800; letter-spacing: -1px; color: var(--text-primary); line-height: 1; }
 

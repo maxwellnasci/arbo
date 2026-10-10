@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { buildWelcomeWhatsappMessage, isSuperAdminUser, studentAccessUrl } from '../lib/superAdmin'
+import {
+  buildWelcomeWhatsappMessage,
+  deleteConfirmationMatches,
+  isDefaultOrganization,
+  isSuperAdminUser,
+  studentAccessUrl,
+} from '../lib/superAdmin'
 
 describe('isSuperAdminUser', () => {
   it('só app_metadata.is_super_admin === true (booleano) vale', () => {
@@ -41,5 +47,23 @@ describe('buildWelcomeWhatsappMessage', () => {
 
   it('sem nome do treinador usa cumprimento neutro', () => {
     expect(buildWelcomeWhatsappMessage({ ...base, coachName: null }).startsWith('Olá! 👋')).toBe(true)
+  })
+})
+
+describe('isDefaultOrganization', () => {
+  it('reconhece a vitrine Arbo pelo id fixo ou pelo slug', () => {
+    expect(isDefaultOrganization({ id: '00000000-0000-4000-a000-000000000001', slug: 'outro' })).toBe(true)
+    expect(isDefaultOrganization({ id: 'x', slug: 'arbo' })).toBe(true)
+    expect(isDefaultOrganization({ id: 'x', slug: 'arbo-run' })).toBe(false)
+  })
+})
+
+describe('deleteConfirmationMatches', () => {
+  it('exige o nome exato (só espaços nas pontas são ignorados)', () => {
+    expect(deleteConfirmationMatches('Box Azul', 'Box Azul')).toBe(true)
+    expect(deleteConfirmationMatches('  Box Azul ', 'Box Azul')).toBe(true)
+    expect(deleteConfirmationMatches('box azul', 'Box Azul')).toBe(false)
+    expect(deleteConfirmationMatches('Box', 'Box Azul')).toBe(false)
+    expect(deleteConfirmationMatches('   ', '   ')).toBe(false)
   })
 })

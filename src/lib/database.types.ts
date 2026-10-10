@@ -521,11 +521,13 @@ export type Database = {
       }
       organizations: {
         Row: {
+          accent_color: string | null
           ai_tone: string | null
           brand_name: string | null
           coach_display_name: string | null
           created_at: string
           id: string
+          is_active: boolean
           logo_url: string | null
           name: string
           primary_color: string
@@ -534,11 +536,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accent_color?: string | null
           ai_tone?: string | null
           brand_name?: string | null
           coach_display_name?: string | null
           created_at?: string
           id?: string
+          is_active?: boolean
           logo_url?: string | null
           name: string
           primary_color?: string
@@ -547,11 +551,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accent_color?: string | null
           ai_tone?: string | null
           brand_name?: string | null
           coach_display_name?: string | null
           created_at?: string
           id?: string
+          is_active?: boolean
           logo_url?: string | null
           name?: string
           primary_color?: string
@@ -1290,10 +1296,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_organization_cascade: { Args: { p_org_id: string }; Returns: Json }
       get_brand_by_slug: {
         Args: { p_slug: string }
         Returns: {
+          accent_color: string
           brand_name: string
+          is_active: boolean
           logo_url: string
           name: string
           primary_color: string

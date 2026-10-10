@@ -6,13 +6,34 @@ export type ManagedOrganization = {
   slug: string
   brand_name: string | null
   primary_color: string
+  secondary_color: string | null
+  accent_color: string | null
   coach_display_name: string | null
+  ai_tone: string | null
   logo_url: string | null
+  is_active: boolean
   created_at: string
 }
 
 export const MANAGED_ORGANIZATION_COLUMNS =
-  'id, name, slug, brand_name, primary_color, coach_display_name, logo_url, created_at'
+  'id, name, slug, brand_name, primary_color, secondary_color, accent_color, coach_display_name, ai_tone, logo_url, is_active, created_at'
+
+// Organização padrão (vitrine Arbo Run): nunca pausada nem excluída, slug fixo.
+// O banco garante (trg_protect_arbo_default / trg_protect_organization_fields)
+// e a Edge Function delete-organization recusa; a tela só esconde as ações.
+export const DEFAULT_ORGANIZATION_ID = '00000000-0000-4000-a000-000000000001'
+export const DEFAULT_ORGANIZATION_SLUG = 'arbo'
+
+export function isDefaultOrganization(org: { id: string; slug: string }): boolean {
+  return org.id === DEFAULT_ORGANIZATION_ID || org.slug === DEFAULT_ORGANIZATION_SLUG
+}
+
+// Confirmação forte da exclusão: o nome digitado tem que ser igual ao nome
+// cadastrado (espaços nas pontas ignorados; maiúsculas importam).
+export function deleteConfirmationMatches(typed: string, organizationName: string): boolean {
+  const t = typed.trim()
+  return t.length > 0 && t === organizationName.trim()
+}
 
 // Super admin vem só de app_metadata (escrito pelo servidor), nunca de
 // user_metadata — mesma regra da role.

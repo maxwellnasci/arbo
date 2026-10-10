@@ -3,10 +3,11 @@ import { toast } from 'sonner'
 import { ImagePlus, Trash2, Save, AlertTriangle } from 'lucide-react'
 import { useBrand } from '../../contexts/BrandContext'
 import { useOrganizationBranding } from '../../hooks/useOrganizationBranding'
+import BrandColorField from '../../components/admin/BrandColorField'
+import BrandPreview from '../../components/admin/BrandPreview'
 import {
   DARK_APP_BACKGROUND,
   contrastRatio,
-  isHexColor,
   pickTextOnBrand,
   type Brand,
 } from '../../lib/brand'
@@ -21,13 +22,16 @@ export default function AdminMinhaAssessoria() {
     <div className={styles.page}>
       <h1 className={styles.title}>Minha Assessoria</h1>
       <p className={styles.subtitle}>
-        Identidade visual que seus alunos veem no app: logo, nome e cor principal.
+        Identidade visual que seus alunos veem no app: logo, nome e cores.
       </p>
       {!brand.id ? (
         <p className={styles.muted}>{isLoading ? 'Carregando assessoria...' : 'Não foi possível carregar a assessoria.'}</p>
       ) : (
         // key: remonta o formulário com os valores salvos sempre que a marca muda
-        <BrandingForm key={`${brand.id}-${brand.primaryColor}-${brand.logoUrl}-${brand.brandName}`} brand={brand} />
+        <BrandingForm
+          key={`${brand.id}-${brand.primaryColor}-${brand.secondaryColor}-${brand.accentColor}-${brand.logoUrl}-${brand.brandName}`}
+          brand={brand}
+        />
       )}
     </div>
   )
@@ -41,7 +45,8 @@ function BrandingForm({ brand }: { brand: Brand }) {
   const [brandName, setBrandName] = useState(brand.brandName)
   const [coachDisplayName, setCoachDisplayName] = useState(brand.coachDisplayName ?? '')
   const [primaryColor, setPrimaryColor] = useState(brand.primaryColor.toUpperCase())
-  const [hexInput, setHexInput] = useState(brand.primaryColor.toUpperCase())
+  const [secondaryColor, setSecondaryColor] = useState<string | null>(brand.secondaryColor?.toUpperCase() ?? null)
+  const [accentColor, setAccentColor] = useState<string | null>(brand.accentColor?.toUpperCase() ?? null)
   const [logoFile, setLogoFile] = useState<File | null>(null)
   const [removeLogo, setRemoveLogo] = useState(false)
 
@@ -73,19 +78,10 @@ function BrandingForm({ brand }: { brand: Brand }) {
     trimmedName !== brand.brandName ||
     coachDisplayName.trim() !== (brand.coachDisplayName ?? '') ||
     primaryColor.toLowerCase() !== brand.primaryColor.toLowerCase() ||
+    (secondaryColor ?? '').toLowerCase() !== (brand.secondaryColor ?? '').toLowerCase() ||
+    (accentColor ?? '').toLowerCase() !== (brand.accentColor ?? '').toLowerCase() ||
     logoFile !== null ||
     removeLogo
-
-  function handleHexChange(value: string) {
-    const normalized = value.startsWith('#') ? value : `#${value}`
-    setHexInput(normalized.toUpperCase())
-    if (isHexColor(normalized)) setPrimaryColor(normalized.toUpperCase())
-  }
-
-  function handlePickerChange(value: string) {
-    setPrimaryColor(value.toUpperCase())
-    setHexInput(value.toUpperCase())
-  }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null
@@ -108,7 +104,15 @@ function BrandingForm({ brand }: { brand: Brand }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (nameError || !isDirty) return
-    const saved = await save(brand, { brandName: trimmedName, coachDisplayName, primaryColor, logoFile, removeLogo })
+    const saved = await save(brand, {
+      brandName: trimmedName,
+      coachDisplayName,
+      primaryColor,
+      secondaryColor,
+      accentColor,
+      logoFile,
+      removeLogo,
+    })
     if (!saved) {
       toast.error('Não foi possível salvar a marca. Tente novamente.')
       return
@@ -172,28 +176,12 @@ function BrandingForm({ brand }: { brand: Brand }) {
         </label>
 
         <div className={styles.field}>
-          <span className={styles.label}>Cor principal</span>
-          <div className={styles.colorRow}>
-            <input
-              type="color"
-              className={styles.colorPicker}
-              value={primaryColor.toLowerCase()}
-              onChange={e => handlePickerChange(e.target.value)}
-              aria-label="Escolher cor principal"
-            />
-            <input
-              className={`${styles.input} ${styles.hexInput}`}
-              value={hexInput}
-              maxLength={7}
-              onChange={e => handleHexChange(e.target.value)}
-              aria-label="Cor principal em hexadecimal"
-              aria-invalid={!isHexColor(hexInput)}
-            />
-          </div>
-          {!isHexColor(hexInput) && <span className={styles.error}>Use o formato #RRGGBB.</span>}
-          <span className={styles.hint}>
-            Texto sobre a cor: {textOnBrand === '#ffffff' ? 'branco' : 'escuro'} · contraste {buttonContrast.toFixed(1)}:1
-          </span>
+          <BrandColorField
+            label="Cor principal"
+            value={primaryColor}
+            onChange={v => { if (v) setPrimaryColor(v) }}
+            hint={`Botões e destaques principais. Texto sobre a cor: ${textOnBrand === '#ffffff' ? 'branco' : 'escuro'} · contraste ${buttonContrast.toFixed(1)}:1`}
+          />
           {backgroundContrast < 3 && (
             <span className={styles.warning}>
               <AlertTriangle size={14} /> Cor muito escura: títulos e ícones nessa cor ficam difíceis de ler no fundo escuro do app.
@@ -201,24 +189,39 @@ function BrandingForm({ brand }: { brand: Brand }) {
           )}
         </div>
 
-        <button type="submit" className={styles.saveBtn} disabled={isSaving || !isDirty || Boolean(nameError) || !isHexColor(hexInput)}>
+        <BrandColorField
+          label="Cor secundária (opcional)"
+          value={secondaryColor}
+          onChange={setSecondaryColor}
+          fallback={primaryColor}
+          optional
+          hint="Rótulos e números do topo do app do aluno. Vazio = igual à principal."
+        />
+
+        <BrandColorField
+          label="Cor de destaque (opcional)"
+          value={accentColor}
+          onChange={setAccentColor}
+          fallback={primaryColor}
+          optional
+          hint="Badges (ex.: Hyrox), metas dos blocos e o ponto alto do recado da IA. Vazio = igual à principal."
+        />
+
+        <button type="submit" className={styles.saveBtn} disabled={isSaving || !isDirty || Boolean(nameError)}>
           <Save size={16} /> {isSaving ? 'Salvando...' : 'Salvar marca'}
         </button>
       </section>
 
       <section className={styles.card} aria-label="Prévia">
         <span className={styles.label}>Prévia</span>
-        <div className={styles.preview}>
-          <div className={styles.previewBrand}>
-            <img src={previewLogo} alt="" className={styles.previewLogo} />
-            <span className={styles.previewName}>{trimmedName || 'Sua marca'}</span>
-          </div>
-          <p className={styles.previewEyebrow} style={{ color: primaryColor }}>MEU TREINO</p>
-          <p className={styles.previewTitle}>Bom treino, Ana.</p>
-          <span className={styles.previewButton} style={{ background: primaryColor, color: textOnBrand }}>
-            Fazer check-in
-          </span>
-        </div>
+        <BrandPreview
+          brandName={trimmedName}
+          logoUrl={filePreviewUrl ?? (removeLogo ? null : brand.logoUrl)}
+          coachName={coachDisplayName}
+          primaryColor={primaryColor}
+          secondaryColor={secondaryColor}
+          accentColor={accentColor}
+        />
       </section>
     </form>
   )

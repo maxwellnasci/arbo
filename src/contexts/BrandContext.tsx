@@ -16,6 +16,9 @@ import {
 type BrandContextValue = {
   brand: Brand
   isLoading: boolean
+  // Assessoria pausada pelo dono da plataforma — só true depois de carregar a
+  // marca DO SERVIDOR para o usuário atual (nunca a partir de cache antigo).
+  isPaused: boolean
   // Aplica e guarda no cache uma marca recém-salva (ex.: tela Minha Assessoria),
   // sem esperar um novo fetch.
   commitBrand: (next: Brand) => void
@@ -44,6 +47,8 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   // index.html já aplicou) — sem piscar a marca padrão.
   const [brand, setBrand] = useState<Brand>(() => readBrandCache(safeLocalStorage()) ?? DEFAULT_BRAND)
   const [isLoading, setIsLoading] = useState(false)
+  // id do usuário para quem a marca atual veio do servidor
+  const [serverBrandFor, setServerBrandFor] = useState<string | null>(null)
 
   useEffect(() => {
     applyBrandVars(brandCssVars(brand))
@@ -69,6 +74,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
       if (!data) return
       const next = brandFromOrganization(data)
       setBrand(next)
+      setServerBrandFor(userId)
       writeBrandCache(safeLocalStorage(), next)
     }
     load()
@@ -79,6 +85,8 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
     setBrand(next)
     writeBrandCache(safeLocalStorage(), next)
   }, [])
+
+  const isPaused = Boolean(userId) && serverBrandFor === userId && !brand.isActive
 
   const loadPublicBrand = useCallback(async (slug: string) => {
     const { data, error } = await supabase.rpc('get_brand_by_slug', { p_slug: slug })
@@ -93,7 +101,7 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
   }, [commitBrand])
 
   return (
-    <BrandContext.Provider value={{ brand, isLoading, commitBrand, loadPublicBrand }}>
+    <BrandContext.Provider value={{ brand, isLoading, isPaused, commitBrand, loadPublicBrand }}>
       {children}
     </BrandContext.Provider>
   )
