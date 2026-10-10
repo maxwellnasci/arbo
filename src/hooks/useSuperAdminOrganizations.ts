@@ -21,6 +21,10 @@ export type UpdateOrganizationResult =
 
 export type SimpleResult = { ok: true } | { ok: false; error: string }
 
+// warning: a assessoria foi excluída, mas algum arquivo (vídeo/logo) ficou no
+// armazenamento — não desfaz nada, só avisa.
+export type DeleteOrganizationResult = { ok: true; warning?: string } | { ok: false; error: string }
+
 // Troca de logo na edição: arquivo novo, remover a atual, ou nada.
 export type LogoChange = { file: File | null; remove: boolean }
 
@@ -179,12 +183,15 @@ export function useSuperAdminOrganizations() {
     return { ok: true }
   }, [replaceLocal])
 
-  const deleteOrganization = useCallback(async (id: string, confirmName: string): Promise<SimpleResult> => {
+  const deleteOrganization = useCallback(async (id: string, confirmName: string): Promise<DeleteOrganizationResult> => {
     const call = await callFunction('delete-organization', { organizationId: id, confirmName })
     if ('error' in call) return { ok: false, error: call.error }
-    const body = call.json as { error?: string } | null
+    const body = call.json as { error?: string; videosFailed?: number; videosSkipped?: boolean } | null
     if (!call.res.ok) return { ok: false, error: body?.error ?? 'Erro ao excluir a assessoria.' }
     setOrganizations(list => list.filter(o => o.id !== id))
+    if (body?.videosSkipped || (body?.videosFailed ?? 0) > 0) {
+      return { ok: true, warning: 'Alguns vídeos dos treinos não foram apagados do armazenamento (ficaram órfãos).' }
+    }
     return { ok: true }
   }, [])
 

@@ -1,4 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { AwsClient } from 'https://esm.sh/aws4fetch@1.0.20'
+import { isOrganizationVideoKey, organizationVideoPrefix, parseListObjectsV2 } from '../_shared/r2Keys.ts'
 
 // Exclusão definitiva de uma assessoria (Painel Super Admin). Só o dono da
 // plataforma (app_metadata.is_super_admin === true).
@@ -7,9 +9,13 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // 2. public.delete_organization_cascade (uma transação, só service_role):
 //    dados de treino/turma/check-ins, contas dos usuários da org e a org.
 //    Bloqueia a Arbo (padrão/vitrine) e org que tenha super admin.
-// 3. Só depois do banco: remove a pasta {orgId}/ do bucket brand-assets
-//    (falha aqui só deixa arquivo órfão — não desfaz a exclusão).
-// Pendente: vídeos do R2 em videos/{orgId}/ continuam no bucket.
+// 3. Só depois do banco (melhor esforço — falha aqui só deixa arquivo órfão,
+//    nunca desfaz a exclusão nem deixa dado apontando para vídeo apagado):
+//    - pasta {orgId}/ do bucket brand-assets (logo)
+//    - pasta videos/{orgId}/ do R2 (vídeos dos treinos), listada com
+//      ListObjectsV2 e apagada objeto a objeto (mesma assinatura SigV4 do
+//      r2-delete). Chaves legadas videos/{trainingId}/... são todas da Arbo,
+//      que nunca é excluída.
 
 const ALLOWED_ORIGINS = [
   'https://arbo.mxos.com.br',
@@ -19,6 +25,67 @@ const ALLOWED_ORIGINS = [
 ]
 
 const DEFAULT_ORG_ID = '00000000-0000-4000-a000-000000000001'
+// Teto de segurança para caber no tempo da Edge Function (20 páginas × 1000).
+const R2_MAX_PAGES = 20
+const R2_DELETE_CONCURRENCY = 8
+
+type VideoCleanup = { removed: number; failed: number; skipped: boolean }
+
+async function removeOrganizationVideos(organizationId: string): Promise<VideoCleanup> {
+  const accountId = Deno.env.get('R2_ACCOUNT_ID')
+  const accessKeyId = Deno.env.get('R2_ACCESS_KEY_ID')
+  const secretAccessKey = Deno.env.get('R2_SECRET_ACCESS_KEY')
+  const bucket = Deno.env.get('R2_BUCKET_NAME')
+  const prefix = organizationVideoPrefix(organizationId)
+  if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !prefix) {
+    console.error('Limpeza do R2 pulada: credenciais ausentes ou organização inválida.')
+    return { removed: 0, failed: 0, skipped: true }
+  }
+
+  const aws = new AwsClient({ accessKeyId, secretAccessKey, service: 's3', region: 'auto' })
+  const base = `https://${accountId}.r2.cloudflarestorage.com/${bucket}`
+  let removed = 0
+  let failed = 0
+  let token: string | null = null
+
+  for (let page = 0; page < R2_MAX_PAGES; page++) {
+    const listUrl = new URL(base)
+    listUrl.searchParams.set('list-type', '2')
+    listUrl.searchParams.set('prefix', prefix)
+    listUrl.searchParams.set('max-keys', '1000')
+    if (token) listUrl.searchParams.set('continuation-token', token)
+
+    const listRes = await aws.fetch(listUrl.toString(), { method: 'GET' })
+    if (!listRes.ok) {
+      console.error('Erro ao listar vídeos no R2:', listRes.status, await listRes.text())
+      return { removed, failed: failed + 1, skipped: false }
+    }
+    const { keys, isTruncated, nextContinuationToken } = parseListObjectsV2(await listRes.text())
+    const toDelete = keys.filter((key) => isOrganizationVideoKey(key, organizationId))
+
+    for (let i = 0; i < toDelete.length; i += R2_DELETE_CONCURRENCY) {
+      const batch = toDelete.slice(i, i + R2_DELETE_CONCURRENCY)
+      const results = await Promise.all(batch.map(async (key) => {
+        const objectUrl = `${base}/${key.split('/').map(encodeURIComponent).join('/')}`
+        const res = await aws.fetch(objectUrl, { method: 'DELETE' })
+        // 404 = já não existe: idempotente, conta como removido.
+        if (!res.ok && res.status !== 404) {
+          console.error('Erro ao remover vídeo do R2:', key, res.status)
+          return false
+        }
+        return true
+      }))
+      removed += results.filter(Boolean).length
+      failed += results.filter((ok) => !ok).length
+    }
+
+    if (!isTruncated || !nextContinuationToken) return { removed, failed, skipped: false }
+    token = nextContinuationToken
+  }
+
+  console.error(`Limpeza do R2 parou no teto de ${R2_MAX_PAGES} páginas; restam vídeos em ${prefix}`)
+  return { removed, failed: failed + 1, skipped: false }
+}
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 function getCorsHeaders(origin: string | null): Record<string, string> {
@@ -104,5 +171,20 @@ Deno.serve(async (req) => {
     else filesRemoved = paths.length
   }
 
-  return json(200, { deleted: result, brandFilesRemoved: filesRemoved })
+  // Vídeos dos treinos no R2 — melhor esforço, depois do banco.
+  let videos: VideoCleanup = { removed: 0, failed: 0, skipped: true }
+  try {
+    videos = await removeOrganizationVideos(organizationId)
+  } catch (e: unknown) {
+    console.error('Erro inesperado na limpeza do R2:', e instanceof Error ? e.message : e)
+    videos = { removed: 0, failed: 1, skipped: false }
+  }
+
+  return json(200, {
+    deleted: result,
+    brandFilesRemoved: filesRemoved,
+    videosRemoved: videos.removed,
+    videosFailed: videos.failed,
+    videosSkipped: videos.skipped,
+  })
 })

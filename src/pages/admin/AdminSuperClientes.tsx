@@ -177,8 +177,9 @@ export default function AdminSuperClientes() {
           organization={deleting}
           onClose={() => setDeleting(null)}
           onSubmit={deleteOrganization}
-          onDeleted={() => {
+          onDeleted={(warning) => {
             toast.success(`${displayName(deleting)} foi excluída.`)
+            if (warning) toast.error(warning)
             setDeleting(null)
           }}
         />
@@ -352,7 +353,7 @@ function ExcluirAssessoriaModal({ organization, onClose, onSubmit, onDeleted }: 
   organization: ManagedOrganization
   onClose: () => void
   onSubmit: ReturnType<typeof useSuperAdminOrganizations>['deleteOrganization']
-  onDeleted: () => void
+  onDeleted: (warning?: string) => void
 }) {
   const [typed, setTyped] = useState('')
   const [formError, setFormError] = useState<string | null>(null)
@@ -371,7 +372,7 @@ function ExcluirAssessoriaModal({ organization, onClose, onSubmit, onDeleted }: 
       setFormError(result.error)
       return
     }
-    onDeleted()
+    onDeleted(result.warning)
   }
 
   return createPortal(
@@ -388,7 +389,7 @@ function ExcluirAssessoriaModal({ organization, onClose, onSubmit, onDeleted }: 
           <AlertTriangle size={18} aria-hidden="true" />
           <p>
             Isso apaga <strong>para sempre</strong> a assessoria, as contas do professor e dos alunos, treinos, turmas,
-            check-ins, recordes, mensagens e a logo. Não dá para desfazer. Se for só temporário, use <strong>Pausar</strong>.
+            check-ins, recordes, mensagens, a logo e os vídeos dos treinos. Não dá para desfazer. Se for só temporário, use <strong>Pausar</strong>.
           </p>
         </div>
 

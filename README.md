@@ -28,6 +28,20 @@
 - Sistema de convites por email
 - Exclusão segura de alunos
 - Visualização das atividades e análises de IA do Strava de qualquer aluno
+- Treinos de **Corrida, CrossFit e Hyrox** com blocos (estações oficiais do Hyrox, WODs) e check-in por bloco
+- **Minha Assessoria** — logo, nome e cores da marca (principal, secundária e destaque) com prévia ao vivo
+
+### White-label (várias assessorias numa só plataforma)
+- Cada assessoria/box é uma organização isolada por RLS — nenhum dado cruza entre clientes
+- Identidade visual por assessoria: logo, cores e nome aplicados no app do aluno; login pelo link `/a/{slug}`
+- Assessoria sem logo mostra um monograma com as iniciais na cor da marca (nunca a logo de outra marca)
+- Recado da IA no tom e com o nome do treinador de cada assessoria
+
+### Painel do dono da plataforma (Super Admin)
+- Cadastro de assessoria nova + convite do professor em ~30 s, com link dos alunos e mensagem pronta para WhatsApp
+- Editar marca, cores, logo, slug e tom da IA de qualquer cliente
+- Pausar/reativar (acesso bloqueado no banco, tela amigável para professor e alunos)
+- Excluir com confirmação pelo nome — remove dados, contas, logo e vídeos do cliente
 
 ### App do Aluno
 - Dashboard com treinos da semana
@@ -37,6 +51,7 @@
 - Chat direto com o professor via botão flutuante (FAB), acessível de qualquer aba
 - Perfil com dados pessoais
 - Integração com Strava — sincronização automática de corridas
+- App com a cara da assessoria (logo, cores e nome do treinador)
 - Análise automática por IA (DeepSeek) da última corrida — resumo, avaliação de desempenho e dica para o próximo treino
 - Vídeos de treino (YouTube ou upload direto, via Cloudflare R2)
 - Instalável como PWA (Android + iOS)
