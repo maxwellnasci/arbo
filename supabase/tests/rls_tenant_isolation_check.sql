@@ -32,7 +32,13 @@ DECLARE
 
 BEGIN
   SELECT id INTO admin_a FROM public.profiles WHERE role = 'admin' AND organization_id = arbo LIMIT 1;
-  SELECT id INTO aluno_a FROM public.profiles WHERE role = 'aluno' AND organization_id = arbo AND id <> demo LIMIT 1;
+  -- Aluno de teste próprio (a Arbo virou vitrine em 2026-10-08 e não tem mais
+  -- aluno real além do Demo). Criado na transação abortada; cai na Arbo como
+  -- aluno pelos triggers de cadastro.
+  aluno_a := gen_random_uuid();
+  INSERT INTO auth.users (id, instance_id, aud, role, email, raw_user_meta_data, raw_app_meta_data, created_at, updated_at)
+  VALUES (aluno_a, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
+          'aluno-a-' || aluno_a || '@example.invalid', '{}', '{}', now(), now());
 
   -- ── Blindagem de role (migration 20261007100921) ──
   -- Cadastro tentando virar admin via user_metadata → vira aluno.

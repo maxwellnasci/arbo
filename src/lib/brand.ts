@@ -10,7 +10,10 @@ export type Brand = {
   logoUrl: string | null
   primaryColor: string
   secondaryColor: string | null
+  accentColor: string | null
   coachDisplayName: string | null
+  // false = assessoria pausada pelo dono da plataforma
+  isActive: boolean
 }
 
 export const DEFAULT_BRAND: Brand = {
@@ -21,7 +24,9 @@ export const DEFAULT_BRAND: Brand = {
   logoUrl: null,
   primaryColor: '#E8521A',
   secondaryColor: null,
+  accentColor: null,
   coachDisplayName: null,
+  isActive: true,
 }
 
 export const BRAND_CACHE_KEY = 'arbo:brand'
@@ -69,13 +74,16 @@ export function pickTextOnBrand(primary: unknown): string {
     : TEXT_ON_BRAND_DARK
 }
 
-export function brandCssVars(brand: Pick<Brand, 'primaryColor' | 'secondaryColor'>): BrandVars {
+// Secundária e destaque são opcionais: sem valor, caem na primária — uma
+// assessoria que só escolheu a cor principal vê o app exatamente como antes.
+export function brandCssVars(brand: Pick<Brand, 'primaryColor' | 'secondaryColor' | 'accentColor'>): BrandVars {
   const primary = isHexColor(brand.primaryColor) ? brand.primaryColor : DEFAULT_BRAND.primaryColor
   const secondary = isHexColor(brand.secondaryColor) ? brand.secondaryColor : primary
+  const accent = isHexColor(brand.accentColor) ? brand.accentColor : primary
   return {
     '--brand-primary': primary,
     '--brand-secondary': secondary,
-    '--brand-accent': primary,
+    '--brand-accent': accent,
     '--text-on-brand': pickTextOnBrand(primary),
   }
 }
@@ -110,7 +118,10 @@ export function readBrandCache(storage: Pick<Storage, 'getItem'> | null): Brand 
       logoUrl: typeof b.logoUrl === 'string' && b.logoUrl.startsWith('https://') ? b.logoUrl : null,
       primaryColor: b.primaryColor,
       secondaryColor: isHexColor(b.secondaryColor) ? b.secondaryColor : null,
+      accentColor: isHexColor(b.accentColor) ? b.accentColor : null,
       coachDisplayName: str(b.coachDisplayName),
+      // só `false` explícito pausa; cache antigo (sem o campo) = ativa
+      isActive: b.isActive !== false,
     }
   } catch {
     return null
@@ -134,7 +145,9 @@ type OrganizationRow = {
   logo_url: string | null
   primary_color: string
   secondary_color: string | null
+  accent_color?: string | null
   coach_display_name: string | null
+  is_active?: boolean | null
 }
 
 export function brandFromOrganization(row: OrganizationRow): Brand {
@@ -146,12 +159,14 @@ export function brandFromOrganization(row: OrganizationRow): Brand {
     logoUrl: typeof row.logo_url === 'string' && row.logo_url.startsWith('https://') ? row.logo_url : null,
     primaryColor: isHexColor(row.primary_color) ? row.primary_color : DEFAULT_BRAND.primaryColor,
     secondaryColor: isHexColor(row.secondary_color) ? row.secondary_color : null,
+    accentColor: isHexColor(row.accent_color) ? row.accent_color : null,
     coachDisplayName: row.coach_display_name?.trim() || null,
+    isActive: row.is_active !== false,
   }
 }
 
 export const ORGANIZATION_BRAND_COLUMNS =
-  'id, name, slug, brand_name, logo_url, primary_color, secondary_color, coach_display_name'
+  'id, name, slug, brand_name, logo_url, primary_color, secondary_color, accent_color, coach_display_name, is_active'
 
 // Marca pública por slug (RPC get_brand_by_slug) — usada na tela de login
 // /a/:slug, antes de existir sessão. Sem id nem dados internos da assessoria.
@@ -162,6 +177,8 @@ export type PublicBrandRow = {
   logo_url: string | null
   primary_color: string
   secondary_color: string | null
+  accent_color?: string | null
+  is_active?: boolean | null
 }
 
 const SLUG_RE = /^[a-z0-9]([a-z0-9-]{0,48}[a-z0-9])?$/

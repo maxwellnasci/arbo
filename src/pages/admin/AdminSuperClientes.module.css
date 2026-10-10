@@ -400,6 +400,126 @@
   white-space: pre-wrap;
 }
 
+/* ── Status e ações do card ─────────────────────────────────────────────── */
+
+.cardPaused {
+  border-color: var(--yellow-border);
+}
+
+.cardPaused .swatch {
+  opacity: 0.5;
+}
+
+.badgeActive,
+.badgePaused {
+  margin-left: auto;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badgeActive {
+  background: var(--green-subtle);
+  border: 1px solid var(--green-border);
+  color: var(--green-accent);
+}
+
+.badgePaused {
+  background: var(--yellow-subtle);
+  border: 1px solid var(--yellow-border);
+  color: var(--yellow-accent);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.actionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-input);
+  color: var(--text-secondary);
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.actionDanger {
+  border-color: var(--red-border);
+  background: var(--red-subtle);
+  color: var(--red-accent);
+}
+
+/* ── Edição e exclusão ──────────────────────────────────────────────────── */
+
+.modalWide {
+  max-width: 560px;
+}
+
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.45;
+}
+
+.dangerBox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--red-subtle);
+  border: 1px solid var(--red-border);
+  color: var(--red-accent);
+}
+
+.dangerBox svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.dangerBox p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.dangerBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--red-accent);
+  color: var(--text-on-brand);
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dangerBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 @media (max-width: 600px) {
   .overlay {
     align-items: flex-end;

@@ -8,6 +8,9 @@ export type BrandingForm = {
   brandName: string
   coachDisplayName: string
   primaryColor: string
+  // Opcionais: null = usa a cor principal
+  secondaryColor: string | null
+  accentColor: string | null
   // Arquivo novo escolhido (ainda não enviado) — o upload só acontece no save.
   logoFile: File | null
   // Remover a logo atual (volta para a logo padrão do app).
@@ -56,6 +59,8 @@ export function useOrganizationBranding() {
           brand_name: form.brandName.trim(),
           coach_display_name: form.coachDisplayName.trim() || null,
           primary_color: form.primaryColor,
+          secondary_color: form.secondaryColor,
+          accent_color: form.accentColor,
           logo_url: logoUrl,
         })
         .eq('id', orgId)
