@@ -64,6 +64,24 @@ export type Database = {
           },
         ]
       }
+      app_heartbeat: {
+        Row: {
+          beat_count: number
+          id: number
+          last_beat: string
+        }
+        Insert: {
+          beat_count?: number
+          id?: number
+          last_beat?: string
+        }
+        Update: {
+          beat_count?: number
+          id?: number
+          last_beat?: string
+        }
+        Relationships: []
+      }
       checkin_block_results: {
         Row: {
           actual_distance_m: number | null
