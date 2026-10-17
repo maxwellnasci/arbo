@@ -5,6 +5,56 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-10-16 — Keep-alive com escrita real no banco (PR #16)
+
+**Problema:** a RPC `public.keepalive()` (desde 2026-09-21) só fazia
+`SELECT now()` — roda em memória, não grava nada em disco/WAL nem movimenta
+`pg_stat_user_tables`. Hipótese do Max: o detector de inatividade do free
+tier olha essas estatísticas, o que explicaria a pausa de 27/09 mesmo com o
+ping de 26/09 respondendo 200. **Não é documentado pelo Supabase nem foi
+comprovado** — é a hipótese mais forte disponível, não uma certeza.
+
+**Migration `20261016000000_heartbeat_keepalive` (branch
+`feat/heartbeat-keepalive-hardening`, PR #16 → `57652c7`):**
+- `public.app_heartbeat` — uma linha só (`id smallint PK CHECK (id = 1)`,
+  `last_beat`, `beat_count`), RLS ligado sem policies e
+  `REVOKE ALL FROM anon, authenticated` (o Supabase dá GRANT automático em
+  tabela nova do `public`; sem o REVOKE, o RLS seria a única barreira).
+- `public.keepalive()` reescrita em `plpgsql SECURITY DEFINER`,
+  `SET search_path = ''`: UPSERT da batida (`beat_count + 1`) + `count(*)`
+  em `trainings`. Retorna `{ status, beat_count, read_ok, timestamp }`.
+- **Ajuste de segurança sobre o SQL proposto:** a versão original devolvia
+  `trainings_checked` (a contagem). Como a RPC é pública (`anon`) e
+  `SECURITY DEFINER` ignora RLS, isso revelaria o total de treinos de todas
+  as assessorias para quem tem a anon key — a leitura continua, a resposta
+  traz só `read_ok`. `REVOKE ALL ON FUNCTION ... FROM PUBLIC` antes do GRANT.
+
+**Workflow `keep-alive.yml`:** além do HTTP 200, exige no corpo
+`status = "ok"` e `beat_count` numérico (`jq`) — 200 sem a batida gravada
+agora deixa o workflow vermelho.
+
+**Verificação:** `supabase/tests/heartbeat_keepalive_check.sql` (11
+checagens, aborta sempre) — RLS, ausência de GRANT, DEFINER +
+`search_path`, `anon` executa a RPC mas tem a leitura da tabela negada,
+`beat_count` incrementa, resposta sem contagem de treinos e
+`pg_stat_xact_user_tables` com 2 escritas em `app_heartbeat` e 2 leituras em
+`trainings`. Ensaio (migration + checagens numa transação abortada) 11/11 →
+`db push` → mesmo script 11/11. `POST /rest/v1/rpc/keepalive` real com a
+anon key: HTTP 200, `beat_count: 1`. Após o merge, `gh workflow run
+keep-alive.yml` → success, `beat_count: 2` (persistindo entre execuções).
+tsc 0, lint 0, 129/129 testes; `database.types.ts` só ganhou `app_heartbeat`.
+
+**Como ler daqui pra frente:** se o projeto pausar de novo **com o
+`beat_count` subindo todo dia**, a hipótese das estatísticas cai — ver o
+motivo no Dashboard/e-mail do Supabase. `exit code 6` no workflow continua
+significando pausa (restaurar pelo Dashboard).
+
+**Nota de ambiente:** worktree nova não tem `supabase/.temp` (gitignored) —
+o CLI responde `ProjectRefNotLinkedError`; copiar a pasta do checkout
+principal resolve.
+
+---
+
 ## O que foi feito em 2026-10-10 — Gestão de assessorias, cores, logo white-label e limpeza do R2 (PRs #13, #14 e #15)
 
 Três entregas seguidas no Painel Super Admin, cada uma em branch própria,
