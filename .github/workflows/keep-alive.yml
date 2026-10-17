@@ -24,9 +24,10 @@ jobs:
             -H "apikey: $ANON_KEY" \
             "$SUPABASE_URL/auth/v1/health")
 
-          # RPC keepalive força conexão real ao Postgres (conta como atividade
-          # para o detector de pausa do free tier).
-          DB_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 --retry 2 \
+          # RPC keepalive faz escrita real (UPSERT em app_heartbeat → WAL +
+          # pg_stat_user_tables) e leitura em trainings — SELECT now() sozinho
+          # roda só em memória e não conta como atividade.
+          DB_STATUS=$(curl -s -o keepalive.json -w "%{http_code}" --max-time 20 --retry 2 \
             -X POST \
             -H "apikey: $ANON_KEY" \
             -H "Authorization: Bearer $ANON_KEY" \
@@ -43,5 +44,13 @@ jobs:
 
           if [ "$DB_STATUS" != "200" ]; then
             echo "::error::Keepalive RPC falhou com HTTP $DB_STATUS (esperado 200). Verifique se a migration foi aplicada no Supabase."
+            exit 1
+          fi
+
+          # 200 não basta: exige que a batida tenha sido gravada (beat_count).
+          echo "Resposta:      $(cat keepalive.json)"
+          if [ "$(jq -r '.status' keepalive.json)" != "ok" ] \
+            || ! jq -e '.beat_count | numbers' keepalive.json > /dev/null; then
+            echo "::error::Keepalive RPC respondeu sem status ok/beat_count — a escrita no heartbeat não aconteceu."
             exit 1
           fi
