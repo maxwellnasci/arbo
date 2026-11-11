@@ -5,6 +5,23 @@ Para referência técnica atual, ver [CLAUDE.md](CLAUDE.md).
 
 ---
 
+## O que foi feito em 2026-11-10 — Diagnóstico pós-pausa + Auto-Restore automático no Keep-Alive via Management API
+
+**Diagnóstico de saúde:**
+- Aplicação e deploy 100% íntegros: `npm run lint` (0 erros), `npx tsc --noEmit` com cache limpo (0 erros), `npm test` (**129/129 testes** em 17 arquivos), `npm run build` (OK, PWA com 83 entradas em precache), `npm audit --omit=dev` (0 vulnerabilidades em produção) e Vercel (`https://arbo.mxos.com.br`) respondendo HTTP 200.
+- **Queda da hipótese de 2026-10-16 comprovada:** o histórico do GitHub Actions mostrou que o `keep-alive.yml` rodou com sucesso em `05/11/2026 19:13 UTC` (`Auth: HTTP 200`, `Keepalive RPC: HTTP 200`, `beat_count: 14`), mas no dia seguinte (`06/11/2026`) o projeto já estava pausado (`NXDOMAIN` em `jhfkflnixzivuichmkie.supabase.co`, `curl exit code 6`). O mesmo já havia ocorrido em `25/10/2026` após 8 dias de batidas verdes. Ou seja, mesmo gravando em disco/WAL (`UPSERT` em `app_heartbeat`) e lendo `trainings`, o Free Tier do Supabase ainda pode pausar o projeto.
+- Após restauração, todos os subsistemas voltaram a `ACTIVE_HEALTHY`: Auth HTTP 200, `POST /rest/v1/rpc/keepalive` HTTP 200 (`beat_count: 15`), `npx supabase migration list --linked` com **24/24 migrations sincronizadas** (`local === remote`) e **11/11 Edge Functions** respondendo.
+
+**Solução definitiva — Auto-Restore via Management API (`.github/workflows/keep-alive.yml`):**
+- Como o Data Plane (`*.supabase.co`) perde o DNS quando pausado, o único caminho capaz de detectar e religar o projeto sem clique humano no Dashboard é o Control Plane oficial (`https://api.supabase.com/v1`).
+- Configurada a secret **`SUPABASE_ACCESS_TOKEN`** no GitHub Actions (a partir do Personal Access Token `sbp_...` da CLI).
+- `.github/workflows/keep-alive.yml` atualizado para rodar **a cada 12h (`0 0,12 * * *`)**:
+  1. Consulta `GET https://api.supabase.com/v1/projects/jhfkflnixzivuichmkie` com `Authorization: Bearer $SUPABASE_ACCESS_TOKEN`.
+  2. Se `status` for `INACTIVE*` ou `PAUSED*`, dispara automaticamente **`POST https://api.supabase.com/v1/projects/jhfkflnixzivuichmkie/restore`** (`operationId: v1-restore-a-project`) e faz polling a cada 10s (até 6 min) aguardando `status == "ACTIVE_HEALTHY"`.
+  3. Executa o ping no `Auth` (`/auth/v1/health`) e na `RPC keepalive` (`/rest/v1/rpc/keepalive`) com loop de retry (até 12×10s) — necessário porque, logo após o status virar `ACTIVE_HEALTHY`, o PostgREST ainda leva ~20–40s para carregar o schema cache do Postgres recém-iniciado (retornando `HTTP 404 / PGRST202` transitório durante o aquecimento).
+
+---
+
 ## O que foi feito em 2026-10-16 — Keep-alive com escrita real no banco (PR #16)
 
 **Problema:** a RPC `public.keepalive()` (desde 2026-09-21) só fazia

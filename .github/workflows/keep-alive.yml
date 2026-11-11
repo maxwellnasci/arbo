@@ -2,37 +2,107 @@ name: Supabase Keep-Alive
 
 on:
   schedule:
-    # Diário às 12:00 UTC (09:00 BRT) — pausa do free tier ocorre após 7 dias sem atividade
-    - cron: '0 12 * * *'
+    # A cada 12h (00:00 e 12:00 UTC = 21:00 e 09:00 BRT) — mantém atividade no banco
+    # e religa o projeto automaticamente via Management API caso o free tier pause.
+    - cron: '0 0,12 * * *'
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase (Auth + query real no banco)
+      - name: Auto-Restore (se pausado) + Ping Supabase (Auth + escrita real no banco)
         env:
+          PROJECT_REF: jhfkflnixzivuichmkie
           SUPABASE_URL: https://jhfkflnixzivuichmkie.supabase.co
           ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           if [ -z "$ANON_KEY" ]; then
             echo "::error::Secret SUPABASE_ANON_KEY não configurada."
             exit 1
           fi
 
-          AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 --retry 2 \
-            -H "apikey: $ANON_KEY" \
-            "$SUPABASE_URL/auth/v1/health")
+          # 1. Verifica status no Control Plane (Management API) e dispara Auto-Restore se estiver INACTIVE
+          if [ -n "$ACCESS_TOKEN" ]; then
+            MGMT_HTTP=$(curl -s -o project.json -w "%{http_code}" --max-time 20 --retry 2 \
+              -H "Authorization: Bearer $ACCESS_TOKEN" \
+              "https://api.supabase.com/v1/projects/$PROJECT_REF" || echo "000")
 
+            if [ "$MGMT_HTTP" = "200" ]; then
+              PROJECT_STATUS=$(jq -r '.status // empty' project.json)
+              echo "Management API status: $PROJECT_STATUS"
+
+              WAIT_FOR_RESTORE="false"
+              if [[ "$PROJECT_STATUS" == INACTIVE* ]] || [[ "$PROJECT_STATUS" == PAUSED* ]]; then
+                echo "::warning::Projeto Supabase encontrado pausado ($PROJECT_STATUS). Disparando Auto-Restore via Management API..."
+                RESTORE_HTTP=$(curl -s -o restore.json -w "%{http_code}" --max-time 20 \
+                  -X POST \
+                  -H "Authorization: Bearer $ACCESS_TOKEN" \
+                  "https://api.supabase.com/v1/projects/$PROJECT_REF/restore" || echo "000")
+
+                if [ "$RESTORE_HTTP" != "200" ] && [ "$RESTORE_HTTP" != "201" ]; then
+                  echo "::error::Falha ao disparar Auto-Restore (HTTP $RESTORE_HTTP): $(cat restore.json 2>/dev/null)"
+                  exit 1
+                fi
+                echo "Auto-Restore solicitado com sucesso (HTTP $RESTORE_HTTP)."
+                WAIT_FOR_RESTORE="true"
+              elif [ "$PROJECT_STATUS" != "ACTIVE_HEALTHY" ]; then
+                echo "::warning::Projeto em estado transitório ($PROJECT_STATUS). Aguardando ficar ACTIVE_HEALTHY..."
+                WAIT_FOR_RESTORE="true"
+              fi
+
+              if [ "$WAIT_FOR_RESTORE" = "true" ]; then
+                for i in $(seq 1 36); do
+                  sleep 10
+                  POLL_HTTP=$(curl -s -o project.json -w "%{http_code}" --max-time 20 \
+                    -H "Authorization: Bearer $ACCESS_TOKEN" \
+                    "https://api.supabase.com/v1/projects/$PROJECT_REF" || echo "000")
+                  if [ "$POLL_HTTP" = "200" ]; then
+                    PROJECT_STATUS=$(jq -r '.status // empty' project.json)
+                  fi
+                  echo "Aguardando inicialização ($i/36): status=$PROJECT_STATUS"
+                  if [ "$PROJECT_STATUS" = "ACTIVE_HEALTHY" ]; then
+                    break
+                  fi
+                done
+
+                if [ "$PROJECT_STATUS" != "ACTIVE_HEALTHY" ]; then
+                  echo "::error::Timeout aguardando o projeto ficar ACTIVE_HEALTHY (último status: $PROJECT_STATUS)."
+                  exit 1
+                fi
+              fi
+            else
+              echo "::warning::Management API respondeu HTTP $MGMT_HTTP (verifique SUPABASE_ACCESS_TOKEN). Seguindo com ping direto."
+            fi
+          else
+            echo "::warning::Secret SUPABASE_ACCESS_TOKEN não configurada — Auto-Restore desativado; executando apenas o ping."
+          fi
+
+          # 2. Ping no Auth + RPC keepalive (com retry para aguardar DNS e schema cache do PostgREST pós-restore)
           # RPC keepalive faz escrita real (UPSERT em app_heartbeat → WAL +
           # pg_stat_user_tables) e leitura em trainings — SELECT now() sozinho
           # roda só em memória e não conta como atividade.
-          DB_STATUS=$(curl -s -o keepalive.json -w "%{http_code}" --max-time 20 --retry 2 \
-            -X POST \
-            -H "apikey: $ANON_KEY" \
-            -H "Authorization: Bearer $ANON_KEY" \
-            -H "Content-Type: application/json" \
-            "$SUPABASE_URL/rest/v1/rpc/keepalive")
+          for attempt in $(seq 1 12); do
+            AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 \
+              -H "apikey: $ANON_KEY" \
+              "$SUPABASE_URL/auth/v1/health" || echo "000")
+
+            DB_STATUS=$(curl -s -o keepalive.json -w "%{http_code}" --max-time 20 \
+              -X POST \
+              -H "apikey: $ANON_KEY" \
+              -H "Authorization: Bearer $ANON_KEY" \
+              -H "Content-Type: application/json" \
+              -d "{}" \
+              "$SUPABASE_URL/rest/v1/rpc/keepalive" || echo "000")
+
+            if [ "$AUTH_STATUS" = "200" ] && [ "$DB_STATUS" = "200" ]; then
+              break
+            fi
+
+            echo "Tentativa $attempt/12: Auth=HTTP $AUTH_STATUS, Keepalive RPC=HTTP $DB_STATUS — aguardando 10s..."
+            sleep 10
+          done
 
           echo "Auth health:   HTTP $AUTH_STATUS"
           echo "Keepalive RPC: HTTP $DB_STATUS"
@@ -43,7 +113,7 @@ jobs:
           fi
 
           if [ "$DB_STATUS" != "200" ]; then
-            echo "::error::Keepalive RPC falhou com HTTP $DB_STATUS (esperado 200). Verifique se a migration foi aplicada no Supabase."
+            echo "::error::Keepalive RPC falhou com HTTP $DB_STATUS (esperado 200). Corpo: $(cat keepalive.json 2>/dev/null)"
             exit 1
           fi
 
@@ -54,3 +124,4 @@ jobs:
             echo "::error::Keepalive RPC respondeu sem status ok/beat_count — a escrita no heartbeat não aconteceu."
             exit 1
           fi
+
